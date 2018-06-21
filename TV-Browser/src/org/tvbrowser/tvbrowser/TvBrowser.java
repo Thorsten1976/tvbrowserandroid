@@ -16,7 +16,6 @@
  */
 package org.tvbrowser.tvbrowser;
 
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -75,8 +74,6 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -136,8 +133,6 @@ import android.text.style.ReplacementSpan;
 import android.util.Base64;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -169,6 +164,7 @@ import com.example.android.listviewdragginganimation.StableArrayAdapter;
 
 import de.epgpaid.EPGpaidDataConnection;
 
+@SuppressLint("ApplySharedPref")
 public class TvBrowser extends AppCompatActivity {
   private static final boolean TEST_VERSION = false;
 
@@ -259,7 +255,7 @@ public class TvBrowser extends AppCompatActivity {
     super.onSaveInstanceState(outState);
   }
 
-  private final boolean addUserColor(SharedPreferences pref, Editor edit, int defaultColorKey, int colorKey, int userColorKey) {
+  private boolean addUserColor(SharedPreferences pref, Editor edit, int defaultColorKey, int colorKey, int userColorKey) {
     int defaultColor = ContextCompat.getColor(this, defaultColorKey);
     int color = pref.getInt(getString(colorKey), defaultColor);
 
@@ -3808,7 +3804,6 @@ public class TvBrowser extends AppCompatActivity {
     mBottomNavigationView.requestLayout();
   }
 
-<<<<<<< HEAD
   private void updateFromPreferences(boolean finish) {
     SettingConstants.initializeLogoMap(getApplicationContext(), true);
     if (isProgramTableActiviated() && !(mSectionsPagerAdapter.getRegisteredFragment(3) instanceof FragmentProgramTable)) {
@@ -3829,29 +3824,6 @@ public class TvBrowser extends AppCompatActivity {
           fragmentProgramTable.updateChannelBar();
           fragmentProgramTable.updateMarkings();
         }
-=======
-    boolean programTableActivated = PrefUtils.getBooleanValue(R.string.PROG_TABLE_ACTIVATED, R.bool.prog_table_activated_default);
-    Fragment test = mSectionsPagerAdapter.getRegisteredFragment(3);
-
-    if(!programTableActivated && test instanceof FragmentProgramTable) {
-      ((FragmentProgramTable)test).removed();
-      mSectionsPagerAdapter.destroyItem(mViewPager, 3, mSectionsPagerAdapter.getRegisteredFragment(3));
-      mSectionsPagerAdapter.notifyDataSetChanged();
-      mTabLayout.removeTabAt(3);
-    }
-    else if(!(test instanceof FragmentProgramTable) && programTableActivated) {
-      try {
-        mTabLayout.addTab(mTabLayout.newTab()
-            .setText(mSectionsPagerAdapter.getPageTitle(3)));
-        mSectionsPagerAdapter.notifyDataSetChanged();
-        mSectionsPagerAdapter.instantiateItem(mViewPager, 3);
-      }catch(Throwable ignored) {}
-    }
-    else if(test instanceof FragmentProgramTable) {
-      if(!((FragmentProgramTable)test).checkTimeBlockSize() && !((FragmentProgramTable)test).updateTable()) {
-        ((FragmentProgramTable)test).updateChannelBar();
-        ((FragmentProgramTable)test).updateMarkings();
->>>>>>> master
       }
     }
 

@@ -26,10 +26,10 @@ import java.util.List;
  * Made generic for use of channel sort.
  */
 public class StableArrayAdapter<T> extends ArrayAdapter<T> {
-  private static final ID_INVALID = -1;
+  private static final long ID_INVALID = -1;
   private final HashMap<T, Integer> mIdMap = new HashMap<>();
 
-    public StableArrayAdapter(Context context, int textViewResourceId, List<T> objects) {
+    protected StableArrayAdapter(Context context, int textViewResourceId, List<T> objects) {
         super(context, textViewResourceId, objects);
         for (int i = 0; i < objects.size(); ++i) {
             mIdMap.put(objects.get(i), i);
