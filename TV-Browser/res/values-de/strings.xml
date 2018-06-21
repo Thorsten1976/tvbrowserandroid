@@ -547,6 +547,13 @@
         <item>Auswahlbox am oberen Rand (Neustart notwendig)</item>
         <item>Listenauswahl auf der linken Seite (Neustart notwendig)</item>
     </string-array>
+	<string name="pref_navigation_layout_category">Navigation</string>
+	<string name="pref_navigation_layout_text">Art der Navigation</string>
+	<string-array name="pref_navigation_layout_entries">
+		<item>Reiter am oberen Rand (fixiert)</item>
+		<item>Reiter am oberen Rand (dynamisch)</item>
+		<item>Navigationsleiste am unteren Rand</item>
+	</string-array>
     <string name="favorite_fragment_help">Die ausgewählte Lieblingssendung hat keine gefundenen Sendungen.\n\nUm eine Lieblingssendung zu bearbeiten oder zu löschen, wählen Sie diese aus und klicken Sie dann lang auf die ausgewählte Lieblingssendung oder verwenden Sie das Herzsymbol.\n\nKlicken Sie auf das Herzsymbol um eine neue Lieblingssendung anzulegen.</string>
     <string name="favorite_name">Name:</string>
     <string name="favorite_name_hint">Namen eingeben (optional)</string>

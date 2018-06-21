@@ -406,6 +406,7 @@ public class TvbPreferenceFragment extends PreferenceFragment implements OnShare
           || key.equals(getResources().getString(R.string.PREF_WIDGET_LISTS_DIVIDER_SIZE))
           || key.equals(getResources().getString(R.string.PREF_WIDGET_VERTICAL_PADDING_SIZE))
           || key.equals(getResources().getString(R.string.PREF_FAVORITE_TAB_LAYOUT))
+          || key.equals(getResources().getString(R.string.PREF_NAVIGATION_LAYOUT))
           || key.equals(getResources().getString(R.string.PREF_WIDGET_BACKGROUND_TRANSPARENCY_HEADER))
           || key.equals(getResources().getString(R.string.PREF_WIDGET_BACKGROUND_TRANSPARENCY_LIST))
           || key.equals(getResources().getString(R.string.PREF_NEWS_TYPE))

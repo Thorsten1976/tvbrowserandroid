@@ -15,6 +15,7 @@
     <item name="on_air_tag" format="integer" type="id">2000</item>
     <item name="prog_table_default" type="bool" format="boolean">false</item>
     <item name="pref_favorite_tab_layout_default" type="string" format="string">0</item>
+    <item name="pref_navigation_layout_default" type="string" format="string">0</item>
     <item name="prog_lists_show_end_time_default" type="bool" format="boolean">false</item>
     <item name="prog_lists_show_list_on_channel_click_default" type="bool" format="boolean">true</item>
     <dimen name="detail_padding_left_right">8dp</dimen>

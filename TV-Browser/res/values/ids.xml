@@ -43,6 +43,7 @@
         <item type="id" name="activity_tvbrowser_toolbar" />
         <item type="id" name="activity_tvbrowser_tabs" />
 		<item type="id" name="activity_tvbrowser_pager" />
+		<item type="id" name="action_navigation_program_table" />
 		
 	<!--  channel_label -->
 		

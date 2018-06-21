@@ -1,45 +1,59 @@
-<RelativeLayout
+<android.support.v7.widget.FitWindowsLinearLayout
     android:id="@id/activity_tvbrowser_layout"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context=".TvBrowser">
 
-    <android.support.v7.widget.Toolbar
-        android:id="@id/activity_tvbrowser_toolbar"
+    <android.support.design.widget.AppBarLayout
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+	    app:elevation="4dp"
+	    tools:targetApi="lollipop">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@id/activity_tvbrowser_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="?attr/actionBarSize"
+            />
+
+        <android.support.design.widget.TabLayout
+            android:id="@id/activity_tvbrowser_tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorPrimaryDark"
+            app:tabTextAppearance="@style/TextAppearance.TvBrowser.Tab"
+	        />
+
+    </android.support.design.widget.AppBarLayout>
+
+    <FrameLayout
+        android:layout_weight="1"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:background="?attr/colorPrimary"
-        android:elevation="6dp"
-        android:minHeight="?attr/actionBarSize"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        />
+        android:layout_height="match_parent">
+        <org.tvbrowser.view.NonSwipableViewPager
+            android:id="@+id/activity_tvbrowser_pager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="12dp"
+            android:background="@drawable/dropshadow" />
+    </FrameLayout>
 
-    <android.support.design.widget.TabLayout
-        android:id="@id/activity_tvbrowser_tabs"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/activity_tvbrowser_toolbar"
-        android:background="?attr/colorPrimary"
-        android:elevation="6dp"
-        android:minHeight="?attr/actionBarSize"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"/>
-
-    <android.support.v4.view.ViewPager
-        android:id="@+id/activity_tvbrowser_pager"
-        android:layout_width="match_parent"
-        android:layout_height="fill_parent"
-        android:layout_below="@id/activity_tvbrowser_tabs"/>
-
-</RelativeLayout>
-
-<!--
-<android.support.v4.view.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@id/pager"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".TvBrowser" />-->
+	<android.support.design.widget.BottomNavigationView
+		android:id="@+id/activity_tvbrowser_bottom_navigation"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:visibility="visible"
+		app:itemBackground="?attr/colorPrimary"
+		app:itemIconTint="?attr/colorAccent"
+		app:itemTextColor="?attr/colorAccent"
+		app:menu="@menu/bottom_navigation"
+		app:elevation="4dp" />
+</android.support.v7.widget.FitWindowsLinearLayout>

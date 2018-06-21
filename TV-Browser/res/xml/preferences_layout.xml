@@ -206,4 +206,12 @@
 			android:entryValues="@array/pref_simple_string_value_array2"
 			android:summary="%s"/>
 	</PreferenceCategory>
+	<PreferenceCategory android:title="@string/pref_navigation_layout_category">
+		<ListPreference android:key="@string/PREF_NAVIGATION_LAYOUT"
+		    android:title="@string/pref_navigation_layout_text"
+		    android:defaultValue="@string/pref_navigation_layout_default"
+		    android:entries="@array/pref_navigation_layout_entries"
+		    android:entryValues="@array/pref_simple_string_value_array3"
+		    android:summary="%s"/>
+	</PreferenceCategory>
 </PreferenceScreen>

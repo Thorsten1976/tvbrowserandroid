@@ -138,7 +138,7 @@
 	    <string name="PREF_COLOR_SEPARATOR_SPACE" translatable="false">PREF_COLOR_SEPARATOR_SPACE</string>
 	    
 	    <string name="PREF_FAVORITE_TAB_LAYOUT" translatable="false">PREF_FAVORITE_TAB_LAYOUT</string>
-	    
+	    <string name="PREF_NAVIGATION_LAYOUT" translatable="false">PREF_NAVIGATION_LAYOUT</string>
 	    <!-- Category colors -->
 	    
 	    <!-- 

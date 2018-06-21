@@ -554,6 +554,13 @@
         <item>Top drop down menu (Needs restart)</item>
         <item>Left side list selection (Needs restart)</item>
     </string-array>
+	<string name="pref_navigation_layout_category">Navigation</string>
+	<string name="pref_navigation_layout_text">Navigation style</string>
+	<string-array name="pref_navigation_layout_entries">
+		<item>Tab bar (fixed)</item>
+		<item>Tab bar (scrollable)</item>
+		<item>Bottom bar</item>
+	</string-array>
     <string name="favorite_fragment_help">The selected Favorite has no found programs.\n\nTo edit or delete Favorites, please select it and click long on the selected entry or use the heart icon.\n\nTo add a new Favorite click on the heart icon.</string>
     <string name="favorite_name">Name:</string>
     <string name="favorite_name_hint">Enter name (optional)</string>

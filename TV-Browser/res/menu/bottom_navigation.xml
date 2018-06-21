@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+	<item
+		android:id="@+id/action_navigation_running_programs"
+		android:icon="@drawable/ic_ondemand_video_black_24dp"
+		android:title="@string/title_running_programs"
+		android:titleCondensed="Running"
+		app:showAsAction="ifRoom|withText" />
+	<item
+		android:id="@+id/action_navigation_program_list"
+		android:icon="@drawable/ic_remove_from_queue_black_24dp"
+		android:title="@string/title_programs_list"
+		android:titleCondensed="List"
+		app:showAsAction="ifRoom|withText" />
+	<item
+		android:id="@+id/action_navigation_favorites"
+		android:icon="@drawable/ic_favorite_border_black_24dp"
+		android:title="@string/title_favorites"
+		android:titleCondensed="@string/title_favorites"
+		app:showAsAction="ifRoom|withText" />
+</menu>
