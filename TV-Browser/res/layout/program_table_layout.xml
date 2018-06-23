@@ -16,9 +16,10 @@
 	    android:layout_height="wrap_content"
 	    android:layout_alignParentBottom="true"
 	    android:layout_alignParentLeft="true"
-	    android:drawableLeft="?attr/ic_back_icon"
+	    android:drawableLeft="@drawable/ic_chevron_left_24dp"
 	    android:gravity="left|center_vertical"
-	    android:text="@string/previous_day" />
+	    android:text="@string/previous_day"
+	    android:drawableStart="@drawable/ic_chevron_left_24dp"/>
     
     <TextView
 	    android:id="@id/show_current_day"
@@ -30,7 +31,8 @@
 	    android:layout_toRightOf="@id/switch_to_previous_day"
 	    android:gravity="center_horizontal|center_vertical"
 	    tools:text="Sonntag\n20. November"
-	    android:clickable="true" />
+	    android:clickable="true"
+	    android:focusable="true"/>
     
      <Button
 	    android:id="@id/switch_to_next_day"
@@ -38,10 +40,10 @@
 	    android:layout_height="wrap_content"
 	    android:layout_alignParentRight="true"
 	    android:layout_alignTop="@id/show_current_day"
-	    android:drawableRight="?attr/ic_forward_icon"
 	    android:gravity="right|center_vertical"
+	    android:drawableRight="@drawable/ic_chevron_right_24dp"
 	    android:text="@string/next_day"
-	     />
+	    android:drawableEnd="@drawable/ic_chevron_right_24dp"/>
      </RelativeLayout>
 	 <RelativeLayout android:id="@id/program_table_base"
 	     android:layout_width="wrap_content"
