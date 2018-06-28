@@ -17,10 +17,12 @@
 package org.tvbrowser.utils;
 
 import java.io.File;
+import java.text.Collator;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -140,7 +142,24 @@ import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-public class UiUtils {
+public final class UiUtils {
+
+  UiUtils() {}
+
+  /**
+   * A thread specific {@link Collator} instance for locale sensitive sorting.
+   * @see #getCollator()
+   */
+  private static final ThreadLocal<Collator> collatorThreadLocal = new ThreadLocal<Collator>() {
+    @Override
+    protected Collator initialValue() {
+      final Collator collator = Collator.getInstance();
+      collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
+      collator.setStrength(Collator.SECONDARY);
+      return collator;
+    }
+  };
+
   public static final SimpleDateFormat LONG_DAY_FORMAT = new SimpleDateFormat("EEEE", Locale.getDefault());
   
   private static final HashMap<String, Integer> VALUE_MAP;
@@ -423,39 +442,86 @@ public class UiUtils {
                     IOUtils.close(channel);
                   }
 
-                  String year = "";
+                  final StringBuilder year = new StringBuilder();
+
                   int yearInt = -1;
+                  int yearLast = -1;
+                  int yearFirst = -1;
+                  int originLength = 0;
                       
                   if(!c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_ORIGIN))) {
-                    year = c.getString(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_ORIGIN));
+                    year.append(c.getString(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_ORIGIN)));
+                    originLength = year.length();
                   }
-                  
+
                   if(!c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_YEAR))) {
-                    if(year.length() > 0) {
-                      year += " ";
-                    }
-                    
                     yearInt = c.getInt(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_YEAR));
-                    year += yearInt;
                   }
-                  
+
+                  if(!c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_YEAR_PRODUCTION_FIRST))) {
+                    yearFirst = c.getInt(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_YEAR_PRODUCTION_FIRST));
+                  }
+
                   if(!c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_LAST_PRODUCTION_YEAR))) {
-                    int test = c.getInt(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_LAST_PRODUCTION_YEAR));
-                    
-                    if(yearInt < test) {
-                      if(year.length() > 0) {
-                        if(yearInt != -1) {
-                          year += "-";
+                    yearLast = c.getInt(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_LAST_PRODUCTION_YEAR));
+                  }
+
+                  if(yearLast < yearInt) {
+                    yearLast = -1;
+                  }
+
+                  if(yearInt != -1 && ((yearLast != -1 && yearFirst == -1) || (yearLast == -1 && yearFirst < yearInt && yearFirst != -1))) {
+                    yearFirst = yearInt;
+                  }
+
+                  if(yearInt != -1) {
+                    if(year.length() >= 0) {
+                      year.append(" ");
+                    }
+
+                    year.append(yearInt);
+                  }
+
+                  if(yearLast != -1 && yearLast != yearInt) {
+                    if(yearFirst != -1) {
+                      if(year.length() >= 0) {
+                        if(yearFirst == yearInt) {
+                          year.append(" \u2013 ");
                         }
                         else {
-                          year += " ";
+                          year.append(" (");
                         }
                       }
-                      
-                      year += test;
+
+                      if(yearFirst == yearInt) {
+                        year.append(yearLast);
+                      }
+                      else {
+                        year.append(yearFirst).append(" \u2013 ").append(yearLast).append(")");
+                      }
+                    }
+                    else {
+                      year.append(yearLast);
                     }
                   }
-                  
+                  else if(yearFirst != -1 && yearFirst != yearInt) {
+                    if(yearFirst < yearInt) {
+                      year.insert(originLength, " \u2013 ");
+                      year.insert(originLength, yearFirst);
+
+                      if(originLength != 0) {
+                        year.insert(originLength, " ");
+                      }
+                    }
+                    else if(yearInt == -1) {
+                      if(originLength > 0) {
+                        year.append(" ");
+                      }
+
+                      year.append(yearFirst);
+                    }
+                  }
+
                   String originalTitle = null;
                   String titleTest = c.getString(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_TITLE));
                   
@@ -506,7 +572,7 @@ public class UiUtils {
 //                    genre.setText();
                   }
                   else if(year.length() > 0) {
-                    checkAndAddHiglightingForFavorites(genre, year, patternList, false, backgroundColorSpan);
+                    checkAndAddHiglightingForFavorites(genre, year.toString(), patternList, false, backgroundColorSpan);
                     //genre.setText(year);
                   }
                   else {
@@ -2684,4 +2750,14 @@ public class UiUtils {
     }
   }
   
+  /**
+   * Returns a thread-safe {@link Collator}, that can be used with {@link Comparator} instances
+   * to sort strings in a locale sensitive way; i.e. to apply a rule-based sort while sorting
+   * strings containing umlauts (Dänemark < Deutschland, Norwegen < Österreich < Polen; a < ä = ae).
+   *
+   * @return Collator for the default locale (see {@link Locale#getDefault()}).
+   */
+  public static Collator getCollator() {
+    return collatorThreadLocal.get();
+  }
 }
