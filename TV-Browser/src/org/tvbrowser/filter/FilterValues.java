@@ -115,7 +115,7 @@ public abstract class FilterValues {
     
     final Set<String> test = pref.getStringSet(context.getString(R.string.CURRENT_FILTER_ID), new HashSet<String>());
     
-    final String[] idValues = test.toArray(new String[test.size()]);
+    final String[] idValues = test.toArray(new String[0]);
     boolean removed = false;
     
     for(String id : idValues) {

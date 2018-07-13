@@ -16,25 +16,6 @@
  */
 package org.tvbrowser.tvbrowser;
 
-import java.lang.reflect.Field;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Locale;
-
-import org.tvbrowser.content.TvBrowserContentProvider;
-import org.tvbrowser.settings.SettingConstants;
-import org.tvbrowser.tvbrowser.LoaderUpdater.UnsupportedFragmentException;
-import org.tvbrowser.utils.CompatUtils;
-import org.tvbrowser.utils.IOUtils;
-import org.tvbrowser.utils.PrefUtils;
-import org.tvbrowser.utils.ProgramUtils;
-import org.tvbrowser.utils.UiUtils;
-import org.tvbrowser.view.SeparatorDrawable;
-
 import android.annotation.SuppressLint;
 import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
@@ -51,26 +32,25 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.util.LongSparseArray;
+import android.support.v4.util.SparseArrayCompat;
 import android.text.Spannable;
 import android.text.format.DateFormat;
-import android.util.Log;
-import android.util.SparseArray;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -82,7 +62,24 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.TimePicker;
+
+import org.tvbrowser.content.TvBrowserContentProvider;
+import org.tvbrowser.settings.SettingConstants;
+import org.tvbrowser.tvbrowser.LoaderUpdater.UnsupportedFragmentException;
+import org.tvbrowser.utils.CompatUtils;
+import org.tvbrowser.utils.IOUtils;
+import org.tvbrowser.utils.PrefUtils;
+import org.tvbrowser.utils.ProgramUtils;
+import org.tvbrowser.utils.UiUtils;
+import org.tvbrowser.view.SeparatorDrawable;
+
+import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Locale;
 
 public class FragmentProgramsListRunning extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, OnSharedPreferenceChangeListener {
   private static final String WHERE_CLAUSE_KEY = "WHERE_CLAUSE_KEY";
@@ -90,9 +87,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
   private static final int TIMEOUT_LAST_EXTRA_CLICK = 750;
     
   private Handler handler = new Handler();
-  
- // private boolean mKeepRunning;
-  //private Thread mUpdateThread;
+
   private int mWhereClauseTime;
   
   private BroadcastReceiver mDataUpdateReceiver;
@@ -113,19 +108,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
   private LongSparseArray<String> mTitleMap;
   
   private long mCurrentTime;
-  
-  int mProgramIDColumn;
-  int mStartTimeColumn;
-  int mEndTimeColumn;
-  int mTitleColumn;
-  int mPictureColumn;
-  int mPictureCopyrightColumn;
-  int mCategoryColumn;
-  int mGenreColumn;
-  int mEpsiodeColumn;
-  int mChannelNameColumn;
-  int mChannelIDColumn;
-  
+
   private boolean showEpisode;
   private boolean showInfo;
   private boolean mShowOrderNumber;
@@ -137,7 +120,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
   private long mDayStart;
   
   private ListView mListView;
-  private LinearLayout mTimeBar;
+  private ViewGroup mTimeBar;
   private Spinner mDateSelection;
   
   private ArrayAdapter<DateSelection> mDateAdapter;
@@ -145,6 +128,10 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
   private Button mTimeExtra;
   private long mLastExtraClick;
   private LoaderUpdater mLoaderUpdater;
+
+  private int mStartTime = Integer.MIN_VALUE;
+
+  private long mNextReload;
   
   static {
     BEFORE_GRADIENT = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,new int[] {Color.argb(0x84, 0, 0, 0xff),Color.WHITE});
@@ -153,21 +140,28 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     AFTER_GRADIENT = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,new int[] {Color.WHITE,Color.argb(0x84, 0, 0, 0xff)});
     AFTER_GRADIENT.setCornerRadius(0f);
   }
-  
+
+  public void setStartTime(int time) {
+    mStartTime = time;
+  }
+
   @Override
   public void onResume() {
     super.onResume();
-    
+
+    if(mStartTime != Integer.MIN_VALUE) {
+      selectTime(mStartTime);
+      mStartTime = Integer.MIN_VALUE;
+    }
+
     mLoaderUpdater.setIsRunning();
     mLoaderUpdater.startUpdate();
-    /*mKeepRunning = true;
-    startUpdateThread();*/
   }
-  
+
   @Override
   public void onPause() {
     mLoaderUpdater.setIsNotRunning();
-    
+
     super.onPause();
   }
   
@@ -178,13 +172,11 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     mDataUpdateReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(final Context context, final Intent intent) {
-        handler.post(new Runnable() {
-          public void run() {
-            updateDateSelection();
-            
-            if(intent != null) {
-              mLoaderUpdater.startUpdate();
-            }
+        handler.post(() -> {
+          updateDateSelection();
+
+          if(intent != null) {
+            mLoaderUpdater.startUpdate();
           }
         });
       }
@@ -193,7 +185,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     mRefreshReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
-        if(mWhereClauseTime == -1) {
+        if((mNextReload != -1 && mNextReload < System.currentTimeMillis()) || (mNextReload ==-1 && (mStartTime == -1 || mStartTime == -2))) {
           mLoaderUpdater.startUpdate();
         }
         else {
@@ -204,7 +196,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
           new Thread() {
             public void run() {
               if(getActivity() != null && isAdded()) {
-                ViewGroup list = (ViewGroup)getListView();
+                ViewGroup list = getListView();
                 
                 for(int i = 0; i < list.getChildCount(); i++) {
                   CompactLayoutViewHolder holder = (CompactLayoutViewHolder) list.getChildAt(i).getTag();
@@ -253,16 +245,17 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
             final long programID = intent.getLongExtra(SettingConstants.EXTRA_MARKINGS_ID, -1);
             
             if(mMarkingsMap.indexOfKey(programID) >= 0 && IOUtils.isDatabaseAccessible(getActivity())) {
-              String[] projection = TvBrowserContentProvider.getColumnArrayWithMarkingColums(TvBrowserContentProvider.DATA_KEY_STARTTIME,TvBrowserContentProvider.DATA_KEY_ENDTIME);
+              String[] projection = TvBrowserContentProvider.getColumnArrayWithMarkingColumns(TvBrowserContentProvider.DATA_KEY_STARTTIME,TvBrowserContentProvider.DATA_KEY_ENDTIME);
               
-              Cursor c = getActivity().getContentResolver().query(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_DATA, programID), projection, null, null, null);
               
-              if(c.moveToFirst()) {
+              Cursor c = null; try {
+              c = getActivity().getContentResolver().query(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_DATA, programID), projection, null, null, null);
+              if(c!=null && c.moveToFirst()) {
                 try {
                   final View view = getListView().findViewWithTag(programID);
                   
                   if(view != null) {
-                    ArrayList<String> markedColumns = new ArrayList<String>();
+                    ArrayList<String> markedColumns = new ArrayList<>();
                     
                     for(String column : TvBrowserContentProvider.MARKING_COLUMNS) {
                       int index = c.getColumnIndex(column);
@@ -277,17 +270,12 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
                     
                     mMarkingsMap.put(programID, IOUtils.getStringArrayFromList(markedColumns));
                     
-                    handler.post(new Runnable() {
-                      @Override
-                      public void run() {
-                        getListView().invalidateViews();
-                      }
-                    });
+                    handler.post(() -> getListView().invalidateViews());
                   }
-                }catch(NullPointerException npe) {}
+                }catch(NullPointerException ignored) {}
               }
                             
-              c.close();
+              } finally {IOUtils.close(c);}
             }
           }
         }.start();
@@ -307,11 +295,11 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     
     LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mChannelUpdateDone, channelsChanged);
     getActivity().registerReceiver(mDataUpdateReceiver, intent);
-    LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mRefreshReceiver, SettingConstants.RERESH_FILTER);
+    LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mRefreshReceiver, SettingConstants.REFRESH_FILTER);
     LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mMarkingChangeReceiver, markingsFilter);
   }
   
-  public void setDay(long start) {
+  private void setDay(long start) {
     if(start != mDayStart) {
       mDayStart = start;
       
@@ -322,9 +310,9 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
       today.set(Calendar.MILLISECOND, 0);
       
       if((mDayStart > System.currentTimeMillis() || mDayStart < today.getTimeInMillis()) && mWhereClauseTime < System.currentTimeMillis()) {
-        Button time = (Button)((ViewGroup)((ViewGroup)getView().getParent()).getParent()).findViewWithTag(mWhereClauseTime);
-        Button now = (Button)((ViewGroup)((ViewGroup)getView().getParent()).getParent()).findViewById(R.id.now_button);
-        Button next = (Button)((ViewGroup)((ViewGroup)getView().getParent()).getParent()).findViewById(R.id.button_after1);
+        Button time = ((ViewGroup) getView().getParent().getParent()).findViewWithTag(mWhereClauseTime);
+        Button now = ((ViewGroup) getView().getParent().getParent()).findViewById(R.id.now_button);
+        Button next = ((ViewGroup) getView().getParent().getParent()).findViewById(R.id.button_after1);
         
         if(time != null && !time.equals(now) && (next == null || !time.equals(next))) {
           time.performClick();
@@ -360,12 +348,12 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     }
   }
   
-  public void setWhereClauseTime(Object time) {
+  private void setWhereClauseTime(Object time) {
     if(time instanceof Integer) {
-      int testValue = ((Integer) time).intValue();
+      int testValue = (Integer) time;
       
       if(testValue != mWhereClauseTime) {
-        final Integer timeTest = Integer.valueOf(mWhereClauseTime);
+        final Integer timeTest = mWhereClauseTime;
         
         for(int i = 0; i < mTimeBar.getChildCount(); i++) {
           if(timeTest.equals(mTimeBar.getChildAt(i).getTag())) {
@@ -389,7 +377,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
           int test1 = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
           
           if((test1 - mWhereClauseTime) > 180 && mDayStart < System.currentTimeMillis() && mDayStart >= today.getTimeInMillis()) {
-            Spinner date = (Spinner)((ViewGroup)getView().getParent()).findViewById(R.id.running_date_selection);
+            Spinner date = ((ViewGroup)getView().getParent()).findViewById(R.id.running_date_selection);
             
             if(date.getCount() > 2) {
               date.setSelection(2);
@@ -400,7 +388,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
           }
         }
         else if(oldWhereClauseTime != -1 && (mWhereClauseTime == -1 || mWhereClauseTime == -2)) {
-          Spinner date = (Spinner)((ViewGroup)getView().getParent()).findViewById(R.id.running_date_selection);
+          Spinner date = ((ViewGroup)getView().getParent()).findViewById(R.id.running_date_selection);
           
           if(date.getCount() > 1) {
             date.setSelection(1);
@@ -416,7 +404,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
   }
     
   @Override
-  public void onSaveInstanceState(Bundle outState) {
+  public void onSaveInstanceState(@NonNull Bundle outState) {
     outState.putInt(WHERE_CLAUSE_KEY, mWhereClauseTime);
     outState.putLong(DAY_CLAUSE_KEY, mDayStart);
     super.onSaveInstanceState(outState);
@@ -468,7 +456,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     TextView mNextInfos;
     TextView mNextEpisode;
     
-    public void setVisibility(int type, int visibility) {
+    void setVisibility(int type, int visibility) {
       switch(type) {
         case PREVIOUS:
           mPrevious.setVisibility(visibility);
@@ -491,18 +479,18 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
       }
     }
     
-    public void setSeparatorVisibility(int visibility) {
+    void setSeparatorVisibility(int visibility) {
        if(mSeparator1 != null) {
          mSeparator1.setVisibility(visibility);
          mSeparator2.setVisibility(visibility);
        }
     }
     
-    public boolean orientationChanged(int orientation) {
+    boolean orientationChanged(int orientation) {
       return mCurrentOrientation != orientation;
     }
     
-    public void setColor(int type, int color) {
+    void setColor(int type, int color) {
       switch (type) {
         case PREVIOUS:
           mPreviousEpisode.setTextColor(color);
@@ -642,9 +630,9 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
       if(!channelSet) {
         String logoNamePref = PrefUtils.getStringValue(R.string.CHANNEL_LOGO_NAME_RUNNING, R.string.channel_logo_name_running_default);
         
-        boolean showChannelName = logoNamePref.equals("0") || logoNamePref.equals("2");
-        boolean showChannelLogo = logoNamePref.equals("0") || logoNamePref.equals("1");
-        boolean showBigChannelLogo = logoNamePref.equals("3");
+        boolean showChannelName = "0".equals(logoNamePref) || "2".equals(logoNamePref);
+        boolean showChannelLogo = "0".equals(logoNamePref) || "1".equals(logoNamePref);
+        boolean showBigChannelLogo = "3".equals(logoNamePref);
         
         Drawable logo = null;
         
@@ -690,10 +678,10 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
         channelSet = true;
       }
       
-      viewHolder.mChannelInfo.setTag(startTimeResId, Long.valueOf(startTime));
-      viewHolder.mChannelInfo.setTag(endTimeResId, Long.valueOf(endTime));
+      viewHolder.mChannelInfo.setTag(startTimeResId, startTime);
+      viewHolder.mChannelInfo.setTag(endTimeResId, endTime);
       
-      layout.setTag(Long.valueOf(programID));
+      layout.setTag(programID);
       layout.setOnClickListener(mOnClickListener);
       
       final String[] markingsValue = mMarkingsMap.get(programID);
@@ -718,16 +706,14 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
       boolean isPortrait = viewHolder.mCurrentOrientation == Configuration.ORIENTATION_PORTRAIT;
       
       Configuration config = getResources().getConfiguration();
-      
-      if(Build.VERSION.SDK_INT >= 13) {
-        if(type == CompactLayoutViewHolder.PREVIOUS) {
-          if(config.smallestScreenWidthDp >= 600 && !isPortrait) {
-            viewType = View.INVISIBLE;
-          }
-        }
-        else if(type == CompactLayoutViewHolder.NOW && (config.smallestScreenWidthDp >= 600 || !isPortrait)) {
+
+      if(type == CompactLayoutViewHolder.PREVIOUS) {
+        if(config.smallestScreenWidthDp >= 600 && !isPortrait) {
           viewType = View.INVISIBLE;
         }
+      }
+      else if(type == CompactLayoutViewHolder.NOW && (config.smallestScreenWidthDp >= 600 || !isPortrait)) {
+        viewType = View.INVISIBLE;
       }
       
       viewHolder.setVisibility(type, viewType);
@@ -759,9 +745,9 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
       viewHolder.mCurrentOrientation = SettingConstants.ORIENTATION;
       viewHolder.mCurrentScale = textScale;
       
-      viewHolder.mChannelInfo = (ViewGroup)convertView.findViewById(R.id.running_list_channel_info);
-      viewHolder.mChannelLogo = (ImageView)convertView.findViewById(R.id.running_list_channel_logo);
-      viewHolder.mChannel = (TextView)convertView.findViewById(R.id.running_compact_channel_label);
+      viewHolder.mChannelInfo = convertView.findViewById(R.id.running_list_channel_info);
+      viewHolder.mChannelLogo = convertView.findViewById(R.id.running_list_channel_logo);
+      viewHolder.mChannel = convertView.findViewById(R.id.running_compact_channel_label);
       
       viewHolder.mSeparator1 = convertView.findViewById(R.id.running_separator_1);
       viewHolder.mSeparator2 = convertView.findViewById(R.id.running_separator_2);
@@ -774,21 +760,21 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
       registerForContextMenu(viewHolder.mNow);
       registerForContextMenu(viewHolder.mNext);
       
-      viewHolder.mPreviousStartTime = (TextView)convertView.findViewById(R.id.running_compact_previous_start);
-      viewHolder.mNowStartTime = (TextView)convertView.findViewById(R.id.running_compact_now_start);
-      viewHolder.mNextStartTime = (TextView)convertView.findViewById(R.id.running_compact_next_start);
+      viewHolder.mPreviousStartTime = convertView.findViewById(R.id.running_compact_previous_start);
+      viewHolder.mNowStartTime = convertView.findViewById(R.id.running_compact_now_start);
+      viewHolder.mNextStartTime = convertView.findViewById(R.id.running_compact_next_start);
       
-      viewHolder.mPreviousTitle = (TextView)convertView.findViewById(R.id.running_compact_previous_title);
-      viewHolder.mNowTitle = (TextView)convertView.findViewById(R.id.running_compact_now_title);
-      viewHolder.mNextTitle = (TextView)convertView.findViewById(R.id.running_compact_next_title);
+      viewHolder.mPreviousTitle = convertView.findViewById(R.id.running_compact_previous_title);
+      viewHolder.mNowTitle = convertView.findViewById(R.id.running_compact_now_title);
+      viewHolder.mNextTitle = convertView.findViewById(R.id.running_compact_next_title);
       
-      viewHolder.mPreviousInfos = (TextView)convertView.findViewById(R.id.running_compact_previous_infos);
-      viewHolder.mNowInfos = (TextView)convertView.findViewById(R.id.running_compact_now_infos);
-      viewHolder.mNextInfos = (TextView)convertView.findViewById(R.id.running_compact_next_infos);
+      viewHolder.mPreviousInfos = convertView.findViewById(R.id.running_compact_previous_infos);
+      viewHolder.mNowInfos = convertView.findViewById(R.id.running_compact_now_infos);
+      viewHolder.mNextInfos = convertView.findViewById(R.id.running_compact_next_infos);
       
-      viewHolder.mPreviousEpisode = (TextView)convertView.findViewById(R.id.running_compact_previous_episode);
-      viewHolder.mNowEpisode = (TextView)convertView.findViewById(R.id.running_compact_now_episode);
-      viewHolder.mNextEpisode = (TextView)convertView.findViewById(R.id.running_compact_next_episode);
+      viewHolder.mPreviousEpisode = convertView.findViewById(R.id.running_compact_previous_episode);
+      viewHolder.mNowEpisode = convertView.findViewById(R.id.running_compact_now_episode);
+      viewHolder.mNextEpisode = convertView.findViewById(R.id.running_compact_next_episode);
       
       convertView.setTag(viewHolder);
     }
@@ -860,84 +846,78 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
       mDayStart = -1;
     }
         
-    mMarkingsMap = new LongSparseArray<String[]>();
-    mTitleMap = new LongSparseArray<String>();
+    mMarkingsMap = new LongSparseArray<>();
+    mTitleMap = new LongSparseArray<>();
     
-    mOnClickListener = new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        Long tag = (Long)v.getTag();
-        
-        if(tag != null) {
-          UiUtils.showProgramInfo(getActivity(), tag.longValue(), getActivity().getCurrentFocus(), handler);
-        }
+    mOnClickListener = v -> {
+      Long tag = (Long)v.getTag();
+
+      if(tag != null) {
+        UiUtils.showProgramInfo(getActivity(), tag, getActivity().getCurrentFocus(), handler);
       }
     };
     
-    mChannelSwitchListener = new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        Integer id = (Integer)v.getTag();
-        boolean handle = PrefUtils.getBooleanValue(R.string.PREF_RUNNING_LIST_CLICK_TO_CHANNEL_TO_LIST, R.bool.pref_running_list_click_to_channel_to_list_default);
-        
-        if(handle && id != null) {
-          Intent showChannel = new Intent(SettingConstants.SHOW_ALL_PROGRAMS_FOR_CHANNEL_INTENT);
-          showChannel.putExtra(SettingConstants.CHANNEL_ID_EXTRA,id);
-          
-          Object scrollTime = v.getTag(R.id.running_time_now_start);
-          Object endTime = v.getTag(R.id.running_time_now_end);
-          
-          if(scrollTime == null) {
-            scrollTime = v.getTag(R.id.running_time_previous_start);
-            endTime = v.getTag(R.id.running_time_previous_end);
-          }
-          
-          if(scrollTime == null) {
-            scrollTime = v.getTag(R.id.running_time_next_start);
-            endTime = v.getTag(R.id.running_time_next_end);
-          }
-          
-          if(scrollTime != null) {
-            showChannel.putExtra(SettingConstants.EXTRA_START_TIME, ((Long)scrollTime).longValue());
-            showChannel.putExtra(SettingConstants.EXTRA_END_TIME, ((Long)endTime).longValue());
-          }
-          else {
-            Calendar now = Calendar.getInstance();
-            
-            if(mDayStart != -1) {
-              now.setTimeInMillis(mDayStart);
-            }
-  
-            now.set(Calendar.SECOND, 0);
-            now.set(Calendar.MILLISECOND, 0);
-            
-            if(mWhereClauseTime >= 0) {
-              now.set(Calendar.HOUR_OF_DAY, mWhereClauseTime / 60);
-              now.set(Calendar.MINUTE, mWhereClauseTime % 60);
-            } else if(mWhereClauseTime == -1) {
-              now.setTimeInMillis(System.currentTimeMillis());
-            }
-            
-            showChannel.putExtra(SettingConstants.EXTRA_START_TIME, now.getTimeInMillis());
-            showChannel.putExtra(SettingConstants.EXTRA_END_TIME, now.getTimeInMillis());
-          }
-          
-          if(mDateSelection.getSelectedItemPosition() == 0) {
-            showChannel.putExtra(SettingConstants.DAY_POSITION_EXTRA, FragmentProgramsList.INDEX_DATE_YESTERDAY);
-          }
-          else if(mDateSelection.getSelectedItemPosition() == 1) {
-            if(endTime == null || ((Long)endTime).longValue() > System.currentTimeMillis()) {
-              showChannel.putExtra(SettingConstants.DAY_POSITION_EXTRA, FragmentProgramsList.INDEX_DATE_TODAY_TOMORROW);
-            }
-          }
-          
-          LocalBroadcastManager.getInstance(getActivity()).sendBroadcastSync(showChannel);
+    mChannelSwitchListener = v -> {
+      Integer id = (Integer)v.getTag();
+      boolean handle = PrefUtils.getBooleanValue(R.string.PREF_RUNNING_LIST_CLICK_TO_CHANNEL_TO_LIST, R.bool.pref_running_list_click_to_channel_to_list_default);
+
+      if(handle && id != null) {
+        Intent showChannel = new Intent(SettingConstants.SHOW_ALL_PROGRAMS_FOR_CHANNEL_INTENT);
+        showChannel.putExtra(SettingConstants.CHANNEL_ID_EXTRA,id);
+
+        Object scrollTime = v.getTag(R.id.running_time_now_start);
+        Object endTime = v.getTag(R.id.running_time_now_end);
+
+        if(scrollTime == null) {
+          scrollTime = v.getTag(R.id.running_time_previous_start);
+          endTime = v.getTag(R.id.running_time_previous_end);
         }
+
+        if(scrollTime == null) {
+          scrollTime = v.getTag(R.id.running_time_next_start);
+          endTime = v.getTag(R.id.running_time_next_end);
+        }
+
+        if(scrollTime != null) {
+          showChannel.putExtra(SettingConstants.EXTRA_START_TIME, ((Long)scrollTime).longValue());
+          showChannel.putExtra(SettingConstants.EXTRA_END_TIME, ((Long)endTime).longValue());
+        }
+        else {
+          Calendar now = Calendar.getInstance();
+
+          if(mDayStart != -1) {
+            now.setTimeInMillis(mDayStart);
+          }
+
+          now.set(Calendar.SECOND, 0);
+          now.set(Calendar.MILLISECOND, 0);
+
+          if(mWhereClauseTime >= 0) {
+            now.set(Calendar.HOUR_OF_DAY, mWhereClauseTime / 60);
+            now.set(Calendar.MINUTE, mWhereClauseTime % 60);
+          } else if(mWhereClauseTime == -1) {
+            now.setTimeInMillis(System.currentTimeMillis());
+          }
+
+          showChannel.putExtra(SettingConstants.EXTRA_START_TIME, now.getTimeInMillis());
+          showChannel.putExtra(SettingConstants.EXTRA_END_TIME, now.getTimeInMillis());
+        }
+
+        if(mDateSelection.getSelectedItemPosition() == 0) {
+          showChannel.putExtra(SettingConstants.DAY_POSITION_EXTRA, FragmentProgramsList.INDEX_DATE_YESTERDAY);
+        }
+        else if(mDateSelection.getSelectedItemPosition() == 1) {
+          if(endTime == null || (Long) endTime > System.currentTimeMillis()) {
+            showChannel.putExtra(SettingConstants.DAY_POSITION_EXTRA, FragmentProgramsList.INDEX_DATE_TODAY_TOMORROW);
+          }
+        }
+
+        LocalBroadcastManager.getInstance(getActivity()).sendBroadcastSync(showChannel);
       }
     };
         
-    mProgramBlockList = new ArrayList<FragmentProgramsListRunning.ChannelProgramBlock>();
-    mCurrentViewList = new ArrayList<FragmentProgramsListRunning.ChannelProgramBlock>();
+    mProgramBlockList = new ArrayList<>();
+    mCurrentViewList = new ArrayList<>();
     
     java.text.DateFormat mTimeFormat = DateFormat.getTimeFormat(getActivity());
     String value = ((SimpleDateFormat)mTimeFormat).toLocalizedPattern();
@@ -950,8 +930,9 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     final int DEFAULT_TEXT_COLOR = new TextView(getActivity()).getTextColors().getDefaultColor();
         
     mRunningProgramListAdapter = new ArrayAdapter<FragmentProgramsListRunning.ChannelProgramBlock>(getActivity(), R.layout.running_list_entries, mCurrentViewList) {
+      @NonNull
       @Override
-      public View getView(int position, View convertView, ViewGroup parent) {
+      public View getView(int position, View convertView, @NonNull ViewGroup parent) {
         ChannelProgramBlock block = getItem(position);
         
        // if(mIsCompactLayout) {
@@ -1020,11 +1001,11 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
   }
   */
   @Override
-  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+  public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     View view = inflater.inflate(R.layout.running_program_fragment, container, false);
     
-    mListView = (ListView)view.findViewById(R.id.running_list_fragment_list_view);
-    mTimeBar = (LinearLayout)view.findViewById(R.id.runnning_time_bar);
+    mListView = view.findViewById(R.id.running_list_fragment_list_view);
+    mTimeBar = view.findViewById(R.id.runnning_time_bar);
     
     initialize(view);
     
@@ -1032,33 +1013,28 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
   }
   
   private void pickTime(final View v) {
-    Log.d("info12", "pickTime " + new Date(mLastExtraClick + TIMEOUT_LAST_EXTRA_CLICK) + " " + new Date(System.currentTimeMillis()));
-    
     if(mLastExtraClick + TIMEOUT_LAST_EXTRA_CLICK < System.currentTimeMillis()) {
-      if(!isViewVisible(mTimeExtra)) {      
+      if(isViewNotVisible(mTimeExtra)) {
         ((HorizontalScrollView)mTimeBar.getParent()).scrollTo(mTimeExtra.getLeft(), mTimeExtra.getTop());
       }
       
       final int time = (Integer)v.getTag();
       
-      final TimePickerDialog pick = new TimePickerDialog(getActivity(), TimePickerDialog.THEME_HOLO_DARK, new TimePickerDialog.OnTimeSetListener() {
-        @Override
-        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-          final Integer selectedTime = Integer.valueOf(hourOfDay*60+minute);
-          
-          insertTimeExtra(selectedTime);
-          
-          Calendar cal = Calendar.getInstance();
-          cal.set(Calendar.HOUR_OF_DAY, selectedTime / 60);
-          cal.set(Calendar.MINUTE, selectedTime % 60);
-            
-          mTimeExtra.setText(DateFormat.getTimeFormat(getActivity().getApplicationContext()).format(cal.getTime()));
-          mTimeExtra.setTag(selectedTime);
-          
-          mLastExtraClick = System.currentTimeMillis();
-          setWhereClauseTime(selectedTime);
-          PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, getActivity()).edit().putInt(getString(R.string.PREF_MISC_LAST_TIME_EXTRA_VALUE), selectedTime).commit();
-        }
+      final TimePickerDialog pick = new TimePickerDialog(getActivity(), TimePickerDialog.THEME_HOLO_DARK, (view, hourOfDay, minute) -> {
+        final Integer selectedTime = hourOfDay * 60 + minute;
+
+        insertTimeExtra(selectedTime);
+
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, selectedTime / 60);
+        cal.set(Calendar.MINUTE, selectedTime % 60);
+
+        mTimeExtra.setText(DateFormat.getTimeFormat(getActivity().getApplicationContext()).format(cal.getTime()));
+        mTimeExtra.setTag(selectedTime);
+
+        mLastExtraClick = System.currentTimeMillis();
+        setWhereClauseTime(selectedTime);
+        PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, getActivity()).edit().putInt(getString(R.string.PREF_MISC_LAST_TIME_EXTRA_VALUE), selectedTime).commit();
       }, time/60, time%60, DateFormat.is24HourFormat(getActivity()));
       
       pick.show();
@@ -1070,34 +1046,28 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
   }
   
   private void initialize(View rootView) {
-    final Button now = (Button)rootView.findViewById(R.id.now_button);
-    final Button next = (Button)rootView.findViewById(R.id.button_after1);
-    mDateSelection = (Spinner)rootView.findViewById(R.id.running_date_selection);
-    now.setTag(Integer.valueOf(-1));
-    next.setTag(Integer.valueOf(-2));
+    final Button now = rootView.findViewById(R.id.now_button);
+    final Button next = rootView.findViewById(R.id.button_after1);
+    mDateSelection = rootView.findViewById(R.id.running_date_selection);
+    now.setTag(-1);
+    next.setTag(-2);
     
-    final View.OnClickListener listenerClick = new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        if(PrefUtils.getBooleanValue(R.string.PREF_RUNNING_PROGRAMS_SHOW_TIME_PICK_BUTTON_ONLY_WHEN_NEEDED, R.bool.pref_running_programs_show_time_pick_button_only_when_needed_default)) {
-          mTimeBar.removeView(mTimeExtra);
-        }
-        
-        if((v.equals(now) || v.equals(next)) && mDateSelection.getCount() > 1) {
-          mDateSelection.setSelection(1);
-        }
-        
-        setWhereClauseTime(v.getTag());
+    final View.OnClickListener listenerClick = v -> {
+      if(PrefUtils.getBooleanValue(R.string.PREF_RUNNING_PROGRAMS_SHOW_TIME_PICK_BUTTON_ONLY_WHEN_NEEDED, R.bool.pref_running_programs_show_time_pick_button_only_when_needed_default)) {
+        mTimeBar.removeView(mTimeExtra);
       }
+
+      if((v.equals(now) || v.equals(next)) && mDateSelection.getCount() > 1) {
+        mDateSelection.setSelection(1);
+      }
+
+      setWhereClauseTime(v.getTag());
     };
     
-    final View.OnLongClickListener listenerLongClick = new View.OnLongClickListener() {
-      @Override
-      public boolean onLongClick(final View v) {
-        pickTime(v);
-        
-        return true;
-      }
+    final View.OnLongClickListener listenerLongClick = v -> {
+      pickTime(v);
+
+      return true;
     };
     
     LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(getActivity());
@@ -1126,20 +1096,17 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
             mTimeBar.addView(next);
           }
           
-          now.setOnLongClickListener(new OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-              if(mDateSelection.getCount() > 1) {
-                mDateSelection.setSelection(1);
-              }
-              
-              setWhereClauseTime(Integer.valueOf(-2));
-              
-              return true;
+          now.setOnLongClickListener(v -> {
+            if(mDateSelection.getCount() > 1) {
+              mDateSelection.setSelection(1);
             }
+
+            setWhereClauseTime(-2);
+
+            return true;
           });
           
-          ArrayList<Integer> values = new ArrayList<Integer>();
+          ArrayList<Integer> values = new ArrayList<>();
           
           int[] defaultValues = getResources().getIntArray(R.array.time_button_defaults);
           
@@ -1151,16 +1118,16 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
               
               Field setting = string.getDeclaredField("TIME_BUTTON_" + i);
               
-              Integer value = Integer.valueOf(pref.getInt(getResources().getString((Integer)setting.get(string)), defaultValues[i-1]));
+              Integer value = pref.getInt(getResources().getString((Integer) setting.get(string)), defaultValues[i - 1]);
               
               if(value >= -1 && !values.contains(value)) {
                 values.add(value);
               }
-            } catch (Exception e) {}
+            } catch (Exception ignored) {}
           }
           
           for(int i = 7; i <= timeButtonCount; i++) {
-              Integer value = Integer.valueOf(pref.getInt("TIME_BUTTON_" + i, 0));
+              Integer value = pref.getInt("TIME_BUTTON_" + i, 0);
               
               if(value >= -1 && !values.contains(value)) {
                 values.add(value);
@@ -1184,28 +1151,20 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
           
           mTimeExtra = (Button)mTimeBar.getChildAt(mTimeBar.getChildCount()-1);
           mTimeExtra.setText(DateFormat.getTimeFormat(getActivity().getApplicationContext()).format(cal.getTime()));
-          mTimeExtra.setTag(R.id.time_extra, Boolean.valueOf(true));
+          mTimeExtra.setTag(R.id.time_extra, Boolean.TRUE);
           mTimeExtra.setTypeface(null, Typeface.BOLD_ITALIC);
-          mTimeExtra.setTag(Integer.valueOf(lastExtraTime));
-          mTimeExtra.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-              pickTime(v);
+          mTimeExtra.setTag(lastExtraTime);
+          mTimeExtra.setOnClickListener(v -> pickTime(v));
+          mTimeExtra.setOnLongClickListener(v -> {
+            mLastExtraClick = System.currentTimeMillis();
+
+            if((v.equals(now) || v.equals(next)) && mDateSelection.getCount() > 1) {
+              mDateSelection.setSelection(1);
             }
-          });
-          mTimeExtra.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-              mLastExtraClick = System.currentTimeMillis();
-              
-              if((v.equals(now) || v.equals(next)) && mDateSelection.getCount() > 1) {
-                mDateSelection.setSelection(1);
-              }
-              
-              setWhereClauseTime(v.getTag());
-              
-              return true;
-            }
+
+            setWhereClauseTime(v.getTag());
+
+            return true;
           });
           
           if(PrefUtils.getBooleanValue(R.string.PREF_RUNNING_PROGRAMS_SHOW_TIME_PICK_BUTTON_ONLY_WHEN_NEEDED, R.bool.pref_running_programs_show_time_pick_button_only_when_needed_default)
@@ -1232,9 +1191,9 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     localBroadcastManager.registerReceiver(receiver, timeButtonsUpdateFilter);
     receiver.onReceive(null, null);
     
-    ArrayList<DateSelection> dateEntries = new ArrayList<DateSelection>();
+    ArrayList<DateSelection> dateEntries = new ArrayList<>();
     
-    mDateAdapter = new ArrayAdapter<DateSelection>(getActivity(), android.R.layout.simple_spinner_item, dateEntries);
+    mDateAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_item, dateEntries);
     mDateAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
     mDateSelection.setAdapter(mDateAdapter);
 
@@ -1319,8 +1278,9 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     return mListView;
   }
   
+  @NonNull
   @Override
-  public android.support.v4.content.Loader<Cursor> onCreateLoader(int id, Bundle args) {
+  public Loader<Cursor> onCreateLoader(int id, Bundle args) {
     String[] infoCategories = TvBrowserContentProvider.INFO_CATEGORIES_COLUMNS_ARRAY;
     int startIndex = 13 + infoCategories.length;
     
@@ -1344,13 +1304,8 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     projection[11] = TvBrowserContentProvider.CHANNEL_KEY_NAME;
     projection[12] = TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE;
     
-    for(int i = 0; i < infoCategories.length; i++) {
-      projection[13+i] = infoCategories[i];
-    }
-    
-    for(int i = startIndex ; i < (startIndex + TvBrowserContentProvider.MARKING_COLUMNS.length); i++) {
-      projection[i] = TvBrowserContentProvider.MARKING_COLUMNS[i-startIndex];
-    }
+    System.arraycopy(infoCategories, 0, projection, 13, infoCategories.length);
+    System.arraycopy(TvBrowserContentProvider.MARKING_COLUMNS, 0, projection, startIndex, TvBrowserContentProvider.MARKING_COLUMNS.length);
     
     Calendar cal = Calendar.getInstance();
     cal.set(Calendar.MINUTE, 0);
@@ -1371,19 +1326,19 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
       cal.setTimeInMillis(System.currentTimeMillis());
     }
     
-    final Integer timeTest = Integer.valueOf(mWhereClauseTime);
+    final Integer timeTest = mWhereClauseTime;
     
     for(int i = 0; i < mTimeBar.getChildCount(); i++) {
       if(timeTest.equals(mTimeBar.getChildAt(i).getTag())) {
         mTimeBar.getChildAt(i).setBackgroundColor(UiUtils.getColor(UiUtils.RUNNING_TIME_SELECTION_KEY, getActivity()));
         
-        if(!isViewVisible(mTimeBar.getChildAt(i))) {      
+        if(isViewNotVisible(mTimeBar.getChildAt(i))) {
           ((HorizontalScrollView)mTimeBar.getParent()).scrollTo(mTimeBar.getChildAt(i).getLeft(), mTimeBar.getChildAt(i).getTop());
         }
       }
     }
     
-    mCurrentTime = ((long)cal.getTimeInMillis() / 60000) * 60000;
+    mCurrentTime = (cal.getTimeInMillis() / 60000) * 60000;
     
     String sort = TvBrowserContentProvider.DATA_KEY_STARTTIME + " ASC";
     
@@ -1400,84 +1355,82 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     
     where += ((TvBrowser)getActivity()).getFilterSelection(false);
     
-    CursorLoader loader = new CursorLoader(getActivity(), TvBrowserContentProvider.CONTENT_URI_DATA_WITH_CHANNEL, projection, where, null, TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER + " , " + TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID + " COLLATE NOCASE, " + sort);
-    
-    return loader;
+    return new CursorLoader(getActivity(), TvBrowserContentProvider.CONTENT_URI_DATA_WITH_CHANNEL, projection, where, null, TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER + " , " + TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID + " COLLATE NOCASE, " + sort);
   }
   
   private static final class ChannelProgramBlock {
-    public int mChannelID;
+    public long mCreationTime;
+    int mChannelID;
     private String mChannelName;
     private int mChannelOrderNumber;
     
-    public int mPreviousPosition;
-    public long mPreviousStart;
-    public long mPreviousEnd;
-    public long mPreviousProgramID;
+    int mPreviousPosition;
+    long mPreviousStart;
+    long mPreviousEnd;
+    long mPreviousProgramID;
 //    public String mPreviousTitle;
-    public String mPreviousEpisode;
-    public String mPreviousGenre;
-    public Spannable mPreviousCategory;
-    public String mPreviousPictureCopyright;
-    public byte[] mPreviousPicture;
+String mPreviousEpisode;
+    String mPreviousGenre;
+    Spannable mPreviousCategory;
+    String mPreviousPictureCopyright;
+    byte[] mPreviousPicture;
 
-    public int mNowPosition;
-    public long mNowStart;
-    public long mNowEnd;
-    public long mNowProgramID;
+    int mNowPosition;
+    long mNowStart;
+    long mNowEnd;
+    long mNowProgramID;
    // public String mNowTitle;
-    public String mNowEpisode;
-    public String mNowGenre;
-    public Spannable mNowCategory;
-    public String mNowPictureCopyright;
-    public byte[] mNowPicture;
+   String mNowEpisode;
+    String mNowGenre;
+    Spannable mNowCategory;
+    String mNowPictureCopyright;
+    byte[] mNowPicture;
     
-    public int mNextPosition;
-    public long mNextStart;
-    public long mNextEnd;
-    public long mNextProgramID;
+    int mNextPosition;
+    long mNextStart;
+    long mNextEnd;
+    long mNextProgramID;
    // public String mNextTitle;
-    public String mNextEpisode;
-    public String mNextGenre;
-    public Spannable mNextCategory;
-    public String mNextPictureCopyright;
-    public byte[] mNextPicture;
+   String mNextEpisode;
+    String mNextGenre;
+    Spannable mNextCategory;
+    String mNextPictureCopyright;
+    byte[] mNextPicture;
 
-    public boolean mIsComplete;
+    boolean mIsComplete;
     
-    public ChannelProgramBlock() {
+    ChannelProgramBlock() {
       mIsComplete = false;
     }
   }
   
   @Override
-  public synchronized void onLoadFinished(android.support.v4.content.Loader<Cursor> loader, final Cursor c) {
-    Log.d("info6", "RUNNING PROGRAMS: onLoadFinished, searching programs " + System.currentTimeMillis());
+  public synchronized void onLoadFinished(@NonNull Loader<Cursor> loader, final Cursor c) {
     if(c != null) {
-      SparseArray<ChannelProgramBlock> channelProgramMap = new SparseArray<ChannelProgramBlock>();
-      SparseArray<ChannelProgramBlock> currentProgramMap = new SparseArray<ChannelProgramBlock>();
+      SparseArrayCompat<ChannelProgramBlock> channelProgramMap = new SparseArrayCompat<>();
+      SparseArrayCompat<ChannelProgramBlock> currentProgramMap = new SparseArrayCompat<>();
       boolean showDontWantToSee = PrefUtils.getStringValue(R.string.PREF_I_DONT_WANT_TO_SEE_FILTER_TYPE, R.string.pref_i_dont_want_to_see_filter_type_default).equals(getResources().getStringArray(R.array.pref_simple_string_value_array2)[1]);
       
       mProgramBlockList.clear();
       mCurrentViewList.clear();
       mMarkingsMap.clear();
       mTitleMap.clear();
-      
-      mProgramIDColumn = c.getColumnIndex(TvBrowserContentProvider.KEY_ID);
-      mStartTimeColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_STARTTIME);
-      mEndTimeColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_ENDTIME);
-      mTitleColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_TITLE);
-      mPictureColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_PICTURE);
-      mPictureCopyrightColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_PICTURE_COPYRIGHT);
-      mCategoryColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_CATEGORIES);
-      mGenreColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_GENRE);
-      mEpsiodeColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_EPISODE_TITLE);
-      mChannelNameColumn = c.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_NAME);
-      mChannelIDColumn = c.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID);
+
+      final int mProgramIDColumn = c.getColumnIndex(TvBrowserContentProvider.KEY_ID);
+      final int mStartTimeColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_STARTTIME);
+      final int mEndTimeColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_ENDTIME);
+      final int mTitleColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_TITLE);
+      final int mPictureColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_PICTURE);
+      final int mPictureCopyrightColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_PICTURE_COPYRIGHT);
+      final int mCategoryColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_CATEGORIES);
+      final int mGenreColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_GENRE);
+      final int mEpsiodeColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_EPISODE_TITLE);
+      final int mChannelNameColumn = c.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_NAME);
+      final int mChannelIDColumn = c.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID);
       int channelOrderColumn = c.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER);
       int dontWantToSeeColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE);
       
-      HashMap<String, Integer> markingColumnsMap = new HashMap<String, Integer>();
+      HashMap<String, Integer> markingColumnsMap = new HashMap<>();
       
       c.moveToPosition(-1);
       
@@ -1485,17 +1438,19 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
         int index = c.getColumnIndex(column);
         
         if(index >= 0) {
-          markingColumnsMap.put(column, Integer.valueOf(index));
+          markingColumnsMap.put(column, index);
         }
       }
       
       if(c.getCount() > 0) {
         try {
+          final ArrayList<Long> timeList = new ArrayList<>();
+
           while(!c.isClosed() && c.moveToNext()) {
             int channelID = c.getInt(mChannelIDColumn);
             
             ChannelProgramBlock block = channelProgramMap.get(channelID);
-            ArrayList<String> markedColumsList = new ArrayList<String>();
+            ArrayList<String> markedColumsList = new ArrayList<>();
             
             if(block == null) {
               block = new ChannelProgramBlock();
@@ -1503,7 +1458,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
               channelProgramMap.put(channelID, block);
               mProgramBlockList.add(block);
             }
-            
+
             if(!block.mIsComplete) {
               long startTime = c.getLong(mStartTimeColumn);
               long endTime = c.getLong(mEndTimeColumn);
@@ -1514,7 +1469,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
               for(String column : TvBrowserContentProvider.MARKING_COLUMNS) {
                 Integer value = markingColumnsMap.get(column);
                 
-                if(value != null && c.getInt(value.intValue()) >= 1) {
+                if(value != null && c.getInt(value) >= 1) {
                   markedColumsList.add(column);
                 }
                 else if(column.equals(TvBrowserContentProvider.DATA_KEY_MARKING_MARKING) && ProgramUtils.isMarkedWithIcon(getActivity(), programID)) {
@@ -1614,24 +1569,54 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
                 
                 mMarkingsMap.put(programID, IOUtils.getStringArrayFromList(markedColumsList));
                 markedColumsList.clear();
-                markedColumsList = null;
+              }
+            } else {
+              if(mStartTime != -1 && mStartTime != -2 && block.mPreviousStart != 0 && !timeList.contains(block.mPreviousStart)) {
+                timeList.add(block.mPreviousStart);
+              }
+              if(block.mPreviousEnd != 0 && !timeList.contains(block.mPreviousEnd)) {
+                timeList.add(block.mPreviousEnd);
+              }
+              if(block.mNowStart != 0 && !timeList.contains(block.mNowStart)) {
+                timeList.add(block.mNowStart);
+              }
+              if(block.mNowEnd != 0 && !timeList.contains(block.mNowEnd)) {
+                timeList.add(block.mNowEnd);
+              }
+              if(block.mNextStart != 0 && !timeList.contains(block.mNextStart)) {
+                timeList.add(block.mNextStart);
               }
             }
           }
-        }catch(IllegalStateException e1) {}
+
+          Collections.sort(timeList);
+          long now = System.currentTimeMillis();
+
+          mNextReload = -1;
+
+          for(Long time : timeList) {
+            if(time > now) {
+              mNextReload = time;
+              break;
+            }
+          }
+        }catch(IllegalStateException ignored) {}
       }
-      
-      c.close();
+
+      IOUtils.close(c); // FIXME should be a call to an adapter's swapCursor to reuse the loader's cursor
       currentProgramMap.clear();
       channelProgramMap.clear();
     }
-    
-    Log.d("info6", "RUNNING PROGRAMS: onLoadFinished, searching programs DONE " + System.currentTimeMillis());
+
     mRunningProgramListAdapter.notifyDataSetChanged();
   }
 
+  public int getScrollY() {
+    return mListView.getScrollY();
+  }
+
   @Override
-  public void onLoaderReset(android.support.v4.content.Loader<Cursor> loader) {
+  public void onLoaderReset(@NonNull Loader<Cursor> loader) {
     mCurrentViewList.clear();
     mProgramBlockList.clear();
   }
@@ -1642,7 +1627,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     Long test = (Long)v.getTag();
     
     if(test != null) {
-      mContextProgramID = test.longValue();
+      mContextProgramID = test;
       mContextView = v;
       UiUtils.createContextMenu(getActivity(), menu, mContextProgramID);
     }
@@ -1671,7 +1656,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     int insertIndex = 1;
     
     if(mTimeBar.getChildCount() > 1) {
-      final Button next = (Button)((ViewGroup)((ViewGroup)getView().getParent()).getParent()).findViewById(R.id.button_after1);
+      final Button next = ((ViewGroup) getView().getParent().getParent()).findViewById(R.id.button_after1);
       
       if(next != null && next.getVisibility() == View.VISIBLE) {
         if(mTimeBar.getChildCount() > 2) {
@@ -1704,11 +1689,11 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
       else if(getString(R.string.PREF_RUNNING_PROGRAMS_SHOW_TIME_PICK_BUTTON_ONLY_WHEN_NEEDED).equals(key)) {
         boolean enabled = sharedPreferences.getBoolean(key, getResources().getBoolean(R.bool.pref_running_programs_show_time_pick_button_only_when_needed_default));
         
-        if(enabled && !mTimeExtra.getTag().equals(Integer.valueOf(mWhereClauseTime))) {
+        if(enabled && !mTimeExtra.getTag().equals(mWhereClauseTime)) {
           mTimeBar.removeView(mTimeExtra);
         }
         else {
-          insertTimeExtra(Integer.valueOf(mWhereClauseTime));
+          insertTimeExtra(mWhereClauseTime);
         }
       }
       else if(mListView != null && (getString(R.string.PREF_COLOR_SEPARATOR_LINE).equals(key) || getString(R.string.PREF_COLOR_SEPARATOR_SPACE).equals(key))) {
@@ -1730,36 +1715,37 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     
     for(int i = 0; i < mTimeBar.getChildCount(); i++) {
       View button = mTimeBar.getChildAt(i);
-      
-      if(button.getTag().equals(Integer.valueOf(time-1))) {
+
+      if(button.getTag().equals(time - 1)) {
         selectButton((Button)button);
         found = true;
         break;
       }
     }
-    
-    if(!found && time == -1) {
-      setWhereClauseTime(Integer.valueOf(-2));
-    }
-    else if(time > 0) {
-      time--;
-      
-      mTimeExtra.setTag(Integer.valueOf(time));
-      
-      Calendar cal = Calendar.getInstance();
-      
-      cal.set(Calendar.HOUR_OF_DAY, time/60);
-      cal.set(Calendar.MINUTE, time%60);
 
-      mLastExtraClick = System.currentTimeMillis();
-      mTimeExtra.setText(DateFormat.getTimeFormat(getActivity().getApplicationContext()).format(cal.getTime()));
-      
-      insertTimeExtra(Integer.valueOf(time));
-      
-      setWhereClauseTime(mTimeExtra.getTag());
-      
-      if(!isViewVisible(mTimeExtra)) {      
-        ((HorizontalScrollView)mTimeBar.getParent()).scrollTo(mTimeExtra.getLeft(), mTimeExtra.getTop());
+    if(!found) {
+      if (time == -1) {
+        setWhereClauseTime(-2);
+      } else if (time > 0) {
+        time--;
+
+        mTimeExtra.setTag(time);
+
+        Calendar cal = Calendar.getInstance();
+
+        cal.set(Calendar.HOUR_OF_DAY, time / 60);
+        cal.set(Calendar.MINUTE, time % 60);
+
+        mLastExtraClick = System.currentTimeMillis();
+        mTimeExtra.setText(DateFormat.getTimeFormat(getActivity().getApplicationContext()).format(cal.getTime()));
+
+        insertTimeExtra(time);
+
+        setWhereClauseTime(mTimeExtra.getTag());
+
+        if (isViewNotVisible(mTimeExtra)) {
+          ((HorizontalScrollView) mTimeBar.getParent()).scrollTo(mTimeExtra.getLeft(), mTimeExtra.getTop());
+        }
       }
     }
   }
@@ -1768,23 +1754,19 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     if(button != null) {
       button.performClick();
       
-      if(!isViewVisible(button)) {      
+      if(isViewNotVisible(button)) {
         ((HorizontalScrollView)mTimeBar.getParent()).scrollTo(button.getLeft(), button.getTop());
       }
     }
   }
   
-  private boolean isViewVisible(View view) {
+  private boolean isViewNotVisible(View view) {
     Rect scrollBounds = new Rect();
     ((View)mTimeBar.getParent()).getDrawingRect(scrollBounds);
 
     float left = view.getX();
     float right = left + view.getWidth();
-    
-    if (scrollBounds.left < left && scrollBounds.right > right) {
-        return true;
-    } else {
-        return false;
-    }
+
+	  return !(scrollBounds.left < left && scrollBounds.right > right);
   }
 }

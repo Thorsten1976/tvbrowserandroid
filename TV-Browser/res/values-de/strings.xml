@@ -1,10 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="info_version_new"><![CDATA[
-        <h2>0.6.3.7</h2>
+        <h2>0.6.5</h2>
+            &bull; Fehler im hellen Thema beseitigt von Thorsten1976<br>
+            &bull; Beschreibung von Sendungen in Programmtabelle anzeigen, wenn Platz vorhanden<br>
+            &bull; Unterstützung für neue Datenfelder<br>
+            &bull; verwendet neues Layout für Tabs<br>
+            &bull; fehlende Aktualisierung der Sendungen im Tab Laufende Sendungen behoben<br>
+            &bull; Synchronisation der Lieblingssendung und Erinnerungen beschleunigt<br>
+            &bull; unterschiedliche Version für GooglePlay und manuelle Installation<br>
+            &bull; Senderlogo in Benachrichtigungen für Erinnerungen skalieren<br>
+            &bull; Wochentag in Benachrichtigung für Erinnerungen anzeigen<br>
+            &bull; TV-Browser wird mit der ausgewählten Zeit des Laufende-Sendungen-Widget gestartet<br>
+            &bull; Unterstützung für Android 8 und höher<br>
+            &bull; Verbesserungen/bug fixes von Thorsten1976<br>
+        <h3>0.6.4</h3>
+        	&bull; fehlerhaft synchronisierte Sendungen verhindern<br>
+        	&bull; verschiedene Verbesserungen/Bugfixes von Thorsten1976<br>
+        <h3>0.6.3.7</h3>
         	&bull; abgeschnittene Beschreibungen im Detail-Fenster korrigiert<br>
         	&bull; Versuch Standardvibration des Systems für Erinnerungen zu verhindern<br>
-        <h2>0.6.3.6</h2>
+        <h3>0.6.3.6</h3>
         	&bull; Laufzeit verlängert bis 31.12.2019<br>
         	&bull; möglichen Absturz beseitigt<br>
         <h3>0.6.3.5</h3>
@@ -420,9 +436,14 @@
     <string name="info_version">Was ist neu in dieser Version?</string>
     <string name="info_version_dont_show_again">Nicht wieder\nanzeigen</string>
     <string name="info_version_show">Änderungen anzeigen</string>
-    
+    <string name="pref_info_version_title">Änderungen beim Versionsupdate anzeigen</string>
+
     <string name="tab_restoring_name">EINSTELLUNGEN WIEDERHERSTELLEN</string>
-    <string name="app_name">TV-Browser</string>
+    <string name="notification_channel_default_description">Benachrichtigungen ohne Sound und Vibration. Bitte so belassen wie dieser ist.</string>
+    <string name="notification_channel_reminder_day">Erinnerer Tages-Modus</string>
+    <string name="notification_channel_reminder_work">Erinnerer Arbeits-Modus</string>
+    <string name="notification_channel_reminder_night">Erinnerer Nacht-Modus</string>
+    <string name="notification_update_reminders">Erinnerer aktualisieren…</string>
     <string name="search_activity_name">TV-Browser-Suche</string>
     <string name="search_no_result_title">Keine Sendung gefunden</string>
     <string name="search_no_result_text">Es wurde keine Sendung für die Suche gefunden.\n\nMöchten Sie für diese Suche eine Lieblingssendung anlegen?\n\n(Lieblingssendungen finden oft mehr Sendungen als eine Schnellsuche.)</string>
@@ -651,7 +672,7 @@
 	<string name="channel_selection_label_text_name">Name:</string>
 	<string name="channel_selection_input_name_hint">Name des Filters eingeben</string>
 	<string name="synchronize_title">Sender synchronisieren?</string>
-	<string name="synchronize_text">Sie <b>können</b> die Sender aus dem Desktop-TV-Browser synchronisieren.\n\nIn diesem Fall müssen Sie sich <a href="http://android.tvbrowser.org/index.php?id=createaccount">zuerst registrieren</a> und die Sender aus dem Desktop-TV-Browser mit dem Android-Sync Plugin exportieren.\n\nTV-Browser kann auch <u><b>ohne Synchronistation</b></u> benutzt werden, in diesem Fall muss man sich <u><b>nicht registrieren</b></u>.\n\nMöchten Sie die Sender jetzt synchronisieren oder möchten Sie die Sender manuell auswählen?</string>
+	<string name="synchronize_text">Sie <b>können</b> die Sender aus dem Desktop-TV-Browser synchronisieren.\n\nIn diesem Fall müssen Sie sich <a href="https://www.tvbrowser-app.de/index.php?id=createaccount">zuerst registrieren</a> und die Sender aus dem Desktop-TV-Browser mit dem Android-Sync Plugin exportieren.\n\nTV-Browser kann auch <u><b>ohne Synchronistation</b></u> benutzt werden, in diesem Fall muss man sich <u><b>nicht registrieren</b></u>.\n\nMöchten Sie die Sender jetzt synchronisieren oder möchten Sie die Sender manuell auswählen?</string>
 	<string name="synchronize_ok">Sender jetzt\nsynchronisieren</string>
 	<string name="synchronizing_channels">Sender synchronisieren&#8230;</string>
 	<string name="synchronize_cancel">Sender manuell\nauswählen</string>
@@ -724,7 +745,6 @@
 	<string name="pref_database_selection_internal">Intern</string>
 	<string name="pref_database_copy_title">Datenbank kopieren</string>
 	<string name="pref_database_copy_wait">Bitte warten&#8230;</string>
-	<string name="pref_programs_list_category">Datendownload</string>
 	<string name="pref_summary_data_download">Einstellungen für den Datendownload</string>
 	<string name="pref_data_update_connection_instable_accept_title">Instabile Internetverbindung</string>
 	<string name="pref_data_update_connection_instable_accept_summary_on">Die Internetverbindung ist sehr langsam bzw. instabil. TV-Browser wird die Daten trotzdem laden, auch wenn das Datenupdate dadurch sehr lange dauert.</string>
@@ -759,9 +779,10 @@
 	</string-array>
 	<string name="pref_show_genre">Genre anzeigen</string>
 	<string name="pref_show_episode">Episodentitel anzeigen</string>
+    <string name="pref_show_description_if_room">Wenn Platz Beschreibung anzeigen</string>
 	<string name="pref_show_program_categories">Sendungskategorien anzeigen</string>
 	<string name="pref_title_program_information_selection">Angezeigte Informationen auswählen</string>
-	<string name="pref_summary_program_categories_selection">Welche Informationen sollen angezeigt werden, wenn sie vorhanden sind?</string>
+	<string name="pref_summary_program_information_selection">Welche Programminformationen sollen, falls verfügbar, angezeigt werden?</string>
 	<string name="pref_start_category">Starten</string>
 	<string name="pref_start_tab">Mit folgenden Tab:</string>
 	<string name="pref_show_link">Link zur Webseite:</string>
@@ -806,6 +827,16 @@
 	<string name="programCategories">Sendungskategorien:\n</string>
 	<string name="additionalInfo">Zusätzliche Informationen:\n</string>
 	<string name="series">Serie:</string>
+
+    <string name="partNumber">Teil:</string>
+    <string name="partNumberTotal">Anzahl Teile:</string>
+    <string name="originalDuration">Originallänge:</string>
+    <string name="firstProductionYear">Erstes Jahr der Produktion:</string>
+    <string name="keywordList">Schlagwörter:</string>
+    <string name="VODinfo">Verfügbarkeit in Mediathek:</string>
+    <string name="VODlink">Link zur Mediathek:</string>
+    <string name="genreSubList">Subgenres:</string>
+
 	<string name="rundate">Lauffähig bis:</string>
 	<string name="pref_prog_table_summary">Die Programmtabelle benötigt sehr viel Speicher. Sind zu viele Sender und Details ausgewählt, kann das zum Absturz der TV-Browser App führen. Achten Sie daher auf die Anzahl der ausgewählten Sender oder deaktivieren Sie die Programmtabelle.</string>
 	<string name="warning_title">Warnung!</string>
@@ -827,6 +858,7 @@
 	    <item>Kompakt</item>
 	</string-array>
 	<string name="running_layout_title">Ansicht</string>
+    <string name="pref_running_start_with_next">Mit Als Nächstes starten</string>
 	<string name="pref_running_show_next_button">Als Nächstes neben Jetzt</string>
 	<string name="pref_running_show_next_button_summary_on">Der Zeitpunkt Als Nächstes kann direkt über den entsprechenden Zeitknopf, über das Zeitmenü oder langen Klick auf Jetzt ausgewählt werden.</string>
 	<string name="pref_running_show_next_button_summary_off">Der Zeitpunkt Als Nächstes kann über das Zeitmenü oder langen Klick auf Jetzt ausgewählt werden.</string>
@@ -859,7 +891,6 @@
 	<string name="log_send_mail">E-Mail verschicken</string>
 	<string name="log_send_data_update">Datenupdate</string>
 	<string name="log_send_reminder">Erinnerer</string>
-	<string name="log_send_plugins">Plugins</string>
 	<string name="log_send_mail_subject">{0} Log-Datei für TV-Browser für Android</string>
 	<string name="log_send_mail_content">Der Anhang enthält die {0} Log-Datei für TV-Browser für Android vom </string>
 	<string name="pref_misc">Sonstiges</string>
@@ -878,7 +909,7 @@
 	<string name="pref_sync_marked_to_desktop_summary">Sendungen die von Plugins markiert wurden, werden nach einem Datenupdate an den Desktop-TV-Browser exportiert.</string>
 <!-- 	<string name="pref_sync_calendar_to_desktop">Dem Kalender hinzugefügte</string>
 	<string name="pref_sync_calendar_to_desktop_summary">Sendungen die dem Android-Kalender hinzugefügt wurden, werden nach einem Datenupdate an den Desktop-TV-Browser exportiert.</string>-->
-	<string name="synchronize_user_info">Sie müssen sich <a href="http://android.tvbrowser.org/index.php?id=createaccount">zuerst registrieren</a> um die Synchronisation mit dem Desktop-TV-Browser nutzen zu können.</string>
+	<string name="synchronize_user_info">Sie müssen sich <a href="https://www.tvbrowser-app.de/index.php?id=createaccount">zuerst registrieren</a> um die Synchronisation mit dem Desktop-TV-Browser nutzen zu können.</string>
 	<string name="marking_value_marked">Markiert</string>
     <string name="marking_value_sync">Sync</string>
     <string name="marking_value_reminder">Erinnerungen</string>
@@ -947,6 +978,7 @@
 	    <item>Hoch</item>
 	    <item>Maximum</item>
 	</string-array>
+    <string name="pref_reminder_config">Sound, Vibration, LED einstellen&#8230;</string>
 	<string name="pref_reminder_type">Tages-Modus</string>
 	<string name="pref_reminder_sound">Sound</string>
 	<string name="pref_reminder_no_sound">Kein Sound</string>
@@ -960,7 +992,7 @@
 	<string name="pref_reminder_night_end">Ende des Nacht-Modus</string>
 	<string name="pref_reminder_work_mode_category">Arbeits-Modus</string>
 	<string name="pref_reminder_as_alarm_clock_title">Als Wecker</string>
-	<string name="pref_reminder_as_alarm_clock_summary_on">Erinnerungen werden als Wecker angelegt, um sicher zu stellen, dass sie auch im Ruhezustand des Geräts erscheinen.</string>
+	<string name="pref_reminder_as_alarm_clock_summary_on">Erinnerungen werden als Wecker angelegt, um sicherzustellen, dass sie auch im Ruhezustand des Geräts erscheinen.</string>
 	<string name="pref_reminder_as_alarm_clock_summary_off">Erinnerungen werden als Alarm angelegt, bei dem es vorkommen kann, dass Erinnerungen nicht zum programmierten Zeitpunkt erscheinen, wenn das Gerät im Ruhezustand ist.</string>
 	<string name="monday">Montag</string>
 	<string name="tuesday">Dienstag</string>
@@ -1051,7 +1083,6 @@
     <string name="pref_show_progress_summary">Zeitfortschritt laufender Sendungen wird im Hintergrund angezeigt.</string>
     <string name="update_not_now">Nicht jetzt</string>
     <string name="update_website">Öffne Webseite</string>
-    <string name="update_google_play">Öffne Google Play</string>
     <string name="pref_auto_update_category">Automatisches Datenupdate</string>
     <string name="pref_auto_update_type">Typ</string>
     <string name="pref_auto_update_frequency">Häufigkeit</string>
@@ -1077,25 +1108,11 @@
     </string-array>
     <string name="you_like_it">Gefällt Ihnen TV-Browser?</string>
     <string name="not_now">Jetzt nicht{0}</string>
-    <string name="rating_button">Bei Google Play bewerten</string>
     <string name="donate_button">Mehr über Spenden</string>
-    <string name="rating_text"><![CDATA[<h3>Bewertung</h3>Sie nutzen TV-Browser jetzt einige Zeit. Wenn Sie m&ouml;chten k&ouml;nnen Sie TV-Browser bei Google Play bewerten.]]></string>
-    <string name="donate_text"><![CDATA[<h3>Spenden</h3>Wenn Ihnen TV-Browser gef&auml;llt, Sie mindestens 18 Jahre alt sind und die weitere Entwicklung von TV-Browser unterst&uuml;tzen m&ouml;chten, k&ouml;nnen Sie für TV-Browser spenden.]]></string>
+    <string name="donate_text">Wenn Ihnen TV-Browser gefällt, Sie mindestens 18 Jahre alt sind und die weitere Entwicklung von TV-Browser unterstützen möchten, können Sie für TV-Browser spenden.</string>
     <string name="donation">Spenden</string>
-    <string name="donation_info_inapp">Sie können direkt über InApp-Zahlung aus einer Liste von Beträgen eine Summe auswählen. (Die Spende wird erst gebucht, wenn dies in Google Play bestätigt wurde.)</string>
-    <string name="donation_open_inapp">Zeige InApp-Spenden</string>
     <string name="donation_info_website">Alle Spendenmöglichkeiten sind auf der Webseite von TV-Browser für Android beschrieben.</string>
-    <string name="donation_open_website">Webseite mit allen\nSpendenmöglichkeiten öffnen</string>
-    <string name="donation_thanks_text">Vielen Dank für das Interesse an Spenden für TV-Browser, Sie können aus folgenden Beträgen auswählen (diese enthalen jeweils 30% Google Play Zahlungsgebühr und die jeweilige Mehrwertsteuer):</string>
-    <string name="make_donation_info">Sie sind dabei eine Spende von {0} zu leisten.\n\nMit dem Klick auf \'Ja, jetzt spenden\' bestätigen Sie, dass sie mindestens 18 Jahre alt sind und damit Spenden leisten dürfen.</string>
-    <string name="make_donation">Ja, jetzt\nspenden</string>
-    <string name="stop_donation">Nein, Danke</string>
-    <string name="thanks_for_donation">Vielen Dank für die Spende für TV-Browser für Android.</string>
-    <string name="in_app_error_1">Konnte keine Verbindung zu Google Play herstellen.\n\nBitte versuchen Sie es später erneut</string>
-    <string name="in_app_error_2">oder verwenden Sie eine Spendenalternative.</string>
-    <string name="already_donated">Sie haben bereits am {1} {0} gespendet. Nochmal danke dafür.\n\nMöchten Sie tatsächlich nochmals spenden?</string>
-    <string name="donate_again">Ja, nochmals spenden</string>
-    <string name="no_donation_possible">Zur Zeit keine Spenden möglich.\nBitte versuchen Sie es später erneut.</string>
+    <string name="donation_open_website">Webseite öffnen</string>
     <string name="pref_running_time_selection">Zeitauswahl</string>
     <string name="pref_running_time_selection_summary">Hintergrundfarbe der ausgewählten Zeit.</string>
     <string name="pref_prog_table_delayed">Laden verzögern</string>
@@ -1150,10 +1167,9 @@
     <string name="widget_important_config_limit_selection_button">Anzahl festlegen</string>
     
     <string name="widget_running_widget_title">TV-Browser: Jetzt läuft</string>
-    
     <string name="widget_running_title">Jetzt läuft</string>
-    
     <string name="widget_running_select_time_title">Angezeigte Zeit auswählen</string>
+    <string name="widget_running_button">Schaltfläche, die das Auswählen der anzuzeigenden Zeit über einen Dialog ermöglicht.</string>
     
     <string name="widget_preferences_background_rounded_corners">Abgerundete Ecken</string>
     <string name="widget_preferences_background_transpacency_header">Transparenz des Kopfes</string>
@@ -1235,7 +1251,6 @@
     
     <string name="plugin_available_title">Verfügbare Plugins</string>
     <string name="plugin_open_google_play">In Google Play\u2122 anzeigen</string>
-    <string name="plugin_download_manually">Manuell herunterladen und installieren</string>
     
     <string name="plugin_available_not_title">Keine Plugins verfügbar</string>
     <string name="plugin_available_not_message">Ein gibt keine Plugins, die installiert werden können.</string>
@@ -1246,4 +1261,36 @@
     <string name="plugin_info_donwload">Lade \'{0}\' herunter</string>
     
     <string name="waiting_detail_show">Öffne Detail-Fenster&#8230;</string>
+	<string name="detail_date_format">%1$ta, %2$s %3$s - %4$s, %5$s</string>
+    <string name="channel_logo_content_description">Senderlogo</string>
+
+    <string name="privacy_statement_text"><![CDATA[<p>In der Standardeinstellung wird TV-Browser keine Daten über Sie oder Ihre Nutzung von TV-Browser erheben und es werden ebenso keine Daten über Sie oder Ihre Nutzung von TV-Browser versendet.</p>
+
+    <p>Sollten Sie die Synchronisationsfunktion von TV-Browser nutzen, werden folgende Daten übertragen:</p>
+
+    <ul>
+    <li><b>Allgemein:</b> Um die Synchronisationsfunktion von TV-Browser nutzen zu können, müssen Sie sich mit einer gültigen E-Mail-Adresse registrieren, um einen Zugang zu erhalten, der Ihre Daten identifiziert. An die verwendete E-Mail-Adresse werden nur Informationen gesendet, die für die Synchronisationsfunktion zwingend notwendig sind. Die E-Mail-Adresse wird ausdrücklich nicht an Dritte weitergegeben und nur zu Ihrer Identifizierung in der Datenbank des Synchronisationsservers gespeichert. Sämtliche Daten die auf den Synchronisationsserver hochgeladen werden, werden ausschließlich verwendet, um die Synchronisationsfunktion anzubieten. Die Daten werden ausschließlich über eine sichere Internetverbindung übertragen.</li><br>
+    <li><b>Sender:</b> Wenn Sie sich entscheiden Ihre Senderliste zu synchronisieren, so wird diese permanent auf dem Synchronisationsserver gespeichert.</li><br>
+    <li><b>Lieblingssendungen/Einstellungen:</b> Wenn Sie sich entscheiden Ihre Lieblingssendungen/Einstellungen zu synchronisieren, so werden diese Informationen permanent auf dem Synchronisationsserver gespeichert.</li><br>
+    <li><b>Will ich nicht sehen!:</b> Wenn Sie sich entscheiden die Liste mit den Ausschlüssen von "Will ich nicht sehen!" zu synchronisieren, so wird diese permanent auf dem Synchronisationsserver gespeichert.</li><br>
+    <li><b>Markierte Sendungen/Erinnerungen:</b> Nachdem die Synchronisationsfunktion aktiviert wurde, werden alle markierten Sendungen, sowie die Erinnerungen automatisch bei einem Datenupdate an den Synchronisationsserver übertragen und dort mindestens bis zum Ablauf der aufgeführten Sendungen aufbewahrt. Diese automatische Übertragung kann in den Einstellungen deaktiviert werden.</li><br>
+    </ul>
+    <p>Wenn Sie die EPGpaid-Daten nutzen, gelten weiterhin folgende Bedingungen:</p>
+    <p>Aus Gründen der Datensparsamkeit werden für EPGpaid nur die unbedingt notwendigen Daten erhoben, Sie müssen beispielsweise weder Ihren Namen, noch Ihre Anschrift eingeben. Die erhobenen Daten (E-Mail- und IP-Adressen) werden ausschließlich zur Bereitstellung des Dienstes EPGpaid verwendet und nur an, für die Vertragserfüllung zwingend erforderliche, Dritte weitergeben. Diese Daten werden sicher in einer Datenbank gespeichert und nur über eine sichere Internetverbindung übertragen. In keinem Fall werden die Daten zu Werbezwecken oder Datensammlungen genutzt.</p>
+    <p>Um die EPGpaid-Daten nutzen zu können, müssen Sie zuvor diesen Bedingungen zugestimmt haben.</p>
+    ]]></string>
+    <string name="epg_paid_terms">Aus Gründen der Datensparsamkeit werden für EPGpaid nur die unbedingt notwendigen Daten erhoben, Sie müssen beispielsweise weder Ihren Namen, noch Ihre Anschrift eingeben. Die erhobenen Daten (E-Mail- und IP-Adressen) werden ausschließlich zur Bereitstellung des Dienstes EPGpaid verwendet und nur an, für die Vertragserfüllung zwingend erforderliche, Dritte weitergeben. In keinem Fall werden die Daten zu Werbezwecken oder Datensammlungen genutzt.</string>
+    <string name="terms_accept_sync">Ich akzeptiere die Bedinungen zur Nutzung der Synchronisationsfunktion.</string>
+    <string name="terms_accept_epgpaid_title">Bedingungen akzeptieren</string>
+    <string name="terms_accept_epgpaid">Ich akzeptiere die Bedingungen zur Nutzung der EPGpaid-Daten.</string>
+
+	<string name="color_preference_hex_label">HEX #</string>
+	<string name="program_picture">Vorschaubild der Sendung</string>
+	<string name="reset_data_update_date">Datum der Datenaktualisierung zurücksetzen</string>
+	<string name="show_plugin_marking_data">Plugin-Markierungsdaten anzeigen</string>
+	<string name="reminder">Erinnerung</string>
+	<string name="widget_settings_button">Einstellungen</string>
+	<string name="widget_open_app_button">App öffnen</string>
+	<string name="widget_toggle_reminder_state">Erinnerungen aktivieren/deaktivieren</string>
+
 </resources>

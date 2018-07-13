@@ -30,19 +30,16 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Point;
 import android.graphics.drawable.Drawable;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.text.Html;
+import android.text.Spanned;
 import android.util.Log;
-import android.view.Display;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.RemoteViews;
 import android.widget.TimePicker;
 
@@ -53,17 +50,8 @@ import android.widget.TimePicker;
  */
 @SuppressLint("NewApi")
 public class CompatUtils {
-  @SuppressWarnings("deprecation")
-  public static final void setRemoteViewsAdapter(RemoteViews views, int appWidgetId, int viewId, Intent intent) {
-    if(Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-      views.setRemoteAdapter(appWidgetId, viewId, intent);
-    }
-    else {
-      views.setRemoteAdapter(viewId, intent);
-    }
-  }
-  
-  public static final boolean isKeyguardWidget(int appWidgetId, Context context) {
+
+  public static boolean isKeyguardWidget(int appWidgetId, Context context) {
     if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
       AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context.getApplicationContext());
       
@@ -84,14 +72,14 @@ public class CompatUtils {
    * @param right Right padding in pixels.
    * @param bottom Bottom padding in pixels.
    */
-  public static final void setRemoteViewsPadding(RemoteViews views, int viewId, int left, int top, int right, int bottom) {
+  public static void setRemoteViewsPadding(RemoteViews views, int viewId, int left, int top, int right, int bottom) {
     if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
       views.setViewPadding(viewId, left, top, right, bottom);
     }
   }
   
   @SuppressWarnings("deprecation")
-  public static final void setBackground(View view, Drawable draw) {
+  public static void setBackground(View view, Drawable draw) {
     if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
       view.setBackground(draw);
     }
@@ -99,20 +87,10 @@ public class CompatUtils {
       view.setBackgroundDrawable(draw);
     }
   }
-  
-  public static NetworkInfo getLanNetworkIfPossible(ConnectivityManager connMgr) {
-    NetworkInfo result = null;
-    
-    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-      result = connMgr.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
-    }
-    
-    return result;
-  }
-  
+
   @SuppressWarnings("deprecation")
   public static boolean isInteractive(PowerManager pm) {
-    boolean result = false;
+    boolean result;
     
     if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
       result = pm.isInteractive();
@@ -123,44 +101,23 @@ public class CompatUtils {
     
     return result;
   }
-  
-  @SuppressWarnings("deprecation")
-  public static final Point getScreenSize(Context context) {
-    WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-    Display display = wm.getDefaultDisplay();
-    
-    Point size = new Point();
-    
-    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-      display.getSize(size);
-    }
-    else {
-      size.set(display.getWidth(), display.getHeight());
-    }
-    
-    return size;
-  }
-  
-  public static final void setAlarmInexact(AlarmManager alarm, int type, long triggerAtMillis, PendingIntent operation) {
-    alarm.set(type, triggerAtMillis, operation);
-  }
-  
-  public static final void setExactAlarmAndAllowWhileIdle(Context context, AlarmManager alarm, int type, long triggerAtMillis, PendingIntent operation) {
+
+  public static void setExactAlarmAndAllowWhileIdle(AlarmManager alarm, int type, long triggerAtMillis, PendingIntent operation) {
     if(Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1) {
       try {
         Method setExactAndAllowWhileIdle = alarm.getClass().getDeclaredMethod("setExactAndAllowWhileIdle", int.class, long.class, PendingIntent.class);
         setExactAndAllowWhileIdle.setAccessible(true);
         setExactAndAllowWhileIdle.invoke(alarm, type, triggerAtMillis, operation);
       } catch (Throwable t) {
-        setAlarmExact(context, alarm, type, triggerAtMillis, operation);
+        setAlarmExact(alarm, type, triggerAtMillis, operation);
       }
     }
     else {
-      setAlarmExact(context, alarm, type, triggerAtMillis, operation);
+      setAlarmExact(alarm, type, triggerAtMillis, operation);
     }
   }
-  
-  public static final void setAlarmExact(Context context, AlarmManager alarm, int type, long triggerAtMillis, PendingIntent operation) {
+
+  public static void setAlarmExact(AlarmManager alarm, int type, long triggerAtMillis, PendingIntent operation) {
     if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
       alarm.setExact(type, triggerAtMillis, operation);
     }
@@ -169,7 +126,7 @@ public class CompatUtils {
     }
   }
   
-  public static final void setAlarm(Context context, AlarmManager alarm, int type, long triggerAtMillis, PendingIntent operation, PendingIntent info) {
+  public static void setAlarm(Context context, AlarmManager alarm, int type, long triggerAtMillis, PendingIntent operation, PendingIntent info) {
     if(Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1) {
       // Cheap workaround for Marshmallow doze mode
       if(PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.PREF_REMINDER_AS_ALARM_CLOCK), context.getResources().getBoolean(R.bool.pref_reminder_as_alarm_clock_default))) {
@@ -224,11 +181,13 @@ public class CompatUtils {
   }
 
   public static void setTimePickerHour(final TimePicker timePicker, final int hour) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M )
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ) {
       timePicker.setHour(hour);
-    else
+    }
+    else {
       //noinspection deprecation
       timePicker.setCurrentHour(hour);
+    }
   }
 
   public static int getTimePickerHour(final TimePicker timePicker) {
@@ -244,11 +203,13 @@ public class CompatUtils {
   }
 
   public static void setTimePickerMinute(final TimePicker timePicker, final int minute) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M )
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ) {
       timePicker.setMinute(minute);
-    else
+    }
+    else {
       //noinspection deprecation
       timePicker.setCurrentMinute(minute);
+    }
   }
 
   public static int getTimePickerMinute(final TimePicker timePicker) {
@@ -261,5 +222,39 @@ public class CompatUtils {
       minute = timePicker.getCurrentMinute();
     }
     return minute;
+  }
+
+  public static boolean isAtLeastAndroidN() {
+    return Build.VERSION.SDK_INT >= Build.VERSION_CODES.N;
+  }
+
+  public static boolean isAtLeastAndroidO() {
+    return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
+  }
+
+  public static boolean canRequestPackageInstalls(final Context context) {
+    return !isAtLeastAndroidO() || context.getPackageManager().canRequestPackageInstalls();
+  }
+
+  public static boolean startForegroundService(final Context context, final Intent service) {
+    boolean result;
+
+    if(isAtLeastAndroidO()) {
+      result = context.startForegroundService(service) != null;
+    }
+    else {
+      result = context.startService(service) != null;
+    }
+
+    return result;
+  }
+
+  @SuppressWarnings("deprecation")
+  public static Spanned fromHtml(String html){
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+      return Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY);
+    } else {
+      return Html.fromHtml(html);
+    }
   }
 }

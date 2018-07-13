@@ -21,16 +21,13 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -39,7 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
-import java.util.TimeZone;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,8 +47,8 @@ import javax.net.ssl.HttpsURLConnection;
 
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.devplugin.Channel;
+import org.tvbrowser.job.JobDataUpdateAuto;
 import org.tvbrowser.settings.SettingConstants;
-import org.tvbrowser.tvbrowser.AutoDataUpdateReceiver;
 import org.tvbrowser.tvbrowser.Logging;
 import org.tvbrowser.tvbrowser.R;
 import org.tvbrowser.tvbrowser.ReminderBroadcastReceiver;
@@ -64,14 +60,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.BatteryManager;
 import android.os.Binder;
 import android.os.Environment;
 import android.os.PowerManager;
-import android.preference.PreferenceManager;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
@@ -82,11 +76,12 @@ import android.util.Log;
  * <p>
  * @author René Mach
  */
-public class IOUtils {
-  private static final int DATA_UPDATE_KEY = 1234;
+public final class IOUtils {
   private static final int REQUEST_CODE_DATA_TABLE_UPDATE = 1235;
-  private static final float MIN_BATTERIE_LEVEL = 0.1f;
-  
+  private static final float MIN_BATTERY_LEVEL = 0.1f;
+
+  IOUtils() {}
+
   /**
    * Creates an integer value from the given byte array.
    * <p>
@@ -107,31 +102,31 @@ public class IOUtils {
     return result;
   }
   
-  public static int INFO_BLACK_AND_WHITE = 1 << 1;
-  public static int INFO_BLACK_FOUR_TO_THREE = 1 << 2;
-  public static int INFO_BLACK_SIXTEEN_TO_NINE = 1 << 3;
-  public static int INFO_BLACK_MONO = 1 << 4;
-  public static int INFO_BLACK_STEREO = 1 << 5;
-  public static int INFO_BLACK_DOLBY_SOURROUND = 1 << 6;
-  public static int INFO_BLACK_DOLBY_DIGITAL = 1 << 7;
-  public static int INFO_BLACK_SECOND_AUDIO_PROGRAM = 1 << 8;
-  public static int INFO_BLACK_SECOND_CLOSED_CAPTION = 1 << 9;
-  public static int INFO_BLACK_SECOND_LIVE = 1 << 10;
-  public static int INFO_BLACK_SECOND_OMU = 1 << 11;
-  public static int INFO_BLACK_SECOND_FILM = 1 << 12;
-  public static int INFO_BLACK_SECOND_SERIES = 1 << 13;
-  public static int INFO_BLACK_SECOND_NEW = 1 << 14;
-  public static int INFO_BLACK_SECOND_AUDIO_DESCRIPTION = 1 << 15;
-  public static int INFO_BLACK_SECOND_NEWS = 1 << 16;
-  public static int INFO_BLACK_SECOND_SHOW = 1 << 17;
-  public static int INFO_BLACK_SECOND_MAGAZIN = 1 << 18;
-  public static int INFO_BLACK_SECOND_HD = 1 << 19;
-  public static int INFO_BLACK_SECOND_DOCU = 1 << 20;
-  public static int INFO_BLACK_SECOND_ART = 1 << 21;
-  public static int INFO_BLACK_SECOND_SPORT = 1 << 22;
-  public static int INFO_BLACK_SECOND_CHILDREN = 1 << 23;
-  public static int INFO_BLACK_SECOND_OTHER = 1 << 24;
-  public static int INFO_BLACK_SECOND_SIGN_LANGUAGE = 1 << 25;
+  private static final int INFO_BLACK_AND_WHITE = 1 << 1;
+  private static final int INFO_BLACK_FOUR_TO_THREE = 1 << 2;
+  private static final int INFO_BLACK_SIXTEEN_TO_NINE = 1 << 3;
+  private static final int INFO_BLACK_MONO = 1 << 4;
+  private static final int INFO_BLACK_STEREO = 1 << 5;
+  private static final int INFO_BLACK_DOLBY_SURROUND = 1 << 6;
+  private static final int INFO_BLACK_DOLBY_DIGITAL = 1 << 7;
+  private static final int INFO_BLACK_SECOND_AUDIO_PROGRAM = 1 << 8;
+  private static final int INFO_BLACK_SECOND_CLOSED_CAPTION = 1 << 9;
+  private static final int INFO_BLACK_SECOND_LIVE = 1 << 10;
+  private static final int INFO_BLACK_SECOND_OMU = 1 << 11;
+  private static final int INFO_BLACK_SECOND_FILM = 1 << 12;
+  private static final int INFO_BLACK_SECOND_SERIES = 1 << 13;
+  private static final int INFO_BLACK_SECOND_NEW = 1 << 14;
+  private static final int INFO_BLACK_SECOND_AUDIO_DESCRIPTION = 1 << 15;
+  private static final int INFO_BLACK_SECOND_NEWS = 1 << 16;
+  private static final int INFO_BLACK_SECOND_SHOW = 1 << 17;
+  private static final int INFO_BLACK_SECOND_MAGAZINE = 1 << 18;
+  private static final int INFO_BLACK_SECOND_HD = 1 << 19;
+  private static final int INFO_BLACK_SECOND_DOCU = 1 << 20;
+  private static final int INFO_BLACK_SECOND_ART = 1 << 21;
+  private static final int INFO_BLACK_SECOND_SPORT = 1 << 22;
+  private static final int INFO_BLACK_SECOND_CHILDREN = 1 << 23;
+  private static final int INFO_BLACK_SECOND_OTHER = 1 << 24;
+  private static final int INFO_BLACK_SECOND_SIGN_LANGUAGE = 1 << 25;
   
   public static final int[] INFO_CATEGORIES_ARRAY = {
     INFO_BLACK_AND_WHITE,
@@ -139,7 +134,7 @@ public class IOUtils {
     INFO_BLACK_SIXTEEN_TO_NINE,
     INFO_BLACK_MONO,
     INFO_BLACK_STEREO,
-    INFO_BLACK_DOLBY_SOURROUND,
+    INFO_BLACK_DOLBY_SURROUND,
     INFO_BLACK_DOLBY_DIGITAL,
     INFO_BLACK_SECOND_AUDIO_PROGRAM,
     INFO_BLACK_SECOND_CLOSED_CAPTION,
@@ -151,7 +146,7 @@ public class IOUtils {
     INFO_BLACK_SECOND_AUDIO_DESCRIPTION,
     INFO_BLACK_SECOND_NEWS,
     INFO_BLACK_SECOND_SHOW,
-    INFO_BLACK_SECOND_MAGAZIN,
+    INFO_BLACK_SECOND_MAGAZINE,
     INFO_BLACK_SECOND_HD,
     INFO_BLACK_SECOND_DOCU,
     INFO_BLACK_SECOND_ART,
@@ -161,8 +156,8 @@ public class IOUtils {
     INFO_BLACK_SECOND_SIGN_LANGUAGE,
   };
   
-  public static final String[] getInfoStringArrayNames(Resources res) {
-    String[] valueArr = {
+  public static String[] getInfoStringArrayNames(Resources res) {
+    return new String[]{
         res.getString(R.string.info_black_and_white),
         res.getString(R.string.info_four_to_three),
         res.getString(R.string.info_sixteen_to_nine),
@@ -189,8 +184,6 @@ public class IOUtils {
         res.getString(R.string.info_other),
         res.getString(R.string.info_sign_language)
     };
-    
-    return valueArr;
   }
   
   public static boolean infoSet(int categories, int info) {
@@ -203,31 +196,34 @@ public class IOUtils {
   
   private static int getDefaultCategoryColorKeyForColorKey(int colorKey) {
     int defaultColorCategoryKey = R.string.pref_color_categories_default;
-    
-    if(colorKey == R.string.PREF_COLOR_CATEGORY_FILM) {
-      defaultColorCategoryKey = R.string.pref_color_category_film_default;
-    }
-    else if(colorKey == R.string.PREF_COLOR_CATEGORY_SERIES) {
-      defaultColorCategoryKey = R.string.pref_color_category_series_default;
-    }
-    else if(colorKey == R.string.PREF_COLOR_CATEGORY_NEW) {
-      defaultColorCategoryKey = R.string.pref_color_category_new_default;
-    }
-    else if(colorKey == R.string.PREF_COLOR_CATEGORY_DOCU || colorKey == R.string.PREF_COLOR_CATEGORY_MAGAZIN) {
-      defaultColorCategoryKey = R.string.pref_color_category_docu_default;
-    }
-    else if(colorKey == R.string.PREF_COLOR_CATEGORY_CHILDREN) {
-      defaultColorCategoryKey = R.string.pref_color_category_children_default;
-    }
-    else if(colorKey == R.string.PREF_COLOR_CATEGORY_SHOW) {
-      defaultColorCategoryKey = R.string.pref_color_category_show_default;
+
+    switch (colorKey) {
+      case R.string.PREF_COLOR_CATEGORY_FILM:
+        defaultColorCategoryKey = R.string.pref_color_category_film_default;
+        break;
+      case R.string.PREF_COLOR_CATEGORY_SERIES:
+        defaultColorCategoryKey = R.string.pref_color_category_series_default;
+        break;
+      case R.string.PREF_COLOR_CATEGORY_NEW:
+        defaultColorCategoryKey = R.string.pref_color_category_new_default;
+        break;
+      case R.string.PREF_COLOR_CATEGORY_DOCU:
+      case R.string.PREF_COLOR_CATEGORY_MAGAZIN:
+        defaultColorCategoryKey = R.string.pref_color_category_docu_default;
+        break;
+      case R.string.PREF_COLOR_CATEGORY_CHILDREN:
+        defaultColorCategoryKey = R.string.pref_color_category_children_default;
+        break;
+      case R.string.PREF_COLOR_CATEGORY_SHOW:
+        defaultColorCategoryKey = R.string.pref_color_category_show_default;
+        break;
     }
     
     return defaultColorCategoryKey;
   }
   
   public static HashMap<String,Integer> loadCategoryColorMap(Context context) {
-    HashMap<String, Integer> categoryColorMap = new HashMap<String, Integer>();
+    HashMap<String, Integer> categoryColorMap = new HashMap<>();
     String[] names = getInfoStringArrayNames(context.getResources());
     
     for(int i = 0; i < SettingConstants.CATEGORY_COLOR_PREF_KEY_ARR.length; i++) {
@@ -236,7 +232,7 @@ public class IOUtils {
       int[] colorCategory = getActivatedColorFor(PrefUtils.getStringValue(colorKey, getDefaultCategoryColorKeyForColorKey(colorKey)));
       
       if(colorCategory[0] == 1) {
-        categoryColorMap.put(names[i], Integer.valueOf(colorCategory[1]));
+        categoryColorMap.put(names[i], colorCategory[1]);
       }
     }
         
@@ -287,7 +283,7 @@ public class IOUtils {
           infoString.append(", ");
           
           if(defaultColor != null) {
-            infoString.setSpan(new ForegroundColorSpan(defaultColor.intValue()), infoString.length()-2, infoString.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            infoString.setSpan(new ForegroundColorSpan(defaultColor), infoString.length()-2, infoString.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
           }
         }
         infoString.append(valueArr[i]);
@@ -298,11 +294,11 @@ public class IOUtils {
           Integer color = defaultColor;
           
           if(colorCategory[0] == 1) {
-            color = Integer.valueOf(colorCategory[1]);
+            color = colorCategory[1];
           }
           
           if(color != null) {
-            infoString.setSpan(new ForegroundColorSpan(color.intValue()), infoString.length()-valueArr[i].length(), infoString.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            infoString.setSpan(new ForegroundColorSpan(color), infoString.length()-valueArr[i].length(), infoString.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
           }          
         }
       }
@@ -325,13 +321,13 @@ public class IOUtils {
     return categories;
   }*/
   
-  public static byte[] loadUrl(String urlString) throws MalformedURLException, IOException, TimeoutException {
+  public static byte[] loadUrl(String urlString) throws TimeoutException {
     return loadUrl(urlString, 30000);
   }
   
-  public static byte[] loadUrl(final String urlString, final int timeout) throws MalformedURLException, IOException, TimeoutException {
+  public static byte[] loadUrl(final String urlString, final int timeout) throws TimeoutException {
     final AtomicInteger count = new AtomicInteger(0);
-    final AtomicReference<byte[]> loadData = new AtomicReference<byte[]>(null);
+    final AtomicReference<byte[]> loadData = new AtomicReference<>(null);
     
     new Thread("LOAD URL THREAD") {
       public void run() {
@@ -342,12 +338,12 @@ public class IOUtils {
           
           loadData.set(byteArr);
         }
-        catch(IOException e) {
+        catch(IOException ignored) {
         }
         finally {
           close(fout);
         }
-      };
+      }
     }.start();
     
     Thread wait = new Thread("SAVE URL WAITING THREAD") {
@@ -355,15 +351,15 @@ public class IOUtils {
         while(loadData.get() == null && count.getAndIncrement() < (timeout / 100)) {
           try {
             sleep(100);
-          } catch (InterruptedException e) {}
+          } catch (InterruptedException ignored) {}
         }
-      };
+      }
     };
     wait.start();
     
     try {
       wait.join();
-    } catch (InterruptedException e) {}
+    } catch (InterruptedException ignored) {}
     
     if(loadData.get() == null) {
       throw new TimeoutException("URL '"+urlString+"' could not be saved.");
@@ -372,7 +368,7 @@ public class IOUtils {
     return loadData.get();
   }
   
-  private static byte[] loadUrl(final String urlString, final AtomicInteger timeoutCount) throws MalformedURLException, IOException {
+  private static byte[] loadUrl(final String urlString, final AtomicInteger timeoutCount) throws IOException {
     BufferedInputStream in = null;
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     
@@ -447,12 +443,12 @@ public class IOUtils {
           
           wasSaved.set(true);
         }
-        catch(IOException e) {
+        catch(IOException ignored) {
         }
         finally {
           close(fout);
         }
-      };
+      }
     }.start();
     
     Thread wait = new Thread("SAVE URL WAITING THREAD") {
@@ -460,9 +456,9 @@ public class IOUtils {
         while(!wasSaved.get() && count.getAndIncrement() < (timeout / 100)) {
           try {
             sleep(100);
-          } catch (InterruptedException e) {}
+          } catch (InterruptedException ignored) {}
         }
-      };
+      }
     };
     wait.start();
         
@@ -496,7 +492,7 @@ public class IOUtils {
    * <p> 
    * @return <code>true</code> if the file was downloaded successfully, <code>false</code> otherwise.
    */
-  public static boolean saveStream(final String filename, final InputStream in, final int timeout) {
+  private static boolean saveStream(final String filename, final InputStream in, final int timeout) {
     final AtomicBoolean wasSaved = new AtomicBoolean(false);
     final AtomicInteger count = new AtomicInteger(0);
     
@@ -519,12 +515,12 @@ public class IOUtils {
           
           wasSaved.set(true);
         }
-        catch(IOException e) {
+        catch(IOException ignored) {
         }
         finally {
           close(fout);
         }
-      };
+      }
     }.start();
     
     Thread wait = new Thread("SAVE URL WAITING THREAD") {
@@ -532,9 +528,9 @@ public class IOUtils {
         while(!wasSaved.get() && count.getAndIncrement() < (timeout / 100)) {
           try {
             sleep(100);
-          } catch (InterruptedException e) {}
+          } catch (InterruptedException ignored) {}
         }
-      };
+      }
     };
     wait.start();
         
@@ -597,12 +593,12 @@ public class IOUtils {
     finally {
     	close(out);
     }
-    
+
     return bytesOut.toByteArray();
   }
   
-  public static final synchronized void setDataUpdateTime(Context context, long time, SharedPreferences pref) {
-    AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+  public static synchronized void setDataUpdateTime(Context context, long time, SharedPreferences pref) {
+    /*AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
     
     Intent dataUpdate = new Intent(context, AutoDataUpdateReceiver.class);
     dataUpdate.putExtra(SettingConstants.TIME_DATA_UPDATE_EXTRA, true);
@@ -611,11 +607,12 @@ public class IOUtils {
       PendingIntent pending = PendingIntent.getBroadcast(context, DATA_UPDATE_KEY, dataUpdate, PendingIntent.FLAG_UPDATE_CURRENT);
       
       CompatUtils.setAlarmInexact(alarmManager,AlarmManager.RTC_WAKEUP, Math.max(System.currentTimeMillis()+28*60000,time), pending);
-    }
+    }*/
   }
   
-  public static final synchronized void removeDataUpdateTime(Context context, SharedPreferences pref) {
-    AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+  public static synchronized void removeDataUpdateTime(Context context, SharedPreferences pref) {
+    JobDataUpdateAuto.cancelJob(context);
+    /*AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
     
     Intent dataUpdate = new Intent(context, AutoDataUpdateReceiver.class);
     
@@ -623,10 +620,10 @@ public class IOUtils {
     
     if(pending != null) {
       alarmManager.cancel(pending);
-    }
+    }*/
   }
   
-  public static final void setDataTableRefreshTime(Context context) {
+  public static void setDataTableRefreshTime(Context context) {
     Calendar now = Calendar.getInstance();
     
     now.add(Calendar.DAY_OF_YEAR, 1);
@@ -645,15 +642,16 @@ public class IOUtils {
     
     PendingIntent pending = PendingIntent.getService(context, REQUEST_CODE_DATA_TABLE_UPDATE, dataUpdate, PendingIntent.FLAG_UPDATE_CURRENT);
     
-    CompatUtils.setExactAlarmAndAllowWhileIdle(context, alarmManager,AlarmManager.RTC_WAKEUP, now.getTimeInMillis(), pending);
+    CompatUtils.setExactAlarmAndAllowWhileIdle(alarmManager,AlarmManager.RTC_WAKEUP, now.getTimeInMillis(), pending);
   }
   
-  public static final synchronized void handleDataUpdatePreferences(Context context) {
+  public static synchronized void handleDataUpdatePreferences(Context context) {
     handleDataUpdatePreferences(context,false);
   }
   
-  public static final synchronized void handleDataUpdatePreferences(Context context, boolean fromNow) {
-    SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
+  public static synchronized void handleDataUpdatePreferences(Context context, boolean fromNow) {
+    JobDataUpdateAuto.scheduleJob(context);
+    /*SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
     IOUtils.removeDataUpdateTime(context, pref);
     
     if(PrefUtils.getStringValue(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default).equals("2")) {
@@ -728,12 +726,12 @@ public class IOUtils {
       }
       
       IOUtils.setDataUpdateTime(context, current, pref);
-    }
+    }*/
   }
   
-  public static final String[] getStringArrayFromList(ArrayList<String> list) {
+  public static String[] getStringArrayFromList(ArrayList<String> list) {
     if(list != null) {
-      return list.toArray(new String[list.size()]);
+      return list.toArray(new String[0]);
     }
     
     return null;
@@ -765,7 +763,7 @@ public class IOUtils {
         finally  {
           disconnect(connection);
         }
-      };
+      }
     }.start();
     
     Thread check = new Thread("WAITING FOR NETWORK CONNECTION THREAD") {
@@ -775,7 +773,7 @@ public class IOUtils {
         while(!isConnected.get() && count++ <= (timeout / 100)) {
           try {
             sleep(100);
-          } catch (InterruptedException e) {}
+          } catch (InterruptedException ignored) {}
         }
       }
     };
@@ -783,7 +781,7 @@ public class IOUtils {
         
     try {
       check.join();
-    } catch (InterruptedException e) {}
+    } catch (InterruptedException ignored) {}
     
     return isConnected.get();
   }
@@ -891,7 +889,7 @@ public class IOUtils {
   }
 
   public static List<Channel> getChannelList(Context context) {
-    ArrayList<Channel> channelList = new ArrayList<Channel>();
+    ArrayList<Channel> channelList = new ArrayList<>();
     
     if(IOUtils.isDatabaseAccessible(context)) {
       final long token = Binder.clearCallingIdentity();
@@ -914,8 +912,16 @@ public class IOUtils {
     }
     return channelList;
   }
-  
+
+  private static final int TYPE_DOWNLOAD_DIRECTORY_DATA = 0;
+  public static final int TYPE_DOWNLOAD_DIRECTORY_OTHER = 1;
+  public static final int TYPE_DOWNLOAD_DIRECTORY_LOG = 2;
+
   public static File getDownloadDirectory(Context context) {
+    return getDownloadDirectory(context,TYPE_DOWNLOAD_DIRECTORY_DATA);
+  }
+
+  public static File getDownloadDirectory(Context context, int type) {
     File parent = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
     boolean external = true;
     
@@ -923,15 +929,29 @@ public class IOUtils {
       external = false;
       parent = context.getDir(Environment.DIRECTORY_DOWNLOADS, Context.MODE_PRIVATE);
     }
-    
-    File path = new File(parent,"tvbrowserdata");
+
+    String subdirectory = null;
+
+    switch (type) {
+      case TYPE_DOWNLOAD_DIRECTORY_OTHER:
+        subdirectory = "other";
+        break;
+      case TYPE_DOWNLOAD_DIRECTORY_LOG:
+        subdirectory = "log";
+        break;
+
+      default: subdirectory = "tvbrowserdata";
+    }
+
+    File path = new File(parent,subdirectory);
     File nomedia = new File(path,".nomedia");
     
     if(!path.isDirectory()) {
       if(!path.mkdirs() && external) {
         parent = context.getDir(Environment.DIRECTORY_DOWNLOADS, Context.MODE_PRIVATE);
-        
-        path = new File(parent,"tvbrowserdata");
+        external = false;
+
+        path = new File(parent,subdirectory);
         nomedia = new File(path,".nomedia");
         
         if(!path.isDirectory()) {
@@ -943,7 +963,7 @@ public class IOUtils {
     if(!nomedia.isFile()) {
       try {
         nomedia.createNewFile();
-      } catch (IOException e) {}
+      } catch (IOException ignored) {}
     }
     
     return path;
@@ -982,15 +1002,15 @@ public class IOUtils {
     return result;
   }
   
-  public static final String getUniqueChannelKey(String groupKey, String channelKey) {
-    return new StringBuilder(groupKey.trim()).append("_##_").append(channelKey.trim()).toString();
+  public static String getUniqueChannelKey(String groupKey, String channelKey) {
+    return groupKey.trim() + "_##_" + channelKey.trim();
   }
   
-  public static final String[] getUniqueChannelKeyParts(String uniqueKey) {
+  public static String[] getUniqueChannelKeyParts(String uniqueKey) {
     return uniqueKey.split("_##_");
   }
   
-  public static final boolean isInteractive(Context context) {
+  public static boolean isInteractive(Context context) {
     return CompatUtils.isInteractive((PowerManager)context.getSystemService(Context.POWER_SERVICE));
   }
   
@@ -1001,7 +1021,7 @@ public class IOUtils {
    * @return An array with the contained episode numbers.
    * @since 0.5.7.3
    */
-  public static Integer[] decodeSingleFieldValueToMultipleEpisodeNumers(int fieldValue) {
+  private static Integer[] decodeSingleFieldValueToMultipleEpisodeNumbers(int fieldValue) {
     int encodingMask = (fieldValue >> 30) & 0x3;
     
     if(encodingMask == 0) {
@@ -1036,7 +1056,7 @@ public class IOUtils {
       
       int last = fieldValue & 0x3FFF;
       
-      ArrayList<Integer> valueList = new ArrayList<Integer>();
+      ArrayList<Integer> valueList = new ArrayList<>();
       valueList.add(last);
       
       for(int i = 0; i < num; i++) {
@@ -1051,7 +1071,7 @@ public class IOUtils {
         valueList.add(last);
       }
       
-      return valueList.toArray(new Integer[valueList.size()]);
+      return valueList.toArray(new Integer[0]);
     }
   }
   
@@ -1063,7 +1083,7 @@ public class IOUtils {
    * @since 0.5.7.3
    */
   public static String decodeSingleFieldValueToMultipleEpisodeString(int fieldValue) {
-    Integer[] episodes = decodeSingleFieldValueToMultipleEpisodeNumers(fieldValue);
+    Integer[] episodes = decodeSingleFieldValueToMultipleEpisodeNumbers(fieldValue);
     
     StringBuilder epis = new StringBuilder();
     
@@ -1078,7 +1098,7 @@ public class IOUtils {
     return epis.toString();
   }
   
-  public static final void deleteOldData(Context context) {
+  public static void deleteOldData(Context context) {
     Calendar cal2 = Calendar.getInstance();
     cal2.add(Calendar.DAY_OF_YEAR, -2);
     cal2.set(Calendar.HOUR_OF_DAY, 0);
@@ -1093,7 +1113,7 @@ public class IOUtils {
           TvBrowserContentProvider.CONTENT_URI_DATA,
           TvBrowserContentProvider.DATA_KEY_STARTTIME + "<"
               + cal2.getTimeInMillis(), null);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException ignored) {
     }
 
     try {
@@ -1101,7 +1121,7 @@ public class IOUtils {
           TvBrowserContentProvider.CONTENT_URI_DATA_VERSION,
           TvBrowserContentProvider.VERSION_KEY_DAYS_SINCE_1970 + "<"
               + daysSince1970, null);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException ignored) {
     }
     
     final File pathBase = getDownloadDirectory(context);
@@ -1116,20 +1136,17 @@ public class IOUtils {
         if(!currentProperties.isEmpty()) {
           final long startMinute = cal2.getTimeInMillis() / 60000;
           
-          final File[] toDelete = pathBase.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File file) {
-              boolean result = false;
-              int index = file.getName().indexOf("_");
-              
-              if(index > 0) {
-                try {
-                  result = Long.parseLong(file.getName().substring(0,index)) < startMinute;
-                }catch(NumberFormatException nfe) {}
-              }
-              
-              return result;
+          final File[] toDelete = pathBase.listFiles(file -> {
+            boolean result = false;
+            int index = file.getName().indexOf("_");
+
+            if(index > 0) {
+              try {
+                result = Long.parseLong(file.getName().substring(0,index)) < startMinute;
+              }catch(NumberFormatException ignored) {}
             }
+
+            return result;
           });
           
           for(final File file : toDelete) {
@@ -1157,7 +1174,7 @@ public class IOUtils {
     * @return <code>true</code> if the cursor could be moved to the first entry,
     * <code>false</code> otherwise.
     */
-  public static final boolean prepareAccessFirst(Cursor cursor) {
+  public static boolean prepareAccessFirst(Cursor cursor) {
     boolean result = false;
     
     if(cursor != null && cursor.getCount() > 0 && !cursor.isClosed()) {
@@ -1168,7 +1185,7 @@ public class IOUtils {
     return result;
   }
   
-  public static final boolean prepareAccess(Cursor cursor) {
+  public static boolean prepareAccess(Cursor cursor) {
     boolean result = false;
     
     if(cursor != null && cursor.getCount() > 0 && !cursor.isClosed()) {
@@ -1198,7 +1215,7 @@ public class IOUtils {
     }
   }
   
-  public static final boolean isDatabaseAccessible(Context context) {
+  public static boolean isDatabaseAccessible(Context context) {
     boolean result = true;
     
     if(context != null) {
@@ -1220,7 +1237,7 @@ public class IOUtils {
    * @param target The target file.
    * @return <code>true</code> if the file could be copied, <code>false</code> otherwise.
    */
-  public static final boolean copyFile(File source, File target) {
+  public static boolean copyFile(File source, File target) {
     boolean result = false;
     
     if(source.isFile()) {
@@ -1258,7 +1275,7 @@ public class IOUtils {
     return result;
   }
   
-  public static final boolean isBatterySufficient(Context context) {
+  public static boolean isBatterySufficient(Context context) {
     boolean result = false;
     
     if(context != null && context.getApplicationContext() != null) {
@@ -1273,7 +1290,7 @@ public class IOUtils {
         int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
         int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
         
-        result = MIN_BATTERIE_LEVEL <= (level / (float)scale);
+        result = MIN_BATTERY_LEVEL <= (level / (float)scale);
       }
     }
     
@@ -1287,18 +1304,10 @@ public class IOUtils {
       try {
         out = new GZIPOutputStream(new FileOutputStream(propertiesFile));
         prop.store(out, comment);
-      } catch (FileNotFoundException e) {
-        e.printStackTrace();
       } catch (IOException e) {
         e.printStackTrace();
       } finally {
-        if(out != null) {
-          try {
-            out.close();
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        }
+        close(out);
       }
     }
   }
@@ -1312,16 +1321,10 @@ public class IOUtils {
       try {
         in = new GZIPInputStream(new FileInputStream(propertiesFile));
         properties.load(in);
-      } catch(IOException e) {
+      } catch(IOException ignored) {
         
       } finally {
-        if(in != null) {
-          try {
-            in.close();
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        }
+        close(in);
       }
     }
     
@@ -1358,7 +1361,7 @@ public class IOUtils {
         }
         
         delayed.run();
-      };
+      }
     }.start();
   }
 }

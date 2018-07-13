@@ -17,9 +17,12 @@
 package org.tvbrowser.utils;
 
 import java.io.File;
+import java.text.Collator;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,6 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.devplugin.Plugin;
 import org.tvbrowser.devplugin.PluginHandler;
@@ -55,7 +59,6 @@ import org.tvbrowser.widgets.WidgetToggleReminderState;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
@@ -65,8 +68,6 @@ import android.content.ContentProviderOperation;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.OperationApplicationException;
 import android.content.SharedPreferences;
@@ -82,6 +83,7 @@ import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Typeface;
@@ -96,9 +98,11 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.AlertDialog;
 import android.text.Editable;
 import android.text.Html;
 import android.text.Layout;
@@ -115,6 +119,7 @@ import android.text.style.ImageSpan;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextMenu;
@@ -122,12 +127,11 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver.OnPreDrawListener;
+import android.view.WindowManager;
 import android.view.WindowManager.BadTokenException;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
@@ -140,7 +144,24 @@ import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-public class UiUtils {
+public final class UiUtils {
+
+  UiUtils() {}
+
+  /**
+   * A thread specific {@link Collator} instance for locale sensitive sorting.
+   * @see #getCollator()
+   */
+  private static final ThreadLocal<Collator> collatorThreadLocal = new ThreadLocal<Collator>() {
+    @Override
+    protected Collator initialValue() {
+      final Collator collator = Collator.getInstance();
+      collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
+      collator.setStrength(Collator.SECONDARY);
+      return collator;
+    }
+  };
+
   public static final SimpleDateFormat LONG_DAY_FORMAT = new SimpleDateFormat("EEEE", Locale.getDefault());
   
   private static final HashMap<String, Integer> VALUE_MAP;
@@ -150,13 +171,13 @@ public class UiUtils {
   public static final int MARKED_FAVORITE_COLOR_KEY = 2;
   public static final int MARKED_REMINDER_COLOR_KEY = 3;
   public static final int MARKED_SYNC_COLOR_KEY = 4;
-  public static final int ON_AIR_BACKGROUND_KEY = 5;
-  public static final int ON_AIR_PROGRESS_KEY = 6;
+  private static final int ON_AIR_BACKGROUND_KEY = 5;
+  private static final int ON_AIR_PROGRESS_KEY = 6;
   public static final int RUNNING_TIME_SELECTION_KEY = 7;
   public static final int I_DONT_WANT_TO_SEE_HIGHLIGHT_COLOR_KEY = 8;
   
   static {
-    VALUE_MAP = new HashMap<String, Integer>();
+    VALUE_MAP = new HashMap<>();
     VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_ACTORS, R.id.detail_actors);
     VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_REGIE, R.id.detail_regie);
     VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_CUSTOM_INFO, R.id.detail_custom);
@@ -175,10 +196,18 @@ public class UiUtils {
     VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_OTHER_PERSONS, R.id.detail_other_persons);
     VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_PRODUCTION_FIRM, R.id.detail_production_firm);
     VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_AGE_LIMIT_STRING, R.id.detail_age_limit_string);
+    VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_YEAR_PRODUCTION_FIRST, R.id.detail_year_production_first);
     VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_LAST_PRODUCTION_YEAR, R.id.detail_last_production_year);
     VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_ADDITIONAL_INFO, R.id.detail_additional_info);
     VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_SERIES, R.id.detail_series);
     VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_RATING, R.id.detail_rating);
+    VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_GENRE_SUB_LIST, R.id.detail_subgenre_list);
+    VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_VOD_INFO, R.id.detail_vod_info);
+    VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_VOD_LINK, R.id.detail_vod_link);
+    VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_KEYWORD_LIST, R.id.detail_keyword_list);
+    VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_PART_NUMBER, R.id.detail_part_numer);
+    VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_PART_NUMBER_TOTAL, R.id.detail_parts_total);
+    VALUE_MAP.put(TvBrowserContentProvider.DATA_KEY_DURATION_ORIGINAL, R.id.detail_duration_original);
   }
   
   public static void showProgramInfo(final Context context, long id, View parent, Handler handler) {
@@ -212,17 +241,14 @@ public class UiUtils {
               
               mShowWaitingDialog = true;
               mHandler = new Handler();
-              mShowWaiting = new Runnable() {
-                @Override
-                public void run() {
-                  mProgress = new ProgressDialog(context);
-                  mProgress.setMessage(context.getString(R.string.waiting_detail_show));
-                  
-                  if(mShowWaitingDialog) {
-                    try {
-                      mProgress.show();
-                    }catch(BadTokenException e) {}
-                  }
+              mShowWaiting = () -> {
+                mProgress = new ProgressDialog(context);
+                mProgress.setMessage(context.getString(R.string.waiting_detail_show));
+
+                if(mShowWaitingDialog) {
+                  try {
+                    mProgress.show();
+                  }catch(BadTokenException ignored) {}
                 }
               };
               
@@ -234,7 +260,7 @@ public class UiUtils {
             
             @Override
             protected Boolean doInBackground(Void... params) {
-              Boolean result = Boolean.valueOf(false);
+              Boolean result = Boolean.FALSE;
               
               final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
               
@@ -243,12 +269,12 @@ public class UiUtils {
               try {
                 if(IOUtils.prepareAccessFirst(c)) {
                   mHasSpannableActors = false;
-                  result = Boolean.valueOf(true);
+                  result = Boolean.TRUE;
                   float textScale = Float.parseFloat(PrefUtils.getStringValue(R.string.DETAIL_TEXT_SCALE, R.string.detail_text_scale_default));
                   
                   final long startTime = c.getLong(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_STARTTIME));
                   final long endTime = c.getLong(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_ENDTIME));
-                  final ImageButton handleReminder = (ImageButton)mLayout.findViewById(R.id.detail_handle_reminder);
+                  final ImageButton handleReminder = mLayout.findViewById(R.id.detail_handle_reminder);
                   
                   if(startTime <= System.currentTimeMillis()) {
                     handleReminder.setVisibility(View.GONE);
@@ -266,64 +292,55 @@ public class UiUtils {
                       CompatUtils.setBackground(handleReminder, ContextCompat.getDrawable(context, R.drawable.button_selector_add));
                     }
                     
-                    handleReminder.setOnClickListener(new View.OnClickListener() {
-                      @Override
-                      public void onClick(View v) {
-                        ContentValues values = new ContentValues();
-                        boolean add = true;
-                        
-                        if(userRemind.get() || favoriteRemind.get()) {
-                          add = false;
-                          values.put(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER, false);
-                          values.put(TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER, false);
-                          
+                    handleReminder.setOnClickListener(v -> {
+                      ContentValues values = new ContentValues();
+                      boolean add = true;
+
+                      if(userRemind.get() || favoriteRemind.get()) {
+                        add = false;
+                        values.put(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER, false);
+                        values.put(TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER, false);
+
+                      }
+                      else {
+                        values.put(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER, true);
+                      }
+
+                      if(context.getContentResolver().update(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_DATA, id), values, null, null) == 1) {
+                        if(add) {
+                          userRemind.set(true);
+
+                          ServiceUpdateReminders.startReminderUpdate(context);
+                          ProgramUtils.addReminderId(context, id);
+
+                          mHandler.post(() -> {
+                            handleReminder.setImageResource(R.drawable.ic_action_remove_alarm);
+                            CompatUtils.setBackground(handleReminder, ContextCompat.getDrawable(context, R.drawable.button_selector_remove));
+                            handleReminder.invalidate();
+                          });
                         }
                         else {
-                          values.put(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER, true);
+                          userRemind.set(false);
+                          favoriteRemind.set(false);
+
+                          IOUtils.removeReminder(context, id);
+                          ProgramUtils.removeReminderId(context, id);
+                          ServiceUpdateReminders.startReminderUpdate(context);
+
+                          mHandler.post(() -> {
+                            handleReminder.setImageResource(R.drawable.ic_action_add_alarm);
+                            CompatUtils.setBackground(handleReminder, ContextCompat.getDrawable(context, R.drawable.button_selector_add));
+                            handleReminder.invalidate();
+                          });
                         }
-                        
-                        if(context.getContentResolver().update(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_DATA, id), values, null, null) == 1) {
-                          if(add) {
-                            userRemind.set(true);
-                            
-                            ServiceUpdateReminders.startReminderUpdate(context);
-                            ProgramUtils.addReminderId(context, id);
-                            
-                            mHandler.post(new Runnable() {
-                              @Override
-                              public void run() {
-                                handleReminder.setImageResource(R.drawable.ic_action_remove_alarm);
-                                CompatUtils.setBackground(handleReminder, ContextCompat.getDrawable(context, R.drawable.button_selector_remove));
-                                handleReminder.invalidate();
-                              }
-                            });
-                          }
-                          else {
-                            userRemind.set(false);
-                            favoriteRemind.set(false);
-                            
-                            IOUtils.removeReminder(context, id);
-                            ProgramUtils.removeReminderId(context, id);
-                            ServiceUpdateReminders.startReminderUpdate(context);
-                            
-                            mHandler.post(new Runnable() {
-                              @Override
-                              public void run() {
-                                handleReminder.setImageResource(R.drawable.ic_action_add_alarm);
-                                CompatUtils.setBackground(handleReminder, ContextCompat.getDrawable(context, R.drawable.button_selector_add));
-                                handleReminder.invalidate();
-                              }
-                            });
-                          }
-                          
-                          Intent intent = new Intent(SettingConstants.MARKINGS_CHANGED);
-                          intent.putExtra(SettingConstants.EXTRA_MARKINGS_ID, id);
-                          
-                          LocalBroadcastManager.getInstance(context).sendBroadcastSync(intent);
-                          
-                          UiUtils.updateImportantProgramsWidget(context);
-                          UiUtils.updateRunningProgramsWidget(context);
-                        }
+
+                        Intent intent = new Intent(SettingConstants.MARKINGS_CHANGED);
+                        intent.putExtra(SettingConstants.EXTRA_MARKINGS_ID, id);
+
+                        LocalBroadcastManager.getInstance(context).sendBroadcastSync(intent);
+
+                        UiUtils.updateImportantProgramsWidget(context);
+                        UiUtils.updateRunningProgramsWidget(context);
                       }
                     });
                   }
@@ -331,7 +348,7 @@ public class UiUtils {
                   final int favoriteMatchHighlightColor = PrefUtils.getIntValue(R.string.PREF_DETAIL_HIGHLIGHT_COLOR, ContextCompat.getColor(context, R.color.pref_detail_highlight_color_default));
                   
                   final Favorite[] markedFromFavorites = Favorite.getFavoritesForUniqueId(context, id);
-                  final ArrayList<FavoriteTypePattern> patternList = new ArrayList<FavoriteTypePattern>();
+                  final ArrayList<FavoriteTypePattern> patternList = new ArrayList<>();
                   final BackgroundColorSpan backgroundColorSpan = new BackgroundColorSpan(favoriteMatchHighlightColor);
                   
                   if(markedFromFavorites.length > 0) {
@@ -342,16 +359,16 @@ public class UiUtils {
                     }
                   }
                   
-                  TextView date = (TextView)mLayout.findViewById(R.id.detail_date_channel);
-                  TextView title = (TextView)mLayout.findViewById(R.id.detail_title);
-                  TextView genre = (TextView)mLayout.findViewById(R.id.detail_genre);
-                  TextView info = (TextView)mLayout.findViewById(R.id.detail_info);
-                  TextView episode = (TextView)mLayout.findViewById(R.id.detail_episode_title);
-                  TextView shortDescription = (TextView)mLayout.findViewById(R.id.detail_short_description);
-                  TextView description = (TextView)mLayout.findViewById(R.id.detail_description);
-                  TextView link = (TextView)mLayout.findViewById(R.id.detail_link);
-                  TextView pictureDescription = (TextView)mLayout.findViewById(R.id.detail_picture_description);
-                  TextView pictureCopyright = (TextView)mLayout.findViewById(R.id.detail_picture_copyright);
+                  TextView date = mLayout.findViewById(R.id.detail_date_channel);
+                  TextView title = mLayout.findViewById(R.id.detail_title);
+                  TextView genre = mLayout.findViewById(R.id.detail_genre);
+                  TextView info = mLayout.findViewById(R.id.detail_info);
+                  TextView episode = mLayout.findViewById(R.id.detail_episode_title);
+                  TextView shortDescription = mLayout.findViewById(R.id.detail_short_description);
+                  TextView description = mLayout.findViewById(R.id.detail_description);
+                  TextView link = mLayout.findViewById(R.id.detail_link);
+                  TextView pictureDescription = mLayout.findViewById(R.id.detail_picture_description);
+                  TextView pictureCopyright = mLayout.findViewById(R.id.detail_picture_copyright);
                   
                   date.setTextSize(TypedValue.COMPLEX_UNIT_PX, date.getTextSize() * textScale);
                   title.setTextSize(TypedValue.COMPLEX_UNIT_PX, date.getTextSize() * textScale);
@@ -427,39 +444,86 @@ public class UiUtils {
                     IOUtils.close(channel);
                   }
 
-                  String year = "";
+                  final StringBuilder year = new StringBuilder();
+
                   int yearInt = -1;
+                  int yearLast = -1;
+                  int yearFirst = -1;
+                  int originLength = 0;
                       
                   if(!c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_ORIGIN))) {
-                    year = c.getString(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_ORIGIN));
+                    year.append(c.getString(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_ORIGIN)));
+                    originLength = year.length();
                   }
-                  
+
                   if(!c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_YEAR))) {
-                    if(year.length() > 0) {
-                      year += " ";
-                    }
-                    
                     yearInt = c.getInt(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_YEAR));
-                    year += yearInt;
                   }
-                  
+
+                  if(!c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_YEAR_PRODUCTION_FIRST))) {
+                    yearFirst = c.getInt(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_YEAR_PRODUCTION_FIRST));
+                  }
+
                   if(!c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_LAST_PRODUCTION_YEAR))) {
-                    int test = c.getInt(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_LAST_PRODUCTION_YEAR));
-                    
-                    if(yearInt < test) {
-                      if(year.length() > 0) {
-                        if(yearInt != -1) {
-                          year += "-";
+                    yearLast = c.getInt(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_LAST_PRODUCTION_YEAR));
+                  }
+
+                  if(yearLast < yearInt) {
+                    yearLast = -1;
+                  }
+
+                  if(yearInt != -1 && ((yearLast != -1 && yearFirst == -1) || (yearLast == -1 && yearFirst < yearInt && yearFirst != -1))) {
+                    yearFirst = yearInt;
+                  }
+
+                  if(yearInt != -1) {
+                    if(year.length() >= 0) {
+                      year.append(" ");
+                    }
+
+                    year.append(yearInt);
+                  }
+
+                  if(yearLast != -1 && yearLast != yearInt) {
+                    if(yearFirst != -1) {
+                      if(year.length() >= 0) {
+                        if(yearFirst == yearInt) {
+                          year.append(" \u2013 ");
                         }
                         else {
-                          year += " ";
+                          year.append(" (");
                         }
                       }
-                      
-                      year += test;
+
+                      if(yearFirst == yearInt) {
+                        year.append(yearLast);
+                      }
+                      else {
+                        year.append(yearFirst).append(" \u2013 ").append(yearLast).append(")");
+                      }
+                    }
+                    else {
+                      year.append(yearLast);
                     }
                   }
-                  
+                  else if(yearFirst != -1 && yearFirst != yearInt) {
+                    if(yearFirst < yearInt) {
+                      year.insert(originLength, " \u2013 ");
+                      year.insert(originLength, yearFirst);
+
+                      if(originLength != 0) {
+                        year.insert(originLength, " ");
+                      }
+                    }
+                    else if(yearInt == -1) {
+                      if(originLength > 0) {
+                        year.append(" ");
+                      }
+
+                      year.append(yearFirst);
+                    }
+                  }
+
                   String originalTitle = null;
                   String titleTest = c.getString(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_TITLE));
                   
@@ -510,7 +574,7 @@ public class UiUtils {
 //                    genre.setText();
                   }
                   else if(year.length() > 0) {
-                    checkAndAddHiglightingForFavorites(genre, year, patternList, false, backgroundColorSpan);
+                    checkAndAddHiglightingForFavorites(genre, year.toString(), patternList, false, backgroundColorSpan);
                     //genre.setText(year);
                   }
                   else {
@@ -570,7 +634,7 @@ public class UiUtils {
                   boolean showEpgPaidInfo = PrefUtils.getBooleanValue(R.string.PREF_EPGPAID_DESCRIPTION_MISSING_INFO, R.bool.pref_epgpaid_description_missing_default);
                   
                   if(showEpgPaidInfo) {
-                    final Set<String> channelIds = PrefUtils.getStringSetValue(R.string.PREF_EPGPAID_DATABASE_CHANNEL_IDS, new HashSet<String>());
+                    final Set<String> channelIds = PrefUtils.getStringSetValue(R.string.PREF_EPGPAID_DATABASE_CHANNEL_IDS, new HashSet<>());
                     
                     showEpgPaidInfo = channelIds.contains(String.valueOf(channelID));
                     
@@ -665,7 +729,7 @@ public class UiUtils {
                   
                   for(String key : keys) {
                     boolean enabled = pref.getBoolean("details_" + key, true);
-                    TextView textView = (TextView)mLayout.findViewById(VALUE_MAP.get(key));
+                    TextView textView = mLayout.findViewById(VALUE_MAP.get(key));
                     textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, textView.getTextSize() * textScale);
                     
                     if(textView != null && enabled && !c.isNull(c.getColumnIndex(key))) {
@@ -699,7 +763,7 @@ public class UiUtils {
                             actors.setSpan(new StyleSpan(Typeface.BOLD), 0, name.length()-1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                             actors.setSpan(new UnderlineSpan(), 0, name.length()-1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                             
-                            int screenSizeHalf = CompatUtils.getScreenSize(context).x/2;
+                            int screenSizeHalf = getScreenSize(context).x/2;
                             
                             if(separator != null) {
                               String[] lines = text.split(separator);
@@ -887,19 +951,14 @@ public class UiUtils {
               if(mProgress != null && mProgress.isShowing()) {
                 try {
                   mProgress.dismiss();
-                }catch(IllegalArgumentException e) {}
+                }catch(IllegalArgumentException ignored) {}
               }
               
-              if(result.booleanValue()) {
+              if(result) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 
                 if(finish != null) {
-                  builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                    @Override
-                    public void onCancel(DialogInterface dialog) {
-                      finish.finish();
-                    }
-                  });
+                  builder.setOnCancelListener(dialog -> finish.finish());
                 }
                 
                 builder.setView(mLayout);
@@ -927,38 +986,35 @@ public class UiUtils {
                 }
                 
                 if(mLayout instanceof SwipeScrollView) {
-                  mLayout.setOnTouchListener(new View.OnTouchListener() {
-                    @Override
-                    public boolean onTouch(View v, MotionEvent event) {
-                      boolean result = false;
-                      
-                      if(((SwipeScrollView)mLayout).isSwipeLeft()) {
-                        ((SwipeScrollView)mLayout).resetSwipe();
-                        
-                        if(mNextId != -1) {
-                          test.dismiss();
-                          UiUtils.showProgramInfo(context, mNextId, finish, parent, handler);
-                          result = true;
-                        }
+                  mLayout.setOnTouchListener((v, event) -> {
+                    boolean result1 = false;
+
+                    if(((SwipeScrollView)mLayout).isSwipeLeft()) {
+                      ((SwipeScrollView)mLayout).resetSwipe();
+
+                      if(mNextId != -1) {
+                        test.dismiss();
+                        UiUtils.showProgramInfo(context, mNextId, finish, parent, handler);
+                        result1 = true;
                       }
-                      else if(((SwipeScrollView)mLayout).isSwipeRight()) {
-                        ((SwipeScrollView)mLayout).resetSwipe();
-                        
-                        if(mPreviousId != -1) {
-                          test.dismiss();
-                          UiUtils.showProgramInfo(context, mPreviousId, finish, parent, handler);
-                          result = true;
-                        }
-                      }
-                      
-                      return result;
                     }
+                    else if(((SwipeScrollView)mLayout).isSwipeRight()) {
+                      ((SwipeScrollView)mLayout).resetSwipe();
+
+                      if(mPreviousId != -1) {
+                        test.dismiss();
+                        UiUtils.showProgramInfo(context, mPreviousId, finish, parent, handler);
+                        result1 = true;
+                      }
+                    }
+
+                    return result1;
                   });
                 }
                 
                 try {
                   test.show();
-                }catch(BadTokenException e) {}
+                }catch(BadTokenException ignored) {}
               }
               
               new Thread("SHOW PROGRAM INFO ALLOWING THREAD") {
@@ -971,7 +1027,7 @@ public class UiUtils {
                     e.printStackTrace();
                   }
                   mShowingProgramInfo = false;
-                };
+                }
               }.start();
             }
           };
@@ -985,7 +1041,7 @@ public class UiUtils {
   public static void createContextMenu(final Context context, ContextMenu menu, final long id) {
     new MenuInflater(context).inflate(R.menu.program_context, menu);
     
-    String[] projection = TvBrowserContentProvider.getColumnArrayWithMarkingColums(ProgramUtils.DATA_CHANNEL_PROJECTION);
+    String[] projection = TvBrowserContentProvider.getColumnArrayWithMarkingColumns(ProgramUtils.DATA_CHANNEL_PROJECTION);
     
     if(IOUtils.isDatabaseAccessible(context)) {
       Cursor cursor = null;
@@ -1046,25 +1102,22 @@ public class UiUtils {
                     for(final PluginMenu pluginMenu : actions) {
                       MenuItem item = menu.add(-1,Menu.NONE,Menu.NONE,pluginMenu.getTitle());
                       
-                      item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                          try {
-                            if(plugin.onProgramContextMenuSelected(pluginProgram, pluginMenu)) {
-                              if(pluginService.getPluginMarkIcon() != null) {
-                                ProgramUtils.markProgram(context, pluginProgram, pluginService.getId());
-                              }
-                              else {
-                                ProgramUtils.markProgram(context, pluginProgram, null);
-                              }
+                      item.setOnMenuItemClickListener(item1 -> {
+                        try {
+                          if(plugin.onProgramContextMenuSelected(pluginProgram, pluginMenu)) {
+                            if(pluginService.getPluginMarkIcon() != null) {
+                              ProgramUtils.markProgram(context, pluginProgram, pluginService.getId());
                             }
-                          } catch (Throwable t) {
-                            // catch all possible exceptions and errors of plugins
-                            Log.d("info23", "", t);
+                            else {
+                              ProgramUtils.markProgram(context, pluginProgram, null);
+                            }
                           }
-                          
-                          return true;
+                        } catch (Throwable t) {
+                          // catch all possible exceptions and errors of plugins
+                          Log.d("info23", "", t);
                         }
+
+                        return true;
                       });
                     }
                   }
@@ -1086,12 +1139,12 @@ public class UiUtils {
     }
   }
   
-  public static void searchForRepetition(final Context activity, String title, String episode, View parent) {
+  private static void searchForRepetition(final Context activity, String title, String episode, View parent) {
     final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
     final RelativeLayout layout = (RelativeLayout)((LayoutInflater)activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.search_repetition_layout, parent instanceof ViewGroup ? (ViewGroup)parent : null, false);
     final Resources resources = activity.getResources();
-    final EditText titleText = (EditText)layout.findViewById(R.id.search_repetition_title);
-    final EditText episodeText = (EditText)layout.findViewById(R.id.search_repetition_episode);
+    final EditText titleText = layout.findViewById(R.id.search_repetition_title);
+    final EditText episodeText = layout.findViewById(R.id.search_repetition_episode);
     
     if(title != null) {
       titleText.setText(title);
@@ -1103,28 +1156,22 @@ public class UiUtils {
     builder.setTitle(resources.getString(R.string.program_popup_search_repetition));
     builder.setView(layout);
     
-    builder.setPositiveButton(resources.getString(android.R.string.search_go), new DialogInterface.OnClickListener() {      
-      @Override
-      public void onClick(DialogInterface dialog, int which) {
-        Intent search = new Intent(activity,ActivityTvBrowserSearchResults.class);
-        
-        search.putExtra(SearchManager.QUERY, String.valueOf(titleText.getText()));
-        
-        String episode = String.valueOf(episodeText.getText()).trim();
-        
-        if(episode.length() > 0) {
-          search.putExtra(ActivityTvBrowserSearchResults.QUERY_EXTRA_EPISODE_KEY, episode);
-        }
-        
-        activity.startActivity(search);
+    builder.setPositiveButton(resources.getString(android.R.string.search_go), (dialog, which) -> {
+      Intent search = new Intent(activity,ActivityTvBrowserSearchResults.class);
+
+      search.putExtra(SearchManager.QUERY, String.valueOf(titleText.getText()));
+
+      String episode1 = String.valueOf(episodeText.getText()).trim();
+
+      if(episode1.length() > 0) {
+        search.putExtra(ActivityTvBrowserSearchResults.QUERY_EXTRA_EPISODE_KEY, episode1);
       }
+
+      activity.startActivity(search);
     });
     
-    builder.setNegativeButton(resources.getString(android.R.string.cancel), new DialogInterface.OnClickListener() {      
-      @Override
-      public void onClick(DialogInterface dialog, int which) {
-        
-      }
+    builder.setNegativeButton(resources.getString(android.R.string.cancel), (dialog, which) -> {
+
     });
     
     builder.show();
@@ -1135,11 +1182,11 @@ public class UiUtils {
     if(IOUtils.isDatabaseAccessible(activity)) {
       String title = null;
       String episode = null;  
-      ArrayList<String> markedColumns = new ArrayList<String>();
+      ArrayList<String> markedColumns = new ArrayList<>();
       Cursor info = null;
       
       try {
-        info = activity.getContentResolver().query(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_DATA, programID), TvBrowserContentProvider.getColumnArrayWithMarkingColums(TvBrowserContentProvider.DATA_KEY_TITLE,TvBrowserContentProvider.DATA_KEY_EPISODE_TITLE), null, null,null);
+        info = activity.getContentResolver().query(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_DATA, programID), TvBrowserContentProvider.getColumnArrayWithMarkingColumns(TvBrowserContentProvider.DATA_KEY_TITLE,TvBrowserContentProvider.DATA_KEY_EPISODE_TITLE), null, null,null);
   
         if(IOUtils.prepareAccessFirst(info)) {
           for(String column : TvBrowserContentProvider.MARKING_COLUMNS) {
@@ -1160,179 +1207,165 @@ public class UiUtils {
         IOUtils.close(info);
       }
       ContentValues values = new ContentValues();
-      
-      if(item.getItemId() == R.id.create_favorite_item) {
-        UiUtils.editFavorite(null, activity, title);
-        return true;
-      }
-      else if(item.getItemId() == R.id.edit_favorite_item) {
-        final Favorite[] exludeFavorites = Favorite.getFavoritesForUniqueId(activity, programID);
-        
-        if(exludeFavorites.length == 1) {
-          UiUtils.editFavorite(exludeFavorites[0], activity, null);
-        }
-        else if(exludeFavorites.length > 1) {
-          final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-          builder.setTitle(R.string.dialog_edit_favorite_select_title);
-          
-          final ArrayList<String> items = new ArrayList<String>();
-          
-          for(Favorite favorite : exludeFavorites) {
-            items.add(favorite.getName());
-          }
-          
-          builder.setItems(items.toArray(new String[items.size()]), new OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {              
-              UiUtils.editFavorite(exludeFavorites[which], activity, null);
+
+      switch (item.getItemId()) {
+        case R.id.create_favorite_item:
+          UiUtils.editFavorite(null, activity, title);
+          return true;
+        case R.id.edit_favorite_item:
+          final Favorite[] exludeFavorites = Favorite.getFavoritesForUniqueId(activity, programID);
+
+          if (exludeFavorites.length == 1) {
+            UiUtils.editFavorite(exludeFavorites[0], activity, null);
+          } else if (exludeFavorites.length > 1) {
+            final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            builder.setTitle(R.string.dialog_edit_favorite_select_title);
+
+            final ArrayList<String> items = new ArrayList<>();
+
+            for (Favorite favorite : exludeFavorites) {
+              items.add(favorite.getName());
             }
-          });
-                    
-          builder.setNegativeButton(android.R.string.cancel, null);
-          
-          final AlertDialog d = builder.create();
-          d.show();
-        }
-        
-        return true;
-      }
-      else if(item.getItemId() == R.id.program_popup_search_repetition) {
-        searchForRepetition(activity,title,episode,parent);
-      }
-      else if(item.getItemId() == R.id.prog_add_reminder) {
-        if(markedColumns.contains(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER) || markedColumns.contains(TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER)) {
-          return true;
-        }
-        else {
-          values.put(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER, true);
-        }
-        
-        ProgramUtils.addReminderId(activity, programID);
-        //addReminder(activity.getApplicationContext(),programID,0,UiUtils.class,true);
-      }
-      else if(item.getItemId() == R.id.prog_remove_reminder) {
-        if(!(markedColumns.contains(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER) || markedColumns.contains(TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER))) {
-          return true;
-        }
-        
-        values.put(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER, false);
-        values.put(TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER, 0);
-        values.put(TvBrowserContentProvider.DATA_KEY_REMOVED_REMINDER, true);
-        
-        ProgramUtils.removeReminderId(activity, programID);
-        
-        if(menuView != null) {
-          markedColumns.remove(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER);
-          markedColumns.remove(TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER);
-          
-          if(markedColumns.isEmpty()) {
-            menuView.setBackgroundResource(android.R.drawable.list_selector_background);  
+
+            builder.setItems(items.toArray(new String[items.size()]), (dialog, which) -> UiUtils.editFavorite(exludeFavorites[which], activity, null));
+
+            builder.setNegativeButton(android.R.string.cancel, null);
+
+            final AlertDialog d = builder.create();
+            d.show();
           }
-          else {
-            handleMarkings(activity, null, menuView, IOUtils.getStringArrayFromList(markedColumns));
+
+          return true;
+        case R.id.program_popup_search_repetition:
+          searchForRepetition(activity, title, episode, parent);
+          break;
+        case R.id.prog_add_reminder:
+          if (markedColumns.contains(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER) || markedColumns.contains(TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER)) {
+            return true;
+          } else {
+            values.put(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER, true);
           }
-        }
-        
-        IOUtils.removeReminder(activity.getApplicationContext(),programID);
-      }
-      else if(item.getItemId() == R.id.program_popup_dont_want_to_see) {
-        if(title != null) {
-          AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-          
-          builder.setTitle(R.string.action_dont_want_to_see);
-          
-          View view = ((LayoutInflater)activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.dont_want_to_see_edit, parent instanceof ViewGroup ? (ViewGroup)parent : null, false);
-          
-          final TextView exclusion = (TextView)view.findViewById(R.id.dont_want_to_see_value);
-          final CheckBox caseSensitive = (CheckBox)view.findViewById(R.id.dont_want_to_see_case_sensitve);
-          exclusion.setText(title);
-          
-          builder.setView(view);
-          
-          builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              if(!SettingConstants.UPDATING_FILTER) {
+
+          ProgramUtils.addReminderId(activity, programID);
+          //addReminder(activity.getApplicationContext(),programID,0,UiUtils.class,true);
+          break;
+        case R.id.prog_remove_reminder:
+          if (!(markedColumns.contains(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER) || markedColumns.contains(TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER))) {
+            return true;
+          }
+
+          values.put(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER, false);
+          values.put(TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER, 0);
+          values.put(TvBrowserContentProvider.DATA_KEY_REMOVED_REMINDER, true);
+
+          ProgramUtils.removeReminderId(activity, programID);
+
+          if (menuView != null) {
+            markedColumns.remove(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER);
+            markedColumns.remove(TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER);
+
+            if (markedColumns.isEmpty()) {
+              menuView.setBackgroundResource(android.R.drawable.list_selector_background);
+            } else {
+              handleMarkings(activity, null, menuView, IOUtils.getStringArrayFromList(markedColumns));
+            }
+          }
+
+          IOUtils.removeReminder(activity.getApplicationContext(), programID);
+          break;
+        case R.id.program_popup_dont_want_to_see:
+          if (title != null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+
+            builder.setTitle(R.string.action_dont_want_to_see);
+
+            View view = ((LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.dont_want_to_see_edit, parent instanceof ViewGroup ? (ViewGroup) parent : null, false);
+
+            final TextView exclusion = view.findViewById(R.id.dont_want_to_see_value);
+            final CheckBox caseSensitive = view.findViewById(R.id.dont_want_to_see_case_sensitve);
+            exclusion.setText(title);
+
+            builder.setView(view);
+
+            builder.setPositiveButton(android.R.string.ok, (dialog, which) -> {
+              if (!SettingConstants.UPDATING_FILTER) {
                 SettingConstants.UPDATING_FILTER = true;
-                
+
                 String key = activity.getResources().getString(R.string.I_DONT_WANT_TO_SEE_ENTRIES);
                 Set<String> dontWantToSeeSet = PreferenceManager.getDefaultSharedPreferences(activity).getStringSet(key, null);
-                
-                HashSet<String> newDontWantToSeeSet = new HashSet<String>();
-                            
+
+                HashSet<String> newDontWantToSeeSet = new HashSet<>();
+
                 String exclusionText = exclusion.getText().toString().trim();
                 boolean caseSensitiveValue = caseSensitive.isChecked();
-                
-                if(exclusionText.length() > 0) {
-                  if(dontWantToSeeSet != null) {
+
+                if (exclusionText.length() > 0) {
+                  if (dontWantToSeeSet != null) {
                     newDontWantToSeeSet.addAll(dontWantToSeeSet);
                   }
-                  
-                  final String exclusion = exclusionText + ";;" + (caseSensitiveValue ? "1" : "0");
-                  
+
+                  final String exclusion1 = exclusionText + ";;" + (caseSensitiveValue ? "1" : "0");
+
                   new Thread() {
                     public void run() {
-                      if(activity instanceof TvBrowser) {
-                        ((TvBrowser)activity).updateProgressIcon(true);
+                      if (activity instanceof TvBrowser) {
+                        ((TvBrowser) activity).updateProgressIcon(true);
                       }
-                      
+
                       Context applicationContext = activity.getApplicationContext();
-                      
-                      NotificationCompat.Builder builder;
-                      
-                      builder = new NotificationCompat.Builder(activity);
-                      builder.setSmallIcon(R.drawable.ic_stat_notify);
-                      builder.setOngoing(true);
-                      builder.setContentTitle(activity.getResources().getText(R.string.action_dont_want_to_see));
-                      builder.setContentText(activity.getResources().getText(R.string.dont_want_to_see_refresh_notification_text));
-                      
+
+                      NotificationCompat.Builder builder1 = new NotificationCompat.Builder(applicationContext, App.getNotificationChannelIdDefault(activity));
+                      builder1.setSmallIcon(R.drawable.ic_stat_notify);
+                      builder1.setOngoing(true);
+                      builder1.setContentTitle(activity.getResources().getText(R.string.action_dont_want_to_see));
+                      builder1.setContentText(activity.getResources().getText(R.string.dont_want_to_see_refresh_notification_text));
+
                       int notifyID = 4;
-                      
-                      NotificationManager notification = (NotificationManager)activity.getSystemService(Context.NOTIFICATION_SERVICE);
-                      notification.notify(notifyID, builder.build());
-                      
-                      ArrayList<ContentProviderOperation> updateValuesList = new ArrayList<ContentProviderOperation>();
-                      String title = null;
-                      
+
+                      NotificationManager notification = (NotificationManager) applicationContext.getSystemService(Context.NOTIFICATION_SERVICE);
+                      notification.notify(notifyID, builder1.build());
+
+                      ArrayList<ContentProviderOperation> updateValuesList = new ArrayList<>();
+                      String title1 = null;
+
                       Cursor c = null;
-                      
+
                       try {
-                        c = activity.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA, new String[] {TvBrowserContentProvider.KEY_ID,TvBrowserContentProvider.DATA_KEY_TITLE}, " NOT " +TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE, null, TvBrowserContentProvider.KEY_ID);
-                        
-                        if(IOUtils.prepareAccess(c)) {
+                        c = activity.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA, new String[]{TvBrowserContentProvider.KEY_ID, TvBrowserContentProvider.DATA_KEY_TITLE}, " NOT " + TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE, null, TvBrowserContentProvider.KEY_ID);
+
+                        if (IOUtils.prepareAccess(c)) {
                           int size = c.getCount();
                           int count = 0;
-                          
-                          builder.setProgress(100, 0, true);
-                          notification.notify(notifyID, builder.build());
-    
+
+                          builder1.setProgress(100, 0, true);
+                          notification.notify(notifyID, builder1.build());
+
                           int keyColumn = c.getColumnIndex(TvBrowserContentProvider.KEY_ID);
                           int titleColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_TITLE);
-                          DontWantToSeeExclusion exclusionValue = new DontWantToSeeExclusion(exclusion);
-                          
+                          DontWantToSeeExclusion exclusionValue = new DontWantToSeeExclusion(exclusion1);
+
                           int lastPercent = 0;
-                          
-                          while(c.moveToNext()) {
-                            int percent = (int)(count++/(float)size * 100);
-                            
-                            if(lastPercent != percent) {
+
+                          while (c.moveToNext()) {
+                            int percent = (int) (count++ / (float) size * 100);
+
+                            if (lastPercent != percent) {
                               lastPercent = percent;
-                              builder.setProgress(100,percent, false);
-                              notification.notify(notifyID, builder.build());
+                              builder1.setProgress(100, percent, false);
+                              notification.notify(notifyID, builder1.build());
                             }
-                            
-                            title = c.getString(titleColumn);
-                            
-                            if(UiUtils.filter(title, exclusionValue)) {
-                              ContentValues values = new ContentValues();
-                              values.put(TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE, 1);
-                              
+
+                            title1 = c.getString(titleColumn);
+
+                            if (UiUtils.filter(title1, exclusionValue)) {
+                              ContentValues values1 = new ContentValues();
+                              values1.put(TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE, 1);
+
                               ContentProviderOperation.Builder opBuilder = ContentProviderOperation.newUpdate(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_DATA_UPDATE, c.getLong(keyColumn)));
-                              opBuilder.withValues(values);
-                              
+                              opBuilder.withValues(values1);
+
                               updateValuesList.add(opBuilder.build());
-                            }
-                            else {
+                            } else {
                               try {
                                 sleep(1);
                               } catch (InterruptedException e) {
@@ -1344,170 +1377,163 @@ public class UiUtils {
                       } finally {
                         IOUtils.close(c);
                       }
-                      if(!updateValuesList.isEmpty()) {
+                      if (!updateValuesList.isEmpty()) {
                         try {
                           activity.getContentResolver().applyBatch(TvBrowserContentProvider.AUTHORITY, updateValuesList);
-                          sendDontWantToSeeChangedBroadcast(applicationContext,true);
+                          sendDontWantToSeeChangedBroadcast(applicationContext, true);
                         } catch (RemoteException e) {
                           e.printStackTrace();
                         } catch (OperationApplicationException e) {
                           e.printStackTrace();
                         }
                       }
-                      
+
                       notification.cancel(notifyID);
-                      
-                      if(activity instanceof TvBrowser) {
-                        ((TvBrowser)activity).updateProgressIcon(false);
+
+                      if (activity instanceof TvBrowser) {
+                        ((TvBrowser) activity).updateProgressIcon(false);
                       }
-                      
+
                       SettingConstants.UPDATING_FILTER = false;
                     }
                   }.start();
-                  
-                  newDontWantToSeeSet.add(exclusion);
-                  
+
+                  newDontWantToSeeSet.add(exclusion1);
+
                   Editor edit = PreferenceManager.getDefaultSharedPreferences(activity).edit();
-                  
+
                   edit.putStringSet(key, newDontWantToSeeSet);
                   edit.commit();
                 }
               }
-            }
-          });
-          
-          builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {}
-          });
-          
-          builder.show();
-        }
-        
-        return true;
-      }
-      else if(item.getItemId() == R.id.program_popup_want_to_see) {
-        if(title != null && !SettingConstants.UPDATING_FILTER) {
-          SettingConstants.UPDATING_FILTER = true;
-          
-          Set<String> exclusionValues = PrefUtils.getStringSetValue(R.string.I_DONT_WANT_TO_SEE_ENTRIES, null);
-          //ArrayList<>
-          HashSet<String> newExclusionSet = new HashSet<String>();
-          final ArrayList<DontWantToSeeExclusion> exclusionList = new ArrayList<DontWantToSeeExclusion>();
-          
-          for(String exclusion : exclusionValues) {
-            if(!filter(title, new DontWantToSeeExclusion(exclusion))) {
-              newExclusionSet.add(exclusion);
-              exclusionList.add(new DontWantToSeeExclusion(exclusion));
-            }
+            });
+
+            builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+            });
+
+            builder.show();
           }
-          
-          new Thread() {
-            public void run() {
-              if(activity instanceof TvBrowser) {
-                ((TvBrowser)activity).updateProgressIcon(true);
-              }
-              
-              Context applicationContext = activity.getApplicationContext();
-              
-              NotificationCompat.Builder builder;
-              
-              builder = new NotificationCompat.Builder(activity);
-              builder.setSmallIcon(R.drawable.ic_stat_notify);
-              builder.setOngoing(true);
-              builder.setContentTitle(activity.getResources().getText(R.string.action_dont_want_to_see));
-              builder.setContentText(activity.getResources().getText(R.string.dont_want_to_see_refresh_notification_text));
-              
-              int notifyID = 3;
-              
-              NotificationManager notification = (NotificationManager)activity.getSystemService(Context.NOTIFICATION_SERVICE);
-              notification.notify(notifyID, builder.build());
-              
-              ArrayList<ContentProviderOperation> updateValuesList = new ArrayList<ContentProviderOperation>();
-              Cursor c = null;
-              
-              try {
-                c = activity.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA, new String[] {TvBrowserContentProvider.KEY_ID,TvBrowserContentProvider.DATA_KEY_TITLE}, TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE, null, TvBrowserContentProvider.KEY_ID);
-                
-                if(IOUtils.prepareAccess(c)) {
-                  int size = c.getCount();
-                  int count = 0;
-                  
-                  builder.setProgress(size, 0, true);
-                  notification.notify(notifyID, builder.build());
-    
-                  int keyColumn = c.getColumnIndex(TvBrowserContentProvider.KEY_ID);
-                  int titleColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_TITLE);
-                  
-                  DontWantToSeeExclusion[] exclusionArr = exclusionList.toArray(new DontWantToSeeExclusion[exclusionList.size()]);
-                  
-                  while(c.moveToNext()) {
-                    builder.setProgress(size, count++, false);
-                    notification.notify(notifyID, builder.build());
-                    
-                    String title = c.getString(titleColumn);
-                    
-                    ContentValues values = new ContentValues();
-                    values.put(TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE, (UiUtils.filter(activity, title, exclusionArr) ? 1 : 0));
-                    
-                    ContentProviderOperation.Builder opBuilder = ContentProviderOperation.newUpdate(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_DATA_UPDATE, c.getLong(keyColumn)));
-                    opBuilder.withValues(values);
-                    
-                    updateValuesList.add(opBuilder.build());
-                  }
-                  
-                  notification.cancel(notifyID);
-                }
-              } finally {
-               IOUtils.close(c);
-              }
-              if(!updateValuesList.isEmpty()) {
-                try {
-                  activity.getContentResolver().applyBatch(TvBrowserContentProvider.AUTHORITY, updateValuesList);
-                  sendDontWantToSeeChangedBroadcast(applicationContext,false);
-                } catch (RemoteException e) {
-                  e.printStackTrace();
-                } catch (OperationApplicationException e) {
-                  e.printStackTrace();
-                }
-              }
-              
-              if(activity instanceof TvBrowser) {
-                ((TvBrowser)activity).updateProgressIcon(false);
-              }
-              
-              SettingConstants.UPDATING_FILTER = false;
-            }
-          }.start();
-          
-          Editor edit = PreferenceManager.getDefaultSharedPreferences(activity).edit();
-          
-          edit.putStringSet(activity.getResources().getString(R.string.I_DONT_WANT_TO_SEE_ENTRIES), newExclusionSet);
-          edit.commit();
-        }
-        
-        return true;
-      }
-      else {
-        if(!markedColumns.contains(TvBrowserContentProvider.DATA_KEY_MARKING_SYNC)) {
+
           return true;
-        }
-        
-        values.put(TvBrowserContentProvider.DATA_KEY_MARKING_SYNC, false);
-        values.put(TvBrowserContentProvider.DATA_KEY_REMOVED_SYNC, true);
-        
-        ProgramUtils.removeSyncId(activity, programID);
-        
-        if(menuView != null) {
-          markedColumns.remove(TvBrowserContentProvider.DATA_KEY_MARKING_SYNC);
-          
-          if(markedColumns.isEmpty()) {
-            menuView.setBackgroundResource(android.R.drawable.list_selector_background);  
+        case R.id.program_popup_want_to_see:
+          if (title != null && !SettingConstants.UPDATING_FILTER) {
+            SettingConstants.UPDATING_FILTER = true;
+
+            Set<String> exclusionValues = PrefUtils.getStringSetValue(R.string.I_DONT_WANT_TO_SEE_ENTRIES, null);
+            //ArrayList<>
+            HashSet<String> newExclusionSet = new HashSet<>();
+            final ArrayList<DontWantToSeeExclusion> exclusionList = new ArrayList<>();
+
+            for (String exclusion : exclusionValues) {
+              if (!filter(title, new DontWantToSeeExclusion(exclusion))) {
+                newExclusionSet.add(exclusion);
+                exclusionList.add(new DontWantToSeeExclusion(exclusion));
+              }
+            }
+
+            new Thread() {
+              public void run() {
+                if (activity instanceof TvBrowser) {
+                  ((TvBrowser) activity).updateProgressIcon(true);
+                }
+
+                final Context applicationContext = activity.getApplicationContext();
+
+                final NotificationCompat.Builder builder = new NotificationCompat.Builder(applicationContext, App.getNotificationChannelIdDefault(activity));
+                builder.setSmallIcon(R.drawable.ic_stat_notify);
+                builder.setOngoing(true);
+                builder.setContentTitle(activity.getResources().getText(R.string.action_dont_want_to_see));
+                builder.setContentText(activity.getResources().getText(R.string.dont_want_to_see_refresh_notification_text));
+
+                int notifyID = 3;
+
+                NotificationManager notification = (NotificationManager) applicationContext.getSystemService(Context.NOTIFICATION_SERVICE);
+                notification.notify(notifyID, builder.build());
+
+                ArrayList<ContentProviderOperation> updateValuesList = new ArrayList<>();
+                Cursor c = null;
+
+                try {
+                  c = activity.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA, new String[]{TvBrowserContentProvider.KEY_ID, TvBrowserContentProvider.DATA_KEY_TITLE}, TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE, null, TvBrowserContentProvider.KEY_ID);
+
+                  if (IOUtils.prepareAccess(c)) {
+                    int size = c.getCount();
+                    int count = 0;
+
+                    builder.setProgress(size, 0, true);
+                    notification.notify(notifyID, builder.build());
+
+                    int keyColumn = c.getColumnIndex(TvBrowserContentProvider.KEY_ID);
+                    int titleColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_TITLE);
+
+                    DontWantToSeeExclusion[] exclusionArr = exclusionList.toArray(new DontWantToSeeExclusion[exclusionList.size()]);
+
+                    while (c.moveToNext()) {
+                      builder.setProgress(size, count++, false);
+                      notification.notify(notifyID, builder.build());
+
+                      String title = c.getString(titleColumn);
+
+                      ContentValues values = new ContentValues();
+                      values.put(TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE, (UiUtils.filter(activity, title, exclusionArr) ? 1 : 0));
+
+                      ContentProviderOperation.Builder opBuilder = ContentProviderOperation.newUpdate(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_DATA_UPDATE, c.getLong(keyColumn)));
+                      opBuilder.withValues(values);
+
+                      updateValuesList.add(opBuilder.build());
+                    }
+
+                    notification.cancel(notifyID);
+                  }
+                } finally {
+                  IOUtils.close(c);
+                }
+                if (!updateValuesList.isEmpty()) {
+                  try {
+                    activity.getContentResolver().applyBatch(TvBrowserContentProvider.AUTHORITY, updateValuesList);
+                    sendDontWantToSeeChangedBroadcast(applicationContext, false);
+                  } catch (RemoteException e) {
+                    e.printStackTrace();
+                  } catch (OperationApplicationException e) {
+                    e.printStackTrace();
+                  }
+                }
+
+                if (activity instanceof TvBrowser) {
+                  ((TvBrowser) activity).updateProgressIcon(false);
+                }
+
+                SettingConstants.UPDATING_FILTER = false;
+              }
+            }.start();
+
+            Editor edit = PreferenceManager.getDefaultSharedPreferences(activity).edit();
+
+            edit.putStringSet(activity.getResources().getString(R.string.I_DONT_WANT_TO_SEE_ENTRIES), newExclusionSet);
+            edit.commit();
           }
-          else {
-            handleMarkings(activity, null, menuView, IOUtils.getStringArrayFromList(markedColumns));
+
+          return true;
+        default:
+          if (!markedColumns.contains(TvBrowserContentProvider.DATA_KEY_MARKING_SYNC)) {
+            return true;
           }
-        }
+
+          values.put(TvBrowserContentProvider.DATA_KEY_MARKING_SYNC, false);
+          values.put(TvBrowserContentProvider.DATA_KEY_REMOVED_SYNC, true);
+
+          ProgramUtils.removeSyncId(activity, programID);
+
+          if (menuView != null) {
+            markedColumns.remove(TvBrowserContentProvider.DATA_KEY_MARKING_SYNC);
+
+            if (markedColumns.isEmpty()) {
+              menuView.setBackgroundResource(android.R.drawable.list_selector_background);
+            } else {
+              handleMarkings(activity, null, menuView, IOUtils.getStringArrayFromList(markedColumns));
+            }
+          }
+          break;
       }
       
       if(values.size() > 0) {
@@ -1545,13 +1571,13 @@ public class UiUtils {
   }
     
   private static class RunningDrawable extends Drawable {
-    private Paint mBase;
-    private Paint mSecond;
-    private long mStartTime;
-    private long mEndTime;
-    private boolean mVertical;
+    private final Paint mBase;
+    private final Paint mSecond;
+    private final long mStartTime;
+    private final long mEndTime;
+    private final boolean mVertical;
     
-    public RunningDrawable(Paint base, Paint second, long startTime, long endTime, boolean vertical) {
+    RunningDrawable(Paint base, Paint second, long startTime, long endTime, boolean vertical) {
       mBase = base;
       mSecond = second;
       mStartTime = startTime;
@@ -1560,7 +1586,7 @@ public class UiUtils {
     }
     
     @Override
-    public void draw(Canvas canvas) {
+    public void draw(@NonNull Canvas canvas) {
       if(mStartTime <= System.currentTimeMillis() && System.currentTimeMillis() < mEndTime) {
         long expiredSeconds = System.currentTimeMillis() - mStartTime;
         float percent = expiredSeconds/(float)(mEndTime - mStartTime);
@@ -1618,19 +1644,16 @@ public class UiUtils {
       CompatUtils.setBackground(view, draw);
     }
     else{
-      handler.post(new Runnable() {
-        @Override
-        public void run() {
-          view.invalidate();
-          CompatUtils.setBackground(view, draw);
-        }
+      handler.post(() -> {
+        view.invalidate();
+        CompatUtils.setBackground(view, draw);
       });
     }
   }
   
-  public static LayerDrawable getMarkingsDrawable(Context context, Cursor cursor, long startTime, long endTime, String[] markedColumns,boolean vertical) {
+  private static LayerDrawable getMarkingsDrawable(Context context, Cursor cursor, long startTime, long endTime, String[] markedColumns, boolean vertical) {
     if(markedColumns == null && cursor != null) {
-      ArrayList<String> markedColumnList = new ArrayList<String>();
+      ArrayList<String> markedColumnList = new ArrayList<>();
       
       for(String column : TvBrowserContentProvider.MARKING_COLUMNS) {
         int index = cursor.getColumnIndex(column);
@@ -1662,7 +1685,7 @@ public class UiUtils {
       base = null;
     }
     
-    final ArrayList<Drawable> draw = new ArrayList<Drawable>();
+    final ArrayList<Drawable> draw = new ArrayList<>();
     
     if(base != null) {
       RunningDrawable running = new RunningDrawable(base, second, startTime, endTime, vertical);
@@ -1681,7 +1704,7 @@ public class UiUtils {
           }
           
           if(color != null) {
-            colors[i] = getColor(color.intValue(), context);
+            colors[i] = getColor(color, context);
           }
         }
         
@@ -1698,7 +1721,7 @@ public class UiUtils {
         }
         
         if(color != null) {
-          draw.add(new ColorDrawable(getColor(color.intValue(), context)));
+          draw.add(new ColorDrawable(getColor(color, context)));
         }
       }
     }
@@ -1722,7 +1745,7 @@ public class UiUtils {
     activity.startActivity(startEditFavorite);
   }
   
-  public static String formatDate(long date, Context context, boolean onlyDays) {
+  private static String formatDate(long date, Context context, boolean onlyDays) {
     return formatDate(date, context, onlyDays, false);
   }
   
@@ -1799,7 +1822,7 @@ public class UiUtils {
     
     SimpleDateFormat day = new SimpleDateFormat("EEE", Locale.getDefault());
     
-    TextView startDay = (TextView)((View)view.getParent()).findViewById(/*R.id.startDayLabelPL*/startDayLabelID);
+    TextView startDay = ((View)view.getParent()).findViewById(/*R.id.startDayLabelPL*/startDayLabelID);
     startDay.setText(day.format(new Date(date)));
     
     CharSequence startDayValue = formatDate(date, activity, true);
@@ -1821,7 +1844,7 @@ public class UiUtils {
     
     text.setText(mdf.format(progDate.getTime()));
     
-    UiUtils.handleMarkings(activity, cursor, ((RelativeLayout)view.getParent()), null);}catch(Throwable t) {}
+    UiUtils.handleMarkings(activity, cursor, ((RelativeLayout)view.getParent()), null);}catch(Throwable ignored) {}
   }
   
   public static int convertDpToPixel(float dp, Resources res) {
@@ -1831,13 +1854,17 @@ public class UiUtils {
     
     return (int) (dp * scale + 0.5f);
   }
-  
+
+  public static boolean isHighRes(Resources res) {
+    return DisplayMetrics.DENSITY_XHIGH >= res.getDisplayMetrics().densityDpi;
+  }
+
   public static float convertPixelsToSp(float px, Context context) {
     float scaledDensity = context.getResources().getDisplayMetrics().scaledDensity;
     return px/scaledDensity;
   }
   
-  public static boolean filter(String title, DontWantToSeeExclusion exclusion) {
+  private static boolean filter(String title, DontWantToSeeExclusion exclusion) {
     return exclusion.matches(title);
   }
   
@@ -1877,7 +1904,7 @@ public class UiUtils {
     return found;
   }
   
-  public static final int getColor(int key, Context context) throws NullPointerException {
+  public static int getColor(int key, Context context) throws NullPointerException {
     if(context == null) {
       throw new NullPointerException("Context parameter is null.");
     }
@@ -1885,7 +1912,7 @@ public class UiUtils {
     return getColor(key, PreferenceManager.getDefaultSharedPreferences(context),context);
   }
   
-  public static final int getColor(int key, SharedPreferences pref, Context context) throws NullPointerException {
+  private static int getColor(int key, SharedPreferences pref, Context context) throws NullPointerException {
     if(pref == null) {
       throw new NullPointerException("Preferences parameter is null.");
     }
@@ -1919,19 +1946,9 @@ public class UiUtils {
   
   public static void handleConfigurationChange(Handler handler, final BaseAdapter adapter, Configuration newConfig) {
     if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-      handler.post(new Runnable() {
-        @Override
-        public void run() {
-          adapter.notifyDataSetChanged();
-        }
-      });
+      handler.post(adapter::notifyDataSetChanged);
     } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
-      handler.post(new Runnable() {
-        @Override
-        public void run() {
-          adapter.notifyDataSetChanged();
-        }
-      });
+      handler.post(adapter::notifyDataSetChanged);
     }
   }
   
@@ -1998,7 +2015,7 @@ public class UiUtils {
     if(data != null && data.length > 0) {
       try {
         logoBitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-      }catch(NullPointerException e) {}
+      }catch(NullPointerException ignored) {}
     }
     
     return logoBitmap;
@@ -2020,7 +2037,7 @@ public class UiUtils {
 
       ComponentName importantProgramsWidget = new ComponentName(context, ImportantProgramsListWidget.class);
       int[] appWidgetIds = appWidgetManager.getAppWidgetIds(importantProgramsWidget);
-      Log.d("info2", "appWidgetIds " + appWidgetIds);
+      Log.d("info2", "appWidgetIds " + Arrays.toString(appWidgetIds));
       appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.important_widget_list_view);
     }catch(Throwable t) {Log.d("info2", "", t);}
   }
@@ -2033,11 +2050,11 @@ public class UiUtils {
       ComponentName importantProgramsWidget = new ComponentName(context, RunningProgramsListWidget.class);
       int[] appWidgetIds = appWidgetManager.getAppWidgetIds(importantProgramsWidget);
       appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.running_widget_list_view);
-      Log.d("info2", "appWidgetIds " + appWidgetIds);
+      Log.d("info2", "appWidgetIds " + Arrays.toString(appWidgetIds));
     }catch(Throwable t) {Log.d("info2", "", t);}
   }
   
-  public static final void reloadWidgets(Context context) {
+  public static void reloadWidgets(Context context) {
     AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context.getApplicationContext());
 
     ComponentName programsWidget = new ComponentName(context.getApplicationContext(), ImportantProgramsListWidget.class);
@@ -2073,7 +2090,7 @@ public class UiUtils {
         WidgetToggleReminderState.updateAppWidget(context, appWidgetManager, appWidgetId);
       }
       //appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.running_widget_list_view);
-      Log.d("info2", "appWidgetIds " + appWidgetIds);
+      Log.d("info2", "appWidgetIds " + Arrays.toString(appWidgetIds));
     }catch(Throwable t) {Log.d("info2", "", t);}
   }
   
@@ -2103,7 +2120,7 @@ public class UiUtils {
       channelSelectionView.findViewById(R.id.channel_category_label).setVisibility(View.GONE);
       channelSelectionView.findViewById(R.id.channel_category_value).setVisibility(View.GONE);
       
-      final EditText filterName = (EditText)channelSelectionView.findViewById(R.id.channel_selection_input_id_name);
+      final EditText filterName = channelSelectionView.findViewById(R.id.channel_selection_input_id_name);
       
       if(channelFilter.getName() == null) {
         channelSelectionView.findViewById(R.id.channel_selection_label_id_name).setVisibility(View.GONE);
@@ -2113,12 +2130,13 @@ public class UiUtils {
         filterName.setText(channelFilter.getName());
       }
       
-      final ListView list = (ListView)channelSelectionView.findViewById(R.id.channel_selection_list);
+      final ListView list = channelSelectionView.findViewById(R.id.channel_selection_list);
       
       final Bitmap defaultLogo = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_launcher);
       
       final ArrayAdapter<AdapterChannel> channelAdapter = new ArrayAdapter<AdapterChannel>(context, android.R.layout.simple_list_item_1) {
-        public View getView(int position, View convertView, ViewGroup parent) {
+        @NonNull
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
           AdapterChannel value = getItem(position);
           ChannelViewHolder holder = null;
           
@@ -2127,9 +2145,9 @@ public class UiUtils {
             
             convertView = inflater.inflate(R.layout.channel_row, parent, false);
             
-            holder.mTextView = (TextView)convertView.findViewById(R.id.row_of_channel_text);
-            holder.mCheckBox = (CheckBox)convertView.findViewById(R.id.row_of_channel_selection);
-            holder.mLogo = (ImageView)convertView.findViewById(R.id.row_of_channel_icon);
+            holder.mTextView = convertView.findViewById(R.id.row_of_channel_text);
+            holder.mCheckBox = convertView.findViewById(R.id.row_of_channel_selection);
+            holder.mLogo = convertView.findViewById(R.id.row_of_channel_icon);
             
             convertView.setTag(holder);
             
@@ -2203,39 +2221,29 @@ public class UiUtils {
       }
       list.setAdapter(channelAdapter);
       
-      channelSelectionView.findViewById(R.id.channel_selection_select_all).setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-          for(int i = 0; i < channelAdapter.getCount(); i++) {
-            channelAdapter.getItem(i).mSelected = true;
-          }
-          
-          list.invalidateViews();
+      channelSelectionView.findViewById(R.id.channel_selection_select_all).setOnClickListener(v -> {
+        for(int i = 0; i < channelAdapter.getCount(); i++) {
+          channelAdapter.getItem(i).mSelected = true;
         }
+
+        list.invalidateViews();
       });
       
-      channelSelectionView.findViewById(R.id.channel_selection_remove_selection).setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-          for(int i = 0; i < channelAdapter.getCount(); i++) {
-            channelAdapter.getItem(i).mSelected = false;
-          }
-          
-          list.invalidateViews();
+      channelSelectionView.findViewById(R.id.channel_selection_remove_selection).setOnClickListener(v -> {
+        for(int i = 0; i < channelAdapter.getCount(); i++) {
+          channelAdapter.getItem(i).mSelected = false;
         }
+
+        list.invalidateViews();
       });
       
-      list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position,
-            long id) {
-          CheckBox check = (CheckBox)view.findViewById(R.id.row_of_channel_selection);
-          
-          if(check != null) {
-            check.setChecked(!check.isChecked());
-            channelAdapter.getItem(position).mSelected = check.isChecked();
-            list.setItemChecked(position, check.isChecked());
-          }
+      list.setOnItemClickListener((parent1, view, position, id) -> {
+        CheckBox check = view.findViewById(R.id.row_of_channel_selection);
+
+        if(check != null) {
+          check.setChecked(!check.isChecked());
+          channelAdapter.getItem(position).mSelected = check.isChecked();
+          list.setItemChecked(position, check.isChecked());
         }
       });
       
@@ -2244,51 +2252,43 @@ public class UiUtils {
       builder.setView(channelSelectionView);
       builder.setCancelable(false);
       
-      builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-          ArrayList<Integer> channelIDList = new ArrayList<Integer>();
-          boolean allSelected = true;
-          
-          for(int i = 0; i < channelAdapter.getCount(); i++) {
-            AdapterChannel item = channelAdapter.getItem(i);
-            
-            if(item.mSelected) {
-              channelIDList.add(Integer.valueOf(item.mChannelID));
-            }
-            else {
-              allSelected = false;
-            }
-          }
-          
-          if(allSelected || channelIDList.isEmpty()) {
-            channelFilter.setFilterValues(null, null);
+      builder.setPositiveButton(android.R.string.ok, (dialog, which) -> {
+        ArrayList<Integer> channelIDList = new ArrayList<>();
+        boolean allSelected = true;
+
+        for(int i = 0; i < channelAdapter.getCount(); i++) {
+          AdapterChannel item = channelAdapter.getItem(i);
+
+          if(item.mSelected) {
+            channelIDList.add(item.mChannelID);
           }
           else {
-            int[] ids = new int[channelIDList.size()];
-            
-            for(int i = 0; i < ids.length; i++) {
-              ids[i] = channelIDList.get(i);
-            }
-            
-            String name = null;
-            
-            if(filterName.getVisibility() == View.VISIBLE) {
-              name = filterName.getText().toString().trim();
-            }
-            
-            channelFilter.setFilterValues(name,ids);
+            allSelected = false;
           }
+        }
+
+        if(allSelected || channelIDList.isEmpty()) {
+          channelFilter.setFilterValues(null, null);
+        }
+        else {
+          int[] ids = new int[channelIDList.size()];
+
+          for(int i = 0; i < ids.length; i++) {
+            ids[i] = channelIDList.get(i);
+          }
+
+          String name = null;
+
+          if(filterName.getVisibility() == View.VISIBLE) {
+            name = filterName.getText().toString().trim();
+          }
+
+          channelFilter.setFilterValues(name,ids);
         }
       });
       
       if(cancelCallBack != null) {
-        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-          @Override
-          public void onClick(DialogInterface dialog, int which) {
-            cancelCallBack.run();
-          }
-        });
+        builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> cancelCallBack.run());
       }
       else {
         builder.setNegativeButton(android.R.string.cancel, null);
@@ -2320,15 +2320,15 @@ public class UiUtils {
   
   public static void showCategorySelection(Context context, final CategoryFilter categoryFilter, ViewGroup parent, final Runnable cancelCallBack) {
     String[] names = IOUtils.getInfoStringArrayNames(context.getResources());
-    int[] restrictionIndices = categoryFilter.getCategoriyIndicies();
+    int[] restrictionIndices = categoryFilter.getCategoryIndices();
         
     final LayoutInflater inflater = (LayoutInflater) context.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
     
     View selectionView = inflater.inflate(R.layout.dialog_filter_categories, parent, false);
     
-    final EditText nameInput = (EditText)selectionView.findViewById(R.id.dialog_filter_categories_input_name);
-    final Spinner operationSelection = (Spinner)selectionView.findViewById(R.id.dialog_filter_categories_selection_operation);
-    final ListView listView = (ListView)selectionView.findViewById(R.id.dialog_filter_categories_list);
+    final EditText nameInput = selectionView.findViewById(R.id.dialog_filter_categories_input_name);
+    final Spinner operationSelection = selectionView.findViewById(R.id.dialog_filter_categories_selection_operation);
+    final ListView listView = selectionView.findViewById(R.id.dialog_filter_categories_list);
     
     if(categoryFilter.getName() == null) {
       selectionView.findViewById(R.id.dialog_filter_categories_label_name).setVisibility(View.GONE);
@@ -2342,7 +2342,8 @@ public class UiUtils {
     }
     
     final ArrayAdapter<AdapterCategory> categoryAdapter = new ArrayAdapter<AdapterCategory>(context, android.R.layout.simple_list_item_1) {
-      public View getView(int position, View convertView, ViewGroup parent) {
+      @NonNull
+      public View getView(int position, View convertView, @NonNull ViewGroup parent) {
         AdapterCategory value = getItem(position);
         CategoryViewHolder holder = null;
         
@@ -2351,8 +2352,8 @@ public class UiUtils {
           
           convertView = inflater.inflate(R.layout.list_row_selection, parent, false);
           
-          holder.mTextView = (TextView)convertView.findViewById(R.id.row_selection_text);
-          holder.mCheckBox = (CheckBox)convertView.findViewById(R.id.row_selection_selection);
+          holder.mTextView = convertView.findViewById(R.id.row_selection_text);
+          holder.mCheckBox = convertView.findViewById(R.id.row_selection_selection);
           
           convertView.setTag(holder);
         }
@@ -2395,17 +2396,13 @@ public class UiUtils {
     
     listView.setAdapter(categoryAdapter);
     
-    listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-      @Override
-      public void onItemClick(AdapterView<?> parent, View view, int position,
-          long id) {
-        CheckBox check = (CheckBox)view.findViewById(R.id.row_selection_selection);
-        
-        if(check != null) {
-          check.setChecked(!check.isChecked());
-          categoryAdapter.getItem(position).mSelected = check.isChecked();
-          listView.setItemChecked(position, check.isChecked());
-        }
+    listView.setOnItemClickListener((parent1, view, position, id) -> {
+      CheckBox check = view.findViewById(R.id.row_selection_selection);
+
+      if(check != null) {
+        check.setChecked(!check.isChecked());
+        categoryAdapter.getItem(position).mSelected = check.isChecked();
+        listView.setItemChecked(position, check.isChecked());
       }
     });
     
@@ -2414,59 +2411,51 @@ public class UiUtils {
     builder.setView(selectionView);
     builder.setCancelable(false);
     
-    builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-      @Override
-      public void onClick(DialogInterface dialog, int which) {
-        ArrayList<Integer> channelIDList = new ArrayList<Integer>();
-        boolean allSelected = true;
-        
-        for(int i = 0; i < categoryAdapter.getCount(); i++) {
-          AdapterCategory item = categoryAdapter.getItem(i);
-          
-          if(item.mSelected) {
-            channelIDList.add(Integer.valueOf(item.mIndex));
-          }
-          else {
-            allSelected = false;
-          }
-        }
-        
-        if(allSelected || channelIDList.isEmpty()) {
-          categoryFilter.setFilterValues(null, null, null);
+    builder.setPositiveButton(android.R.string.ok, (dialog, which) -> {
+      ArrayList<Integer> channelIDList = new ArrayList<>();
+      boolean allSelected = true;
+
+      for(int i = 0; i < categoryAdapter.getCount(); i++) {
+        AdapterCategory item = categoryAdapter.getItem(i);
+
+        if(item.mSelected) {
+          channelIDList.add(item.mIndex);
         }
         else {
-          int[] indicies = new int[channelIDList.size()];
-          
-          for(int i = 0; i < indicies.length; i++) {
-            indicies[i] = channelIDList.get(i);
-          }
-          
-          String name = null;
-          
-          if(nameInput.getVisibility() == View.VISIBLE) {
-            name = nameInput.getText().toString().trim();
-          }
-          
-          String operation = "AND";
-          
-          if(operationSelection.getVisibility() == View.VISIBLE) {
-            if(operationSelection.getSelectedItemPosition() == 1) {
-              operation = "OR";
-            }
-          }
-          
-          categoryFilter.setFilterValues(name,operation,indicies);
+          allSelected = false;
         }
+      }
+
+      if(allSelected || channelIDList.isEmpty()) {
+        categoryFilter.setFilterValues(null, null, null);
+      }
+      else {
+        int[] indicies = new int[channelIDList.size()];
+
+        for(int i = 0; i < indicies.length; i++) {
+          indicies[i] = channelIDList.get(i);
+        }
+
+        String name = null;
+
+        if(nameInput.getVisibility() == View.VISIBLE) {
+          name = nameInput.getText().toString().trim();
+        }
+
+        String operation = "AND";
+
+        if(operationSelection.getVisibility() == View.VISIBLE) {
+          if(operationSelection.getSelectedItemPosition() == 1) {
+            operation = "OR";
+          }
+        }
+
+        categoryFilter.setFilterValues(name,operation,indicies);
       }
     });
     
     if(cancelCallBack != null) {
-      builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-          cancelCallBack.run();
-        }
-      });
+      builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> cancelCallBack.run());
     }
     else {
       builder.setNegativeButton(android.R.string.cancel, null);
@@ -2500,14 +2489,14 @@ public class UiUtils {
     
     View selectionView = inflater.inflate(R.layout.dialog_filter_keyword, parent, false);
     
-    final EditText nameInput = (EditText)selectionView.findViewById(R.id.dialog_filter_keyword_input_name);
-    final EditText keywordInput = (EditText)selectionView.findViewById(R.id.dialog_filter_keyword_input_keyword);
-    final Spinner columnSelection = (Spinner)selectionView.findViewById(R.id.dialog_filter_keyword_selection_column);
+    final EditText nameInput = selectionView.findViewById(R.id.dialog_filter_keyword_input_name);
+    final EditText keywordInput = selectionView.findViewById(R.id.dialog_filter_keyword_input_keyword);
+    final Spinner columnSelection = selectionView.findViewById(R.id.dialog_filter_keyword_selection_column);
     
     nameInput.setText(keywordFilter.getName());
     keywordInput.setText(keywordFilter.getKeyword());
     
-    final ArrayAdapter<NamedFields> columnSelectionAdatper = new ArrayAdapter<NamedFields>(context, android.R.layout.simple_list_item_1);
+    final ArrayAdapter<NamedFields> columnSelectionAdatper = new ArrayAdapter<>(context, android.R.layout.simple_list_item_1);
     columnSelection.setAdapter(columnSelectionAdatper);
     
     for(int i = 0; i < TvBrowserContentProvider.TEXT_SEARCHABLE_COLUMN_ARRAY.length; i++) {
@@ -2529,20 +2518,10 @@ public class UiUtils {
     builder.setView(selectionView);
     builder.setCancelable(false);
     
-    builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-      @Override
-      public void onClick(DialogInterface dialog, int which) {
-        keywordFilter.setFilterValues(nameInput.getText().toString().trim(), keywordInput.getText().toString(), ((NamedFields)columnSelection.getSelectedItem()).getColumn());
-      }
-    });
+    builder.setPositiveButton(android.R.string.ok, (dialog, which) -> keywordFilter.setFilterValues(nameInput.getText().toString().trim(), keywordInput.getText().toString(), ((NamedFields)columnSelection.getSelectedItem()).getColumn()));
     
     if(cancelCallBack != null) {
-      builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-          cancelCallBack.run();
-        }
-      });
+      builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> cancelCallBack.run());
     }
     else {
       builder.setNegativeButton(android.R.string.cancel, null);
@@ -2577,11 +2556,11 @@ public class UiUtils {
   
   
   private static final class AdapterCategory {
-    int mIndex;
-    Spannable mName;
+    final int mIndex;
+    final Spannable mName;
     boolean mSelected;
     
-    public AdapterCategory(int index, Spannable name, boolean selected) {
+    AdapterCategory(int index, Spannable name, boolean selected) {
       mIndex = index;
       mName = name;
       mSelected = selected;
@@ -2620,12 +2599,12 @@ public class UiUtils {
   }
   
   private static final class AdapterChannel {
-    int mChannelID;
-    String mName;
-    Bitmap mChannelLogo;
+    final int mChannelID;
+    final String mName;
+    final Bitmap mChannelLogo;
     boolean mSelected; 
     
-    public AdapterChannel(int channelID, String name, Bitmap channelLogo, boolean selected) {
+    AdapterChannel(int channelID, String name, Bitmap channelLogo, boolean selected) {
       mChannelID = channelID;
       mName = name;
       mChannelLogo = channelLogo;
@@ -2633,15 +2612,22 @@ public class UiUtils {
     }
   }
   
-  public static final int getThemeResourceId() {
+  public static int getThemeResourceId(final boolean includeToolbar) {
+    int style = includeToolbar ? R.style.AppBaseThemePref : R.style.AppTheme;
+
     if(SettingConstants.IS_DARK_THEME) {
-      return R.style.AppDarkTheme;
+      if(includeToolbar) {
+        style = R.style.AppDarkThemePref;
+      }
+      else {
+        style = R.style.AppDarkTheme;
+      }
     }
     
-    return R.style.AppTheme;
+    return style;
   }
   
-  public static final ImageSpan createImageSpan(Context context, int drawable) {
+  public static ImageSpan createImageSpan(Context context, int drawable) {
     Drawable icon = ContextCompat.getDrawable(context, drawable); 
     
     float zoom = 16f/icon.getIntrinsicHeight() * context.getResources().getDisplayMetrics().density;
@@ -2659,17 +2645,17 @@ public class UiUtils {
   }
   
   private static final class ActorColumnSpan implements LeadingMarginSpan {
-    private String[] mActorParts;
-    private int mMargin;
+    private final String[] mActorParts;
+    private final int mMargin;
     private int mFirstBaseline;
     private boolean mHighlight;
-    private int mHighlightColor;
+    private final int mHighlightColor;
     
-    public ActorColumnSpan(String actor, int leadingMargin, ArrayList<FavoriteTypePattern> patternList, int color) {
+    ActorColumnSpan(String actor, int leadingMargin, ArrayList<FavoriteTypePattern> patternList, int color) {
       mHighlight = false;
       
       for(FavoriteTypePattern pattern : patternList) {
-        if(!pattern.isTitleOnlyType() && pattern.mPattern.matcher(actor.replaceAll("\\n+", " ")).find()) {
+        if(pattern.isNotOnlyTitleType() && pattern.mPattern.matcher(actor.replaceAll("\\n+", " ")).find()) {
           mHighlight = true;
           break;
         }
@@ -2730,7 +2716,7 @@ public class UiUtils {
     SpannableStringBuilder string = new SpannableStringBuilder(text);
     
     for(FavoriteTypePattern typePattern : patternList) {
-      if(allPatterns || !typePattern.isTitleOnlyType()) {
+      if(allPatterns || typePattern.isNotOnlyTitleType()) {
         string = typePattern.addHighlighting(string, backgroundColorSpan);
       }
     }
@@ -2738,16 +2724,16 @@ public class UiUtils {
     view.setText(string);
   }
   
-  public static final class FavoriteTypePattern {
-    private int mType;
-    private Pattern mPattern;
+  static final class FavoriteTypePattern {
+    private final int mType;
+    private final Pattern mPattern;
     
-    public FavoriteTypePattern(int type, Pattern pattern) {
+    FavoriteTypePattern(int type, Pattern pattern) {
       mType = type;
       mPattern = pattern;
     }
     
-    public SpannableStringBuilder addHighlighting(SpannableStringBuilder text, BackgroundColorSpan backgroundColorSpan) {
+    SpannableStringBuilder addHighlighting(SpannableStringBuilder text, BackgroundColorSpan backgroundColorSpan) {
       final Matcher m = mPattern.matcher(text);
       
       int pos = 0;
@@ -2761,9 +2747,30 @@ public class UiUtils {
       return text;
     }
     
-    public boolean isTitleOnlyType() {
-      return mType == Favorite.KEYWORD_ONLY_TITLE_TYPE;
+    boolean isNotOnlyTitleType() {
+      return mType != Favorite.KEYWORD_ONLY_TITLE_TYPE;
     }
   }
   
+  /**
+   * Returns a thread-safe {@link Collator}, that can be used with {@link Comparator} instances
+   * to sort strings in a locale sensitive way; i.e. to apply a rule-based sort while sorting
+   * strings containing umlauts (Dänemark < Deutschland, Norwegen < Österreich < Polen; a < ä = ae).
+   *
+   * @return Collator for the default locale (see {@link Locale#getDefault()}).
+   */
+  public static Collator getCollator() {
+    return collatorThreadLocal.get();
+  }
+
+  @SuppressWarnings("WeakerAccess")
+  @NonNull
+  public static Point getScreenSize(@NonNull final Context context) {
+    final Point size = new Point();
+    final WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+    if (wm != null) {
+      wm.getDefaultDisplay().getSize(size);
+    }
+    return size;
+  }
 }

@@ -21,6 +21,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.devplugin.Program;
 import org.tvbrowser.settings.SettingConstants;
@@ -29,7 +30,6 @@ import org.tvbrowser.utils.PrefUtils;
 import org.tvbrowser.utils.ProgramUtils;
 import org.tvbrowser.utils.UiUtils;
 
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -47,6 +47,8 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.text.format.DateFormat;
 import android.util.Log;
+
+import org.tvbrowser.utils.CompatUtils;
 
 public class ReminderBroadcastReceiver extends BroadcastReceiver {
   public static final String tag = null;
@@ -76,13 +78,16 @@ public class ReminderBroadcastReceiver extends BroadcastReceiver {
       boolean led = PrefUtils.getBooleanValue(R.string.PREF_REMINDER_LED, R.bool.pref_reminder_led_default);
       
       boolean showReminder = true;
-      
+
+      boolean isWorkMode = PrefUtils.getBooleanValue(R.string.PREF_REMINDER_WORK_MODE_ACTIVATED, R.bool.pref_reminder_work_mode_activated_default);
+      boolean isNightMode = PrefUtils.getBooleanValue(R.string.PREF_REMINDER_NIGHT_MODE_ACTIVATED, R.bool.pref_reminder_night_mode_activated_default);
+
       Logging.log(tag, new Date(System.currentTimeMillis()) + ": ProgramID for Reminder '" + programID + "' NIGHT MODE ACTIVATED '" + PrefUtils.getBooleanValue(R.string.PREF_REMINDER_NIGHT_MODE_ACTIVATED, R.bool.pref_reminder_night_mode_activated_default) + "' sound '" + sound + "' vibrate '" + vibrate + "' led '" + led + "'", Logging.TYPE_REMINDER, context);
       
       //TODO add setting for priority
-      int priority = getPriortiyForPreferenceValue(PrefUtils.getStringValue(R.string.PREF_REMINDER_PRIORITY_VALUE, R.string.pref_reminder_priority_default));
+      int priority = getPriorityForPreferenceValue(PrefUtils.getStringValue(R.string.PREF_REMINDER_PRIORITY_VALUE, R.string.pref_reminder_priority_default));
       
-      if(PrefUtils.getBooleanValue(R.string.PREF_REMINDER_NIGHT_MODE_ACTIVATED, R.bool.pref_reminder_night_mode_activated_default)) {
+      if(isNightMode) {
         int start = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_NIGHT_MODE_START, R.integer.pref_reminder_night_mode_start_default);
         int end =  PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_NIGHT_MODE_END, R.integer.pref_reminder_night_mode_end_default);
         
@@ -97,8 +102,10 @@ public class ReminderBroadcastReceiver extends BroadcastReceiver {
           
           end += 24 * 60;
         }
-        
-        if(start <= minutes && minutes <= end) {
+
+        isNightMode = start <= minutes && minutes <= end;
+
+        if(isNightMode) {
           showReminder = !PrefUtils.getBooleanValue(R.string.PREF_REMINDER_NIGHT_MODE_NO_REMINDER, R.bool.pref_reminder_night_mode_no_reminder_default);
           
           Logging.log(tag, new Date(System.currentTimeMillis()) + ": ProgramID for Reminder '" + programID + "' CURRENTLY NIGHT MODE, Don't show '" + !showReminder + "'", Logging.TYPE_REMINDER, context);
@@ -116,12 +123,12 @@ public class ReminderBroadcastReceiver extends BroadcastReceiver {
             sound = tone == null || tone.trim().length() > 0;
             vibrate = PrefUtils.getBooleanValue(R.string.PREF_REMINDER_NIGHT_MODE_VIBRATE, R.bool.pref_reminder_night_mode_vibrate_default);
             led = PrefUtils.getBooleanValue(R.string.PREF_REMINDER_NIGHT_MODE_LED, R.bool.pref_reminder_night_mode_led_default);
-            priority = getPriortiyForPreferenceValue(PrefUtils.getStringValue(R.string.PREF_REMINDER_NIGHT_MODE_PRIORITY_VALUE, R.string.pref_reminder_priority_default));
+            priority = getPriorityForPreferenceValue(PrefUtils.getStringValue(R.string.PREF_REMINDER_NIGHT_MODE_PRIORITY_VALUE, R.string.pref_reminder_priority_default));
           }
         }
       }
       
-      if(PrefUtils.getBooleanValue(R.string.PREF_REMINDER_WORK_MODE_ACTIVATED, R.bool.pref_reminder_work_mode_activated_default)) {
+      if(isWorkMode) {
         Calendar now = Calendar.getInstance();
         int[] values = getValuesForDay(now.get(Calendar.DAY_OF_WEEK));
         
@@ -135,7 +142,7 @@ public class ReminderBroadcastReceiver extends BroadcastReceiver {
           values[1] += 24 * 60;
         }
         
-        boolean isWorkMode = values[0] <= minutes && minutes <= values[1];
+        isWorkMode = values[0] <= minutes && minutes <= values[1];
         
         if(!isWorkMode) {
           now.add(Calendar.DAY_OF_YEAR, -1);
@@ -173,7 +180,7 @@ public class ReminderBroadcastReceiver extends BroadcastReceiver {
             sound = tone == null || tone.trim().length() > 0;
             vibrate = PrefUtils.getBooleanValue(R.string.PREF_REMINDER_WORK_MODE_VIBRATE, R.bool.pref_reminder_work_mode_vibrate_default);
             led = PrefUtils.getBooleanValue(R.string.PREF_REMINDER_WORK_MODE_LED, R.bool.pref_reminder_work_mode_led_default);
-            priority = getPriortiyForPreferenceValue(PrefUtils.getStringValue(R.string.PREF_REMINDER_WORK_MODE_PRIORITY_VALUE, R.string.pref_reminder_priority_default));
+            priority = getPriorityForPreferenceValue(PrefUtils.getStringValue(R.string.PREF_REMINDER_WORK_MODE_PRIORITY_VALUE, R.string.pref_reminder_priority_default));
           }
         }
         
@@ -183,10 +190,24 @@ public class ReminderBroadcastReceiver extends BroadcastReceiver {
       
       if(showReminder && IOUtils.isDatabaseAccessible(context)) {
         Logging.log(tag,  new Date(System.currentTimeMillis()) + ": ProgramID for Reminder '" + programID + "' CONTEXT: " + context + " contentResolver: " + context.getContentResolver(), Logging.TYPE_REMINDER, context);
-        Cursor values = context.getContentResolver().query(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_DATA, programID), SettingConstants.REMINDER_PROJECTION, null, null, TvBrowserContentProvider.DATA_KEY_STARTTIME);
+        Cursor values = null; try {
+        values = context.getContentResolver().query(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_DATA, programID), SettingConstants.REMINDER_PROJECTION, null, null, TvBrowserContentProvider.DATA_KEY_STARTTIME);
+        assert values != null;
         Logging.log(tag, new Date(System.currentTimeMillis()) + ": ProgramID for Reminder '" + programID + "' Tried to load program with given ID, cursor size: " + values.getCount(), Logging.TYPE_REMINDER, context);
-        if(values.moveToFirst()) {
-          NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
+
+        final App app = App.get();
+
+        if(values.moveToFirst() && app != null) {
+          String notificationId = app.getNotificationChannelId(App.TYPE_NOTIFICATION_REMINDER_DAY);
+
+          if(isNightMode) {
+            notificationId = app.getNotificationChannelId(App.TYPE_NOTIFICATION_REMINDER_NIGHT);
+          }
+          if(isWorkMode) {
+            notificationId = app.getNotificationChannelId(App.TYPE_NOTIFICATION_REMINDER_WORK);
+          }
+
+          final NotificationCompat.Builder builder = new NotificationCompat.Builder(context, notificationId);
           
           // high priority notification
           builder.setPriority(priority);
@@ -208,16 +229,19 @@ public class ReminderBroadcastReceiver extends BroadcastReceiver {
               int height = context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_height);
               
               float scale = 1;
-              
-              if(logo.getWidth() > width-4) {
-                scale = ((float)width-4)/logo.getWidth();
+
+              if(logo.getWidth() > logo.getHeight()) {
+                if(logo.getWidth() > width-4 || logo.getWidth() < (width-width/10.)) {
+                  scale = ((float)width-4)/logo.getWidth();
+                }
               }
-              
-              if(logo.getHeight() * scale > height-4) {
-                scale = ((float)height-4)/logo.getHeight();
+              else {
+                if(logo.getHeight() * scale > height-4 || logo.getHeight() < (height-height/10.)) {
+                  scale = ((float)height-4)/logo.getHeight();
+                }
               }
-              
-              if(scale < 1) {
+
+              if(scale != 1) {
                 logo = Bitmap.createScaledBitmap(logo, (int)(logo.getWidth() * scale), (int)(logo.getHeight() * scale), true);
               }
               
@@ -231,36 +255,42 @@ public class ReminderBroadcastReceiver extends BroadcastReceiver {
             
             builder.setSmallIcon(R.drawable.ic_stat_reminder);
             builder.setWhen(startTime);
-            
-            if(sound) {
-              builder.setSound(soundUri);
+
+            if(!CompatUtils.isAtLeastAndroidO()) {
+              if(sound) {
+                builder.setSound(soundUri);
+              }
+              else {
+                builder.setDefaults(0);
+                builder.setSound(null);
+              }
+
+              if(vibrate) {
+                builder.setVibrate(new long[] {1000,200,1000,400,1000,600});
+              }
+              else {
+                builder.setVibrate(null);
+              }
+
+              if(led) {
+                Log.d("info11", PrefUtils.getIntValue(R.string.PREF_REMINDER_COLOR_LED, ContextCompat.getColor(context, R.color.pref_reminder_color_led_default)) + " " + Color.GREEN + " " + Color.RED + " " + Color.YELLOW);
+
+                builder.setLights(PrefUtils.getIntValue(R.string.PREF_REMINDER_COLOR_LED, ContextCompat.getColor(context, R.color.pref_reminder_color_led_default)), 1000, 2000);
+              }
             }
-            else {
-              builder.setDefaults(0);
-              builder.setSound(null);
-            }
-            
-            if(vibrate) {
-              builder.setVibrate(new long[] {1000,200,1000,400,1000,600});
-            }
-            else {
-              builder.setVibrate(null);
-            }
-            
+
             builder.setAutoCancel(true);
             builder.setContentInfo(channelName);
-            
-            if(led) {
-              Log.d("info11", PrefUtils.getIntValue(R.string.PREF_REMINDER_COLOR_LED, ContextCompat.getColor(context, R.color.pref_reminder_color_led_default)) + " " + Color.GREEN + " " + Color.RED + " " + Color.YELLOW);
-              
-              builder.setLights(PrefUtils.getIntValue(R.string.PREF_REMINDER_COLOR_LED, ContextCompat.getColor(context, R.color.pref_reminder_color_led_default)), 1000, 2000);
-            }
-            
+
             java.text.DateFormat mTimeFormat = DateFormat.getTimeFormat(context);
             String value = ((SimpleDateFormat)mTimeFormat).toLocalizedPattern();
             
             if((value.charAt(0) == 'H' && value.charAt(1) != 'H') || (value.charAt(0) == 'h' && value.charAt(1) != 'h')) {
               value = value.charAt(0) + value;
+            }
+
+            if(!value.contains("E")) {
+              value = "E " + value;
             }
             
             SimpleDateFormat timeFormat = new SimpleDateFormat(value, Locale.getDefault());
@@ -277,10 +307,12 @@ public class ReminderBroadcastReceiver extends BroadcastReceiver {
             startInfo.setAction("actionstring" + System.currentTimeMillis());
             
             builder.setContentIntent(PendingIntent.getActivity(context, 0, startInfo, 0));
-            Notification notification = builder.build();
             
             Logging.log(tag, new Date(System.currentTimeMillis()) + ": ProgramID for Reminder '" + programID + "' Create notification with intent: " + startInfo, Logging.TYPE_REMINDER, context);
-            ((NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE)).notify(title,(int)(startTime / 60000), notification);
+            final NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (notificationManager != null) {
+              notificationManager.notify(title,(int)(startTime / 60000), builder.build());
+            }
             Logging.log(tag, new Date(System.currentTimeMillis()) + ": ProgramID for Reminder '" + programID + "' Notification was send.", Logging.TYPE_REMINDER, context);
             
             Intent broadcastProgram = new Intent(SettingConstants.PROGRAM_REMINDED_FOR);
@@ -290,7 +322,7 @@ public class ReminderBroadcastReceiver extends BroadcastReceiver {
           }
         }
         
-        values.close();
+        } finally {IOUtils.close(values);}
       }
     }
     
@@ -360,7 +392,7 @@ public class ReminderBroadcastReceiver extends BroadcastReceiver {
     return new int[] {start,end};
   }
 
-  private int getPriortiyForPreferenceValue(String value) {
+  private int getPriorityForPreferenceValue(String value) {
     int result = NotificationCompat.PRIORITY_DEFAULT;
     
     switch(Integer.parseInt(value)) {

@@ -19,16 +19,25 @@ package org.tvbrowser.view;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.util.AttributeSet;
 import android.view.View;
 
 public class ChannelLabel extends View {
-  private String mChannelName;
+  private final String mChannelName;
   private String mMeasuredChannelName;
   private int mTextMeasuredWidth;
-  private int mOrderNumber;
+  private final int mOrderNumber;
   
-  private Bitmap mLogo;
-  
+  private final Bitmap mLogo;
+
+  /** View constructors for XML inflation (used by tools) */
+  public ChannelLabel(Context context, AttributeSet attributeSet, int defStyleAttr) {
+    super(context, attributeSet, defStyleAttr);
+    mChannelName = null;
+    mLogo = null;
+    mOrderNumber = 0;
+  }
+
   public ChannelLabel(Context context, String channelName, Bitmap logo, int orderNumber) {
     super(context);
     

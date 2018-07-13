@@ -16,29 +16,38 @@
  */
 package org.tvbrowser.view;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-
 import android.content.Context;
 import android.graphics.Canvas;
+import android.util.AttributeSet;
 
 import org.tvbrowser.tvbrowser.R;
 
+import java.util.Calendar;
+import java.util.List;
+
 public class TimeBlockProgramTableLayout extends ProgramTableLayout {
-  //private ArrayList<Integer> mChannelIDsOrdered;
-  private int[] mBlockHeights;
-  private int[] mBlockCumulatedHeights;
-  private int mBlockSize;
-  private Calendar mCurrentShownDay;
+  private final int[] mBlockHeights;
+  private final int[] mBlockCumulatedHeights;
+  private final int mBlockSize;
+  private final Calendar mCurrentShownDay;
   
-  private boolean mGrowToBlock;
-  
-  public TimeBlockProgramTableLayout(Context context, final ArrayList<Integer> channelIDsOrdered, int blockSize, final Calendar day, boolean growToBlock) {
+  private final boolean mGrowToBlock;
+
+  /** View constructors for XML inflation (used by tools) */
+  @SuppressWarnings("PointlessArithmeticExpression")
+  public TimeBlockProgramTableLayout(Context context, AttributeSet attributeSet, int defStyleAttr) {
+    super(context, attributeSet, defStyleAttr);
+    mGrowToBlock = true;
+    mBlockHeights = new int[(ProgramTableLayoutConstants.HOURS/200) + (ProgramTableLayoutConstants.HOURS % 200 > 0 ? 1 : 0)];
+    mBlockCumulatedHeights = new int[mBlockHeights.length];
+    mBlockSize = 200;
+    mCurrentShownDay = Calendar.getInstance();
+  }
+
+  public TimeBlockProgramTableLayout(Context context, final List<Integer> channelIDsOrdered, int blockSize, final Calendar day, boolean growToBlock) {
     super(context, channelIDsOrdered);
-    
-    //mChannelIDsOrdered = channelIDsOrdered;
     mGrowToBlock = growToBlock;
-        
+
     mBlockHeights = new int[(ProgramTableLayoutConstants.HOURS/blockSize) + (ProgramTableLayoutConstants.HOURS % blockSize > 0 ? 1 : 0)];
     mBlockCumulatedHeights = new int[mBlockHeights.length];
     mBlockSize = blockSize;
@@ -59,7 +68,7 @@ public class TimeBlockProgramTableLayout extends ProgramTableLayout {
       int block = progPanel.getStartHour(mCurrentShownDay) / mBlockSize;
       
       if(block >= 0 && sortIndex >= 0 && block < blockProgCount.length) {
-        progPanel.measure(widthSpec, heightMeasureSpec);
+        progPanel.measure(widthSpec, 0);
         blockHeightCalc[block][sortIndex] += progPanel.getMeasuredHeight();
         blockProgCount[block][sortIndex]++;
       }

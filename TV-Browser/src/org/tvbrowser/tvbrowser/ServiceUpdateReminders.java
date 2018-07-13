@@ -2,6 +2,7 @@ package org.tvbrowser.tvbrowser;
 
 import java.util.Date;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.utils.CompatUtils;
@@ -16,10 +17,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
 
 public class ServiceUpdateReminders extends Service {
   public static final String EXTRA_FIRST_STARTUP = "extraFirstStartup";
   private static final int MAX_REMINDERS = 50;
+  private static final int ID_NOTIFICATION = 2;
   
   private static final String[] PROJECTION = {
       TvBrowserContentProvider.KEY_ID,
@@ -29,6 +32,28 @@ public class ServiceUpdateReminders extends Service {
   private Thread mUpdateRemindersThread;
   
   public ServiceUpdateReminders() {
+  }
+
+  @Override
+  public void onCreate() {
+    super.onCreate();
+
+    if(CompatUtils.isAtLeastAndroidO()) {
+      NotificationCompat.Builder b = new NotificationCompat.Builder(ServiceUpdateReminders.this, App.getNotificationChannelIdDefault(this));
+      b.setSmallIcon(R.drawable.ic_stat_notify);
+      b.setContentTitle(getResources().getText(R.string.notification_update_reminders));
+
+      startForeground(ID_NOTIFICATION, b.build());
+    }
+  }
+
+  @Override
+  public void onDestroy() {
+    if(CompatUtils.isAtLeastAndroidO()) {
+      stopForeground(true);
+    }
+
+    super.onDestroy();
   }
 
   @Override
@@ -43,7 +68,7 @@ public class ServiceUpdateReminders extends Service {
         @Override
         public void run() {
           if(IOUtils.isDatabaseAccessible(ServiceUpdateReminders.this)) {
-            boolean firstStart = intent != null ? intent.getBooleanExtra(EXTRA_FIRST_STARTUP, false) : false;
+            boolean firstStart = intent != null && intent.getBooleanExtra(EXTRA_FIRST_STARTUP, false);
             
             StringBuilder where = new StringBuilder(" ( " + TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER + " OR " + TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER + " ) AND ( " + TvBrowserContentProvider.DATA_KEY_ENDTIME + " >= " + System.currentTimeMillis() + " ) ");
             
@@ -67,25 +92,25 @@ public class ServiceUpdateReminders extends Service {
               }finally {
                 IOUtils.close(alarms);
               }
-            }catch(IllegalStateException ise) {
+            }catch(Exception ise) {
               //Ignore, only make sure TV-Browser didn't crash after moving of database
             }
           }
           else {
             try {
               sleep(500);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException ignored) {}
           }
           
           stopSelf();
-        };
+        }
       };
       mUpdateRemindersThread.start();
     }
         
     return Service.START_NOT_STICKY;
   }
-  
+
   private void addReminder(Context context, long programID, long startTime, Class<?> caller, boolean firstCreation) {try {
     Logging.log(ReminderBroadcastReceiver.tag, "addReminder called from: " + caller + " for programID: '" + programID + "' with start time: " + new Date(startTime), Logging.TYPE_REMINDER, context);
     
@@ -100,13 +125,16 @@ public class ServiceUpdateReminders extends Service {
     remind.putExtra(SettingConstants.REMINDER_PROGRAM_ID_EXTRA, programID);
     
     if(startTime <= 0 && IOUtils.isDatabaseAccessible(context)) {
-      Cursor time = context.getContentResolver().query(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_DATA, programID), new String[] {TvBrowserContentProvider.DATA_KEY_STARTTIME}, null, null, null);
-      
-      if(time.moveToFirst()) {
-        startTime = time.getLong(0);
+      Cursor time = null;
+      try {
+        time = context.getContentResolver().query(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_DATA, programID), new String[] {TvBrowserContentProvider.DATA_KEY_STARTTIME}, null, null, null);
+
+        if(time.moveToFirst()) {
+          startTime = time.getLong(0);
+        }
+      } finally {
+        IOUtils.close(time);
       }
-      
-      time.close();
     }
     
     if(startTime >= System.currentTimeMillis()) {
@@ -139,17 +167,21 @@ public class ServiceUpdateReminders extends Service {
   }catch(Throwable t) {t.printStackTrace();}
   }
     
-  public static final void startReminderUpdate(Context context) {
+  public static void startReminderUpdate(Context context) {
     startReminderUpdate(context,false);
   }
   
-  public static final void startReminderUpdate(Context context, boolean firstStart) {
+  private static void startReminderUpdate(Context context, boolean firstStart) {
+    context = context.getApplicationContext();
+
     startReminderUpdate(context,false,-1);
   }
   
-  public static final void startReminderUpdate(Context context, boolean firstStart, long ignoreId) {
+  private static void startReminderUpdate(Context context, boolean firstStart, long ignoreId) {
+    context = context.getApplicationContext();
+
     Intent updateAlarms = new Intent(context, ServiceUpdateReminders.class);
     updateAlarms.putExtra(ServiceUpdateReminders.EXTRA_FIRST_STARTUP, firstStart);
-    context.startService(updateAlarms);
+    CompatUtils.startForegroundService(context, updateAlarms);
   }
 }

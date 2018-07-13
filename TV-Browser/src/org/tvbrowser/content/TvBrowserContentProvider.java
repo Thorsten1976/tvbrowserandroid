@@ -20,6 +20,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -47,6 +48,7 @@ import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -54,14 +56,14 @@ public class TvBrowserContentProvider extends ContentProvider {
   public static final String DATABASE_TVB_NAME = "tvbrowser.db";
   
   public static final String AUTHORITY = "org.tvbrowser.tvbrowsercontentprovider";
-  public static final Uri CONTENT_URI_GROUPS = Uri.parse("content://org.tvbrowser.tvbrowsercontentprovider/groups");
-  public static final Uri CONTENT_URI_CHANNELS = Uri.parse("content://org.tvbrowser.tvbrowsercontentprovider/channels");
-  public static final Uri CONTENT_URI_CHANNELS_WITH_GROUP = Uri.parse("content://org.tvbrowser.tvbrowsercontentprovider/channelgroups");
-  public static final Uri CONTENT_URI_DATA = Uri.parse("content://org.tvbrowser.tvbrowsercontentprovider/data");
-  public static final Uri RAW_QUERY_CONTENT_URI_DATA = Uri.parse("content://org.tvbrowser.tvbrowsercontentprovider/rawdata");
-  public static final Uri CONTENT_URI_DATA_UPDATE = Uri.parse("content://org.tvbrowser.tvbrowsercontentprovider/dataupdate");
-  public static final Uri CONTENT_URI_DATA_WITH_CHANNEL = Uri.parse("content://org.tvbrowser.tvbrowsercontentprovider/datachannels");
-  public static final Uri CONTENT_URI_DATA_VERSION = Uri.parse("content://org.tvbrowser.tvbrowsercontentprovider/dataversion");
+  public static final Uri CONTENT_URI_GROUPS = Uri.parse("content://" + AUTHORITY + "/groups");
+  public static final Uri CONTENT_URI_CHANNELS = Uri.parse("content://" + AUTHORITY + "/channels");
+  public static final Uri CONTENT_URI_CHANNELS_WITH_GROUP = Uri.parse("content://" + AUTHORITY + "/channelgroups");
+  public static final Uri CONTENT_URI_DATA = Uri.parse("content://" + AUTHORITY + "/data");
+  public static final Uri RAW_QUERY_CONTENT_URI_DATA = Uri.parse("content://" + AUTHORITY + "/rawdata");
+  public static final Uri CONTENT_URI_DATA_UPDATE = Uri.parse("content://" + AUTHORITY + "/dataupdate");
+  public static final Uri CONTENT_URI_DATA_WITH_CHANNEL = Uri.parse("content://" + AUTHORITY + "/datachannels");
+  public static final Uri CONTENT_URI_DATA_VERSION = Uri.parse("content://" + AUTHORITY + "/dataversion");
     
   public static final String KEY_ID = "_id";
   
@@ -75,8 +77,8 @@ public class TvBrowserContentProvider extends ContentProvider {
   private static final int CHANNELS = 10;
   private static final int CHANNEL_ID = 11;
   
-  private static final int CHANNELGROUPS = 12;
-  private static final int CHANNELGROUPS_ID = 13;
+  private static final int CHANNEL_GROUPS = 12;
+  private static final int CHANNEL_GROUPS_ID = 13;
   
   private static final int DATA = 20;
   private static final int DATA_ID = 21;
@@ -125,13 +127,15 @@ public class TvBrowserContentProvider extends ContentProvider {
   public static final String CHANNEL_KEY_JOINED_CHANNEL_ID = "joinedChannelID";
   public static final String CHANNEL_KEY_ORDER_NUMBER = "orderNumber";
   public static final String CHANNEL_KEY_SELECTION = "isSelected";
-  public static final String CHANNEL_KEY_USER_CHANNEL_NAME = "userChannelName";
-  public static final String CHANNEL_KEY_USER_ICON = "userChannelIcon";
-  public static final String CHANNEL_KEY_USER_START_TIME = "userStartTime";
-  public static final String CHANNEL_KEY_USER_END_TIME = "userEndTime";
+  private static final String CHANNEL_KEY_USER_CHANNEL_NAME = "userChannelName";
+  private static final String CHANNEL_KEY_USER_ICON = "userChannelIcon";
+  private static final String CHANNEL_KEY_USER_START_TIME = "userStartTime";
+  private static final String CHANNEL_KEY_USER_END_TIME = "userEndTime";
   
   // Column names for the data table
+  @SuppressWarnings("SpellCheckingInspection")
   public static final String DATA_KEY_STARTTIME = "startTime";
+  @SuppressWarnings("SpellCheckingInspection")
   public static final String DATA_KEY_ENDTIME = "endTime";
   public static final String DATA_KEY_TITLE = "title";
   public static final String DATA_KEY_TITLE_ORIGINAL = "titleOriginal";
@@ -140,6 +144,7 @@ public class TvBrowserContentProvider extends ContentProvider {
   public static final String DATA_KEY_SHORT_DESCRIPTION = "shortDescription";
   public static final String DATA_KEY_DESCRIPTION = "description";
   public static final String DATA_KEY_ACTORS = "actors";
+  @SuppressWarnings("SpellCheckingInspection")
   public static final String DATA_KEY_REGIE = "regie";
   public static final String DATA_KEY_CUSTOM_INFO = "customInfo";
   public static final String DATA_KEY_CATEGORIES = "categories";
@@ -147,6 +152,7 @@ public class TvBrowserContentProvider extends ContentProvider {
   public static final String DATA_KEY_WEBSITE_LINK = "websiteLink";
   public static final String DATA_KEY_GENRE = "genre";
   public static final String DATA_KEY_ORIGIN = "origin";
+  @SuppressWarnings("SpellCheckingInspection")
   public static final String DATA_KEY_NETTO_PLAY_TIME = "nettoPlayTime";
   public static final String DATA_KEY_VPS = "vps";
   public static final String DATA_KEY_SCRIPT = "script";
@@ -169,11 +175,31 @@ public class TvBrowserContentProvider extends ContentProvider {
   public static final String DATA_KEY_PRODUCTION_FIRM = "productionFirm";
   public static final String DATA_KEY_AGE_LIMIT_STRING = "ageLimitString";
   public static final String DATA_KEY_LAST_PRODUCTION_YEAR = "lastProductionYear";
+
+  // Keys since 3.2 (desktop) start
+  public static final String DATA_KEY_PART_NUMBER = "partNumber";
+  public static final String DATA_KEY_PART_NUMBER_TOTAL = "partNumberTotal";
+  // Keys since 3.2 (desktop) end
+
+  // Keys since 4.0 (desktop) start
+  public static final String DATA_KEY_DURATION_ORIGINAL = "originalDuration";
+  public static final String DATA_KEY_YEAR_PRODUCTION_FIRST = "firstProductionYear";
+  public static final String DATA_KEY_KEYWORD_LIST = "keywordList";
+  @SuppressWarnings("SpellCheckingInspection")
+  public static final String DATA_KEY_VOD_INFO = "VODinfo";
+  @SuppressWarnings("SpellCheckingInspection")
+  public static final String DATA_KEY_VOD_LINK = "VODlink";
+  public static final String DATA_KEY_GENRE_SUB_LIST = "genreSubList";
+  // Keys since 4.0 (desktop) end
+
   public static final String DATA_KEY_ADDITIONAL_INFO = "additionalInfo";
   public static final String DATA_KEY_SERIES = "series";
   public static final String DATA_KEY_UNIX_DATE = "unixDate";
+  @SuppressWarnings("SpellCheckingInspection")
   public static final String DATA_KEY_DATE_PROG_ID = "dateProgID";
+  @SuppressWarnings("SpellCheckingInspection")
   public static final String DATA_KEY_DATE_PROG_STRING_ID = "dateProgStringID";
+  @SuppressWarnings("SpellCheckingInspection")
   public static final String DATA_KEY_DONT_WANT_TO_SEE = "dontWantToSee";
   public static final String DATA_KEY_REMOVED_REMINDER = "removedReminder";
   public static final String DATA_KEY_MARKING_MARKING = "markingMarking";
@@ -192,7 +218,8 @@ public class TvBrowserContentProvider extends ContentProvider {
   public static final String DATA_KEY_INFO_16_TO_9 = "infoSixteenToNine";
   public static final String DATA_KEY_INFO_MONO = "infoMono";
   public static final String DATA_KEY_INFO_STEREO = "infoStereo";
-  public static final String DATA_KEY_INFO_DOLBY_SOURROUND = "infoDoblySourround";
+  @SuppressWarnings("SpellCheckingInspection")
+  public static final String DATA_KEY_INFO_DOLBY_SURROUND = "infoDoblySourround";
   public static final String DATA_KEY_INFO_DOLBY_DIGITAL_5_1 = "infoDigitalFivePointOne";
   public static final String DATA_KEY_INFO_SECOND_AUDIO_PROGRAM = "infoSecondAudioProgram";
   public static final String DATA_KEY_INFO_CLOSED_CAPTION = "infoClosedCaption";
@@ -201,10 +228,12 @@ public class TvBrowserContentProvider extends ContentProvider {
   public static final String DATA_KEY_INFO_FILM = "infoFilm";
   public static final String DATA_KEY_INFO_SERIES = "infoSeries";
   public static final String DATA_KEY_INFO_NEW = "infoNew";
+  @SuppressWarnings("SpellCheckingInspection")
   public static final String DATA_KEY_INFO_AUDIO_DESCRIPTION = "infoAudioDescritption";
   public static final String DATA_KEY_INFO_NEWS = "infoNews";
   public static final String DATA_KEY_INFO_SHOW = "infoShow";
-  public static final String DATA_KEY_INFO_MAGAZIN = "infoMagazin";
+  @SuppressWarnings("SpellCheckingInspection")
+  public static final String DATA_KEY_INFO_MAGAZINE = "infoMagazin";
   public static final String DATA_KEY_INFO_HD = "infoHD";
   public static final String DATA_KEY_INFO_DOCUMENTATION = "infoDocumentation";
   public static final String DATA_KEY_INFO_ART = "infoArt";
@@ -216,7 +245,7 @@ public class TvBrowserContentProvider extends ContentProvider {
   private static final HashMap<String, String> MAP_DATA_KEY_TYPE = createDataKeyTypeMap();
   
   private static HashMap<String, String> createDataKeyTypeMap () {
-    final HashMap<String, String> mapDataKeyType = new HashMap<String, String>();
+    final HashMap<String, String> mapDataKeyType = new HashMap<>();
     
     mapDataKeyType.put(DATA_KEY_STARTTIME ," INTEGER NOT NULL");
     mapDataKeyType.put(DATA_KEY_ENDTIME ," INTEGER NOT NULL");
@@ -258,6 +287,17 @@ public class TvBrowserContentProvider extends ContentProvider {
     mapDataKeyType.put(DATA_KEY_LAST_PRODUCTION_YEAR ," INTEGER");
     mapDataKeyType.put(DATA_KEY_ADDITIONAL_INFO ," TEXT");
     mapDataKeyType.put(DATA_KEY_SERIES ," TEXT");
+
+    mapDataKeyType.put(DATA_KEY_PART_NUMBER," INTEGER");
+    mapDataKeyType.put(DATA_KEY_PART_NUMBER_TOTAL," INTEGER");
+
+    mapDataKeyType.put(DATA_KEY_DURATION_ORIGINAL," TEXT");
+    mapDataKeyType.put(DATA_KEY_YEAR_PRODUCTION_FIRST," INTEGER");
+    mapDataKeyType.put(DATA_KEY_KEYWORD_LIST," TEXT");
+    mapDataKeyType.put(DATA_KEY_VOD_INFO," TEXT");
+    mapDataKeyType.put(DATA_KEY_VOD_LINK," TEXT");
+    mapDataKeyType.put(DATA_KEY_GENRE_SUB_LIST," TEXT");
+
     mapDataKeyType.put(DATA_KEY_UNIX_DATE ," INTEGER");
     mapDataKeyType.put(DATA_KEY_DATE_PROG_ID ," INTEGER");
     mapDataKeyType.put(DATA_KEY_DATE_PROG_STRING_ID ," TEXT");
@@ -277,7 +317,7 @@ public class TvBrowserContentProvider extends ContentProvider {
     mapDataKeyType.put(DATA_KEY_INFO_16_TO_9 ," INTEGER DEFAULT 0");
     mapDataKeyType.put(DATA_KEY_INFO_MONO ," INTEGER DEFAULT 0");
     mapDataKeyType.put(DATA_KEY_INFO_STEREO ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_DOLBY_SOURROUND  ," INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_DOLBY_SURROUND," INTEGER DEFAULT 0");
     mapDataKeyType.put(DATA_KEY_INFO_DOLBY_DIGITAL_5_1 ," INTEGER DEFAULT 0");
     mapDataKeyType.put(DATA_KEY_INFO_SECOND_AUDIO_PROGRAM ," INTEGER DEFAULT 0");
     mapDataKeyType.put(DATA_KEY_INFO_CLOSED_CAPTION ," INTEGER DEFAULT 0");
@@ -289,7 +329,7 @@ public class TvBrowserContentProvider extends ContentProvider {
     mapDataKeyType.put(DATA_KEY_INFO_AUDIO_DESCRIPTION ," INTEGER DEFAULT 0");
     mapDataKeyType.put(DATA_KEY_INFO_NEWS ," INTEGER DEFAULT 0");
     mapDataKeyType.put(DATA_KEY_INFO_SHOW ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_MAGAZIN ," INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_MAGAZINE," INTEGER DEFAULT 0");
     mapDataKeyType.put(DATA_KEY_INFO_HD ," INTEGER DEFAULT 0");
     mapDataKeyType.put(DATA_KEY_INFO_DOCUMENTATION ," INTEGER DEFAULT 0");
     mapDataKeyType.put(DATA_KEY_INFO_ART ," INTEGER DEFAULT 0");
@@ -302,7 +342,7 @@ public class TvBrowserContentProvider extends ContentProvider {
   }
   
   // Artificial key for creating column at selection
-  public static final String DATA_KEY_START_DAY_LOCAL = "startDayLocal";
+  private static final String DATA_KEY_START_DAY_LOCAL = "startDayLocal";
   
   public static final String[] INFO_CATEGORIES_COLUMNS_ARRAY = {
     DATA_KEY_INFO_BLACK_AND_WHITE,
@@ -310,7 +350,7 @@ public class TvBrowserContentProvider extends ContentProvider {
     DATA_KEY_INFO_16_TO_9,
     DATA_KEY_INFO_MONO,
     DATA_KEY_INFO_STEREO,
-    DATA_KEY_INFO_DOLBY_SOURROUND,
+    DATA_KEY_INFO_DOLBY_SURROUND,
     DATA_KEY_INFO_DOLBY_DIGITAL_5_1,
     DATA_KEY_INFO_SECOND_AUDIO_PROGRAM,
     DATA_KEY_INFO_CLOSED_CAPTION,
@@ -322,7 +362,7 @@ public class TvBrowserContentProvider extends ContentProvider {
     DATA_KEY_INFO_AUDIO_DESCRIPTION,
     DATA_KEY_INFO_NEWS,
     DATA_KEY_INFO_SHOW,
-    DATA_KEY_INFO_MAGAZIN,
+    DATA_KEY_INFO_MAGAZINE,
     DATA_KEY_INFO_HD,
     DATA_KEY_INFO_DOCUMENTATION,
     DATA_KEY_INFO_ART,
@@ -375,7 +415,7 @@ public class TvBrowserContentProvider extends ContentProvider {
   };
   
   static {
-    SEARCH_PROJECTION_MAP = new HashMap<String, String>();
+    SEARCH_PROJECTION_MAP = new HashMap<>();
     SEARCH_PROJECTION_MAP.put(SearchManager.SUGGEST_COLUMN_TEXT_1, DATA_KEY_TITLE + " AS " + SearchManager.SUGGEST_COLUMN_TEXT_1);
     SEARCH_PROJECTION_MAP.put(SearchManager.SUGGEST_COLUMN_TEXT_2, DATA_KEY_EPISODE_TITLE + " AS " + SearchManager.SUGGEST_COLUMN_TEXT_2);
     SEARCH_PROJECTION_MAP.put(SearchManager.SUGGEST_COLUMN_INTENT_DATA_ID,KEY_ID + " AS " + SearchManager.SUGGEST_COLUMN_INTENT_DATA_ID);
@@ -385,32 +425,32 @@ public class TvBrowserContentProvider extends ContentProvider {
   private static final UriMatcher uriMatcher;
   
   // Allocate the UriMatcher object, where a URI ending in 'earthquakes' will correspond to a request
-  // for all eathquakes, and 'earthquakes' with a traisling '/[rowID]' will represent a single earthquake row.
+  // for all earthquakes, and 'earthquakes' with a trailing '/[rowID]' will represent a single earthquake row.
   static {
     uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", "groups", GROUPS);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", "groups/#", GROUP_ID);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", "channels", CHANNELS);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", "channels/#", CHANNEL_ID);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", "channelgroups", CHANNELGROUPS);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", "channelgroups/#", CHANNELGROUPS_ID);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", "data", DATA);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", "data/#", DATA_ID);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", "rawdata", RAW_DATA);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", "rawdata/#", RAW_DATA_ID);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", "dataupdate", DATA_UPDATE);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", "dataupdate/#", DATA_UPDATE_ID);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", "datachannels", DATA_CHANNELS);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", "datachannels/#", DATA_CHANNEL_ID);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", SearchManager.SUGGEST_URI_PATH_QUERY, SEARCH);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", SearchManager.SUGGEST_URI_PATH_QUERY + "/*", SEARCH);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", SearchManager.SUGGEST_URI_PATH_SHORTCUT, SEARCH);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", SearchManager.SUGGEST_URI_PATH_SHORTCUT + "/*", SEARCH);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", "dataversion", DATA_VERSION);
-    uriMatcher.addURI("org.tvbrowser.tvbrowsercontentprovider", "dataversion/#", DATA_VERSION_ID);
+    uriMatcher.addURI(AUTHORITY, "groups", GROUPS);
+    uriMatcher.addURI(AUTHORITY, "groups/#", GROUP_ID);
+    uriMatcher.addURI(AUTHORITY, "channels", CHANNELS);
+    uriMatcher.addURI(AUTHORITY, "channels/#", CHANNEL_ID);
+    uriMatcher.addURI(AUTHORITY, "channelgroups", CHANNEL_GROUPS);
+    uriMatcher.addURI(AUTHORITY, "channelgroups/#", CHANNEL_GROUPS_ID);
+    uriMatcher.addURI(AUTHORITY, "data", DATA);
+    uriMatcher.addURI(AUTHORITY, "data/#", DATA_ID);
+    uriMatcher.addURI(AUTHORITY, "rawdata", RAW_DATA);
+    uriMatcher.addURI(AUTHORITY, "rawdata/#", RAW_DATA_ID);
+    uriMatcher.addURI(AUTHORITY, "dataupdate", DATA_UPDATE);
+    uriMatcher.addURI(AUTHORITY, "dataupdate/#", DATA_UPDATE_ID);
+    uriMatcher.addURI(AUTHORITY, "datachannels", DATA_CHANNELS);
+    uriMatcher.addURI(AUTHORITY, "datachannels/#", DATA_CHANNEL_ID);
+    uriMatcher.addURI(AUTHORITY, SearchManager.SUGGEST_URI_PATH_QUERY, SEARCH);
+    uriMatcher.addURI(AUTHORITY, SearchManager.SUGGEST_URI_PATH_QUERY + "/*", SEARCH);
+    uriMatcher.addURI(AUTHORITY, SearchManager.SUGGEST_URI_PATH_SHORTCUT, SEARCH);
+    uriMatcher.addURI(AUTHORITY, SearchManager.SUGGEST_URI_PATH_SHORTCUT + "/*", SEARCH);
+    uriMatcher.addURI(AUTHORITY, "dataversion", DATA_VERSION);
+    uriMatcher.addURI(AUTHORITY, "dataversion/#", DATA_VERSION_ID);
   }
   
-  public static final String[] getColumnArrayWithMarkingColums(String... columns) {
+  public static String[] getColumnArrayWithMarkingColumns(String... columns) {
     String[] projection = new String[columns.length + TvBrowserContentProvider.MARKING_COLUMNS.length];
     
     System.arraycopy(TvBrowserContentProvider.MARKING_COLUMNS, 0, projection, 0, TvBrowserContentProvider.MARKING_COLUMNS.length);
@@ -420,7 +460,7 @@ public class TvBrowserContentProvider extends ContentProvider {
  }
 
   @Override
-  public int delete(Uri uri, String where, String[] whereArgs) {
+  public int delete(@NonNull Uri uri, String where, String[] whereArgs) {
     int count = 0;
     
     SQLiteDatabase database = mDataBaseHelper.getWritableDatabase();
@@ -468,8 +508,9 @@ public class TvBrowserContentProvider extends ContentProvider {
   }
 
   @Override
-  public String getType(Uri uri) {
+  public String getType(@NonNull Uri uri) {
     switch(uriMatcher.match(uri)) {
+      // FIXME vnd.andorid.cursor.* should be vnd.android.cursor.
       case GROUPS: return "vnd.andorid.cursor.dir/vnd.tvbrowser.groups";
       case GROUP_ID: return "vnd.andorid.cursor.item/vnd.tvbrowser.groups";
       case CHANNELS: return "vnd.andorid.cursor.dir/vnd.tvbrowser.channels";
@@ -489,7 +530,7 @@ public class TvBrowserContentProvider extends ContentProvider {
   }
 
   @Override
-  public Uri insert(Uri uri, ContentValues values) {
+  public Uri insert(@NonNull Uri uri, ContentValues values) {
     if(IOUtils.isDatabaseAccessible(getContext())) {
       switch(uriMatcher.match(uri)) {
         case GROUPS: return insertGroup(uri, values);
@@ -504,7 +545,7 @@ public class TvBrowserContentProvider extends ContentProvider {
   }
   
   @Override
-  public int bulkInsert(Uri uri, ContentValues[] values) {
+  public int bulkInsert(@NonNull Uri uri, @NonNull ContentValues[] values) {
     if(IOUtils.isDatabaseAccessible(getContext())) {
       switch(uriMatcher.match(uri)) {
         case DATA: return bulkInsertData(uri, values);
@@ -517,9 +558,10 @@ public class TvBrowserContentProvider extends ContentProvider {
     throw new SQLException("Failed to insert row into " + uri);
   }
   
+  @NonNull
   @Override
-  public ContentProviderResult[] applyBatch(ArrayList<ContentProviderOperation> operations) throws OperationApplicationException {
-    ArrayList<ContentProviderResult> result = new ArrayList<ContentProviderResult>(0);
+  public ContentProviderResult[] applyBatch(@NonNull ArrayList<ContentProviderOperation> operations) throws OperationApplicationException {
+    ArrayList<ContentProviderResult> result = new ArrayList<>(0);
     
     try {
       SQLiteDatabase database = mDataBaseHelper.getWritableDatabase();
@@ -528,7 +570,7 @@ public class TvBrowserContentProvider extends ContentProvider {
         try {
           database.beginTransaction();
           
-          HashMap<Uri, Uri> updateUris = new HashMap<Uri, Uri>();
+          HashMap<Uri, Uri> updateUris = new HashMap<>();
           
           for(ContentProviderOperation op : operations) {
             Uri uri = op.getUri();
@@ -572,13 +614,13 @@ public class TvBrowserContentProvider extends ContentProvider {
               }
             }
           }
-        }catch(SQLiteDatabaseLockedException e) {}
+        }catch(SQLiteDatabaseLockedException ignored) {}
       }
     }catch(RuntimeException rte) {
       throw new OperationApplicationException(rte);
     }
     
-    return result.toArray(new ContentProviderResult[result.size()]);
+    return result.toArray(new ContentProviderResult[0]);
   }
   
   private int bulkInsertData(Uri uri, ContentValues[] values) {
@@ -688,7 +730,7 @@ public class TvBrowserContentProvider extends ContentProvider {
     SQLiteDatabase database = mDataBaseHelper.getWritableDatabase();
     
     if(database != null) {
-      // Insert the new row. The call to databse.insert will return the row number if it is successfull.
+      // Insert the new row. The call to database.insert will return the row number if it is successful.
       long rowID = database.insert(TvBrowserDataBaseHelper.VERSION_TABLE, "version", values);
       
       // Return a URI to the newly inserted row on success.
@@ -714,7 +756,7 @@ public class TvBrowserContentProvider extends ContentProvider {
     SQLiteDatabase database = mDataBaseHelper.getWritableDatabase();
     
     if(database != null) {
-      // Insert the new row. The call to databse.insert will return the row number if it is successfull.
+      // Insert the new row. The call to database.insert will return the row number if it is successful.
       long rowID = database.insert(TvBrowserDataBaseHelper.DATA_TABLE, "channel", values);
       
       // Return a URI to the newly inserted row on success.
@@ -739,7 +781,7 @@ public class TvBrowserContentProvider extends ContentProvider {
     SQLiteDatabase database = mDataBaseHelper.getWritableDatabase();
     
     if(database != null) {
-      // Insert the new row. The call to databse.insert will return the row number if it is successfull.
+      // Insert the new row. The call to database.insert will return the row number if it is successful.
       long rowID = database.insert(CHANNEL_TABLE, "channel", values);
       
       // Return a URI to the newly inserted row on success.
@@ -764,7 +806,7 @@ public class TvBrowserContentProvider extends ContentProvider {
     SQLiteDatabase database = mDataBaseHelper.getWritableDatabase();
     
     if(database != null) {
-      // Insert the new row. The call to databse.insert will return the row number if it is successfull.
+      // Insert the new row. The call to database.insert will return the row number if it is successful.
       long rowID = database.insert(TvBrowserDataBaseHelper.GROUPS_TABLE, "group", values);
       
       // Return a URI to the newly inserted row on success.
@@ -795,8 +837,8 @@ public class TvBrowserContentProvider extends ContentProvider {
       path = "";
     }
     else if(!path.endsWith(File.separator)) {
-      path += File.separator;
-    }
+        path += File.separator;
+      }
     Log.d("info11", "DATABASEPATH " + path);
     //path = "";
     mDataBaseHelper = new TvBrowserDataBaseHelper(getContext(), path + DATABASE_TVB_NAME, null, TvBrowserDataBaseHelper.DATABASE_VERSION);
@@ -808,9 +850,9 @@ public class TvBrowserContentProvider extends ContentProvider {
     
     String databasePath = "internal";
     
-    try {
+      try {
       databasePath = pref.getString(getContext().getString(R.string.PREF_DATABASE_PATH), getContext().getString(R.string.pref_database_path_default));
-    }catch(NotFoundException nfe) {}
+    }catch(NotFoundException ignored) {}
     
     createDataBaseHelper(databasePath);
     
@@ -874,13 +916,11 @@ public class TvBrowserContentProvider extends ContentProvider {
         orderBy = sortOrder;
       }
       
-      if(orderBy != null && !orderBy.contains("NOCASE") && !orderBy.contains("COLLATE")) {
+      if(!orderBy.contains("NOCASE") && !orderBy.contains("COLLATE")) {
         orderBy += " COLLATE NOCASE";
       }
       
-      if(orderBy != null) {
-        sql.append(" ORDER BY ").append(orderBy);
-      }
+      sql.append(" ORDER BY ").append(orderBy);
       
       // Apply the query to the underling database.
       result = database.rawQuery(sql.toString(), selectionArgs);
@@ -896,7 +936,7 @@ public class TvBrowserContentProvider extends ContentProvider {
   }
   
   @Override
-  public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+  public Cursor query(@NonNull Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
     Cursor result = null;
     
     SQLiteDatabase database = mDataBaseHelper.getWritableDatabase();
@@ -908,22 +948,29 @@ public class TvBrowserContentProvider extends ContentProvider {
         // If no sort order is specified, sort by date / time
         String orderBy = null;
         
-        // If this is a row query, limit the result set to teh pased in row.
+        // If this is a row query, limit the result set to the pased in row.
         switch(uriMatcher.match(uri)) {
-          case SEARCH: String search = uri.getPathSegments().get(1).replace("'", "''");
-                       qb.appendWhere("(" + DATA_KEY_TITLE + " LIKE '%" + search + "%' OR " + DATA_KEY_EPISODE_TITLE + " LIKE '%" +  search + "%') AND " + DATA_KEY_ENDTIME + ">=" + System.currentTimeMillis() + " AND NOT " + DATA_KEY_DONT_WANT_TO_SEE);
-                       qb.setProjectionMap(SEARCH_PROJECTION_MAP);
-                       qb.setTables(TvBrowserDataBaseHelper.DATA_TABLE);
-                       orderBy = DATA_KEY_STARTTIME;
-                       break;
+          case SEARCH:
+            final List<String> uriPathSegments = uri.getPathSegments();
+            String search = "   ";// SearchManager.SUGGEST_URI_PATH_QUERY;
+            if (uriPathSegments != null) {
+              if (uriPathSegments.size() > 1) {
+                search = uriPathSegments.get(1).replace("'", "''").trim();
+              }
+            }
+            qb.appendWhere("(" + DATA_KEY_TITLE + " LIKE '%" + search + "%' OR " + DATA_KEY_EPISODE_TITLE + " LIKE '%" + search + "%') AND " + DATA_KEY_ENDTIME + ">=" + System.currentTimeMillis() + " AND NOT " + DATA_KEY_DONT_WANT_TO_SEE);
+            qb.setProjectionMap(SEARCH_PROJECTION_MAP);
+            qb.setTables(TvBrowserDataBaseHelper.DATA_TABLE);
+            orderBy = DATA_KEY_STARTTIME;
+            break;
           case GROUP_ID: qb.appendWhere(KEY_ID + "=" + uri.getPathSegments().get(1));
           case GROUPS: qb.setTables(TvBrowserDataBaseHelper.GROUPS_TABLE);
                        orderBy = GROUP_KEY_GROUP_ID;break;
           case CHANNEL_ID: qb.appendWhere(KEY_ID + "=" + uri.getPathSegments().get(1));
           case CHANNELS: qb.setTables(CHANNEL_TABLE);
                         orderBy = CHANNEL_KEY_NAME;break;
-          case CHANNELGROUPS_ID: qb.appendWhere(KEY_ID + "=" + uri.getPathSegments().get(1));
-          case CHANNELGROUPS: 
+          case CHANNEL_GROUPS_ID: qb.appendWhere(KEY_ID + "=" + uri.getPathSegments().get(1));
+          case CHANNEL_GROUPS:
             {
               qb.setTables(TvBrowserDataBaseHelper.GROUPS_TABLE + ", " + CHANNEL_TABLE);
               orderBy = CHANNEL_KEY_ORDER_NUMBER + ", " + CHANNEL_KEY_NAME;
@@ -1065,7 +1112,7 @@ public class TvBrowserContentProvider extends ContentProvider {
   }
   
   @Override
-  public int update(Uri uri, ContentValues values, String where, String[] whereArgs) {
+  public int update(@NonNull Uri uri, ContentValues values, String where, String[] whereArgs) {
     int count = 0;
     SQLiteDatabase database = mDataBaseHelper.getWritableDatabase();
     
@@ -1115,7 +1162,7 @@ public class TvBrowserContentProvider extends ContentProvider {
 
   public static final String CHANNEL_TABLE = "channels";
   
-  // Helper class for opneing, creating, and managing database version control
+  // Helper class for opening, creating, and managing database version control
   private static class TvBrowserDataBaseHelper extends SQLiteOpenHelper {
     private static final String GROUPS_TABLE = "channelGroups";
     
@@ -1154,13 +1201,13 @@ public class TvBrowserContentProvider extends ContentProvider {
     
     private static final String CREATE_DATA_TABLE = sqlCreateDataTable(); 
     
-    private static final String sqlCreateDataTable() {
+    private static String sqlCreateDataTable() {
       final StringBuilder builder = new StringBuilder();
       
       builder.append("create table ").append(DATA_TABLE).append(" (").append(KEY_ID).append(" INTEGER primary key autoincrement, ");
       builder.append(CHANNEL_KEY_CHANNEL_ID).append(" INTEGER REFERENCES ").append(CHANNEL_TABLE).append("(").append(KEY_ID).append(") NOT NULL, ");
       
-      final String[] keys = MAP_DATA_KEY_TYPE.keySet().toArray(new String[MAP_DATA_KEY_TYPE.size()]);
+      final String[] keys = MAP_DATA_KEY_TYPE.keySet().toArray(new String[0]);
       
       for(int i = 0; i < keys.length-1; i++) {
         builder.append(keys[i]).append(MAP_DATA_KEY_TYPE.get(keys[i])).append(", ");
@@ -1182,10 +1229,10 @@ public class TvBrowserContentProvider extends ContentProvider {
         + VERSION_KEY_PICTURE0016_VERSION + " INTEGER, "
         + VERSION_KEY_PICTURE1600_VERSION + " INTEGER);";
     
-    private Context mContext;
+    private final Context mContext;
     
-    public TvBrowserDataBaseHelper(Context context, String name,
-        CursorFactory factory, int version) {
+    TvBrowserDataBaseHelper(Context context, String name,
+                            CursorFactory factory, int version) {
       super(context,name, factory, version);
       mContext = context.getApplicationContext();
     }
@@ -1198,7 +1245,7 @@ public class TvBrowserContentProvider extends ContentProvider {
       db.execSQL(CREATE_VERSION_TABLE);
     }
 
-    private static final int DATABASE_VERSION = 11;
+    private static final int DATABASE_VERSION = 12;
     
     @Override
     public void onUpgrade(final SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -1235,10 +1282,12 @@ public class TvBrowserContentProvider extends ContentProvider {
           db.execSQL("ALTER TABLE " + DATA_TABLE + " ADD COLUMN " + DATA_KEY_MARKING_REMINDER + " INTEGER DEFAULT 0");
           db.execSQL("ALTER TABLE " + DATA_TABLE + " ADD COLUMN " + DATA_KEY_MARKING_SYNC + " INTEGER DEFAULT 0");
           
-          Cursor markings = db.query(DATA_TABLE, new String[] {KEY_ID,DATA_KEY_MARKING_VALUES}, "ifnull("+DATA_KEY_MARKING_VALUES+", '') != ''", null, null, null, KEY_ID);
           
+          Cursor markings = null;
+          try {
+          markings = db.query(DATA_TABLE, new String[] {KEY_ID,DATA_KEY_MARKING_VALUES}, "ifnull("+DATA_KEY_MARKING_VALUES+", '') != ''", null, null, null, KEY_ID);
           if(markings.moveToFirst()) {
-            ArrayList<ContentProviderOperation> updateValuesList = new ArrayList<ContentProviderOperation>();
+            ArrayList<ContentProviderOperation> updateValuesList = new ArrayList<>();
             
             do {
               long id = markings.getLong(0);
@@ -1290,8 +1339,8 @@ public class TvBrowserContentProvider extends ContentProvider {
               db.setTransactionSuccessful();
               db.endTransaction();
             }
-          }
           
+          }} finally {IOUtils.close(markings);}
           db.execSQL("ALTER TABLE " + DATA_TABLE + " RENAME TO " + DATA_TABLE + "_old");
           db.execSQL(CREATE_DATA_TABLE);
           
@@ -1361,7 +1410,7 @@ public class TvBrowserContentProvider extends ContentProvider {
       }
       
       if(oldVersion < 7) {
-        ArrayList<String> addColumnList = new ArrayList<String>();
+        ArrayList<String> addColumnList = new ArrayList<>();
         
         addColumnList.add(DATA_KEY_UTC_START_MINUTE_AFTER_MIDNIGHT);
         addColumnList.add(DATA_KEY_UTC_END_MINUTE_AFTER_MIDNIGHT);
@@ -1372,7 +1421,7 @@ public class TvBrowserContentProvider extends ContentProvider {
         addColumnList.add(DATA_KEY_INFO_16_TO_9);
         addColumnList.add(DATA_KEY_INFO_MONO);
         addColumnList.add(DATA_KEY_INFO_STEREO);
-        addColumnList.add(DATA_KEY_INFO_DOLBY_SOURROUND);
+        addColumnList.add(DATA_KEY_INFO_DOLBY_SURROUND);
         addColumnList.add(DATA_KEY_INFO_DOLBY_DIGITAL_5_1);
         addColumnList.add(DATA_KEY_INFO_SECOND_AUDIO_PROGRAM);
         addColumnList.add(DATA_KEY_INFO_CLOSED_CAPTION);
@@ -1384,7 +1433,7 @@ public class TvBrowserContentProvider extends ContentProvider {
         addColumnList.add(DATA_KEY_INFO_AUDIO_DESCRIPTION);
         addColumnList.add(DATA_KEY_INFO_NEWS);
         addColumnList.add(DATA_KEY_INFO_SHOW);
-        addColumnList.add(DATA_KEY_INFO_MAGAZIN);
+        addColumnList.add(DATA_KEY_INFO_MAGAZINE);
         addColumnList.add(DATA_KEY_INFO_HD);
         addColumnList.add(DATA_KEY_INFO_DOCUMENTATION);
         addColumnList.add(DATA_KEY_INFO_ART);
@@ -1405,13 +1454,11 @@ public class TvBrowserContentProvider extends ContentProvider {
             
             while(c.moveToNext()) {
               String name = c.getString(nameColumn);
-              
-              if(addColumnList.contains(name)) {
-                addColumnList.remove(name);
-              }
+
+              addColumnList.remove(name);
             }
           }finally {
-            c.close();
+            IOUtils.close(c);
           }
         }
         
@@ -1431,7 +1478,7 @@ public class TvBrowserContentProvider extends ContentProvider {
             
             try {
               if(all.moveToFirst()) {
-                final ArrayList<ContentProviderOperation> updateValuesList = new ArrayList<ContentProviderOperation>();
+                final ArrayList<ContentProviderOperation> updateValuesList = new ArrayList<>();
                 
                 final int keyColumn = all.getColumnIndex(KEY_ID);
                 final int startTimeColumn = all.getColumnIndex(DATA_KEY_STARTTIME);
@@ -1484,11 +1531,9 @@ public class TvBrowserContentProvider extends ContentProvider {
                 }
               }
             }finally {
-              if(all != null) {
-                all.close();
-              }
+              IOUtils.close(all);
             }
-          };
+          }
         }.start();
       }
       
@@ -1504,13 +1549,11 @@ public class TvBrowserContentProvider extends ContentProvider {
       }
       
       if(oldVersion < 10) {
-        final ArrayList<String> dataKeysList = new ArrayList<String>(MAP_DATA_KEY_TYPE.size());
+        final ArrayList<String> dataKeysList = new ArrayList<>(MAP_DATA_KEY_TYPE.size());
         
         final Set<String> dataKeySet = MAP_DATA_KEY_TYPE.keySet();
-        
-        for(String dataKey : dataKeySet) {
-          dataKeysList.add(dataKey);
-        }
+
+        dataKeysList.addAll(dataKeySet);
         
         final Cursor columnNames = db.rawQuery("PRAGMA table_info(" + DATA_TABLE + ")", null);
         
@@ -1542,6 +1585,14 @@ public class TvBrowserContentProvider extends ContentProvider {
       if(oldVersion < 11) {
         db.execSQL("ALTER TABLE " + GROUPS_TABLE + " ADD COLUMN " + GROUP_KEY_GROUP_MIRRORS_DEFAULT);
       }
+
+      if(oldVersion < 12) {
+        String[] toAdd = {DATA_KEY_PART_NUMBER,DATA_KEY_PART_NUMBER_TOTAL,DATA_KEY_DURATION_ORIGINAL,DATA_KEY_YEAR_PRODUCTION_FIRST,DATA_KEY_KEYWORD_LIST,DATA_KEY_VOD_INFO,DATA_KEY_VOD_LINK,DATA_KEY_GENRE_SUB_LIST};
+
+        for(String key : toAdd) {
+          db.execSQL("ALTER TABLE " + DATA_TABLE + " ADD COLUMN " + key + MAP_DATA_KEY_TYPE.get(key));
+        }
+      }
     }
   
     @Override
@@ -1551,18 +1602,18 @@ public class TvBrowserContentProvider extends ContentProvider {
       if(IOUtils.isDatabaseAccessible(mContext)) {
         try {
           db = super.getWritableDatabase();
-        }catch(SQLiteException sqle) {}
+        }catch(SQLiteException ignored) {}
       }
       
       return db;
     }
   }
   
-  private static final boolean columnExists(SQLiteDatabase db, String columnName) {
+  private static boolean columnExists(SQLiteDatabase db, String columnName) {
     return columnExists(db, CHANNEL_TABLE, columnName);
   }
   
-  private static final boolean columnExists(SQLiteDatabase db, String table, String columnName) {
+  private static boolean columnExists(SQLiteDatabase db, String table, String columnName) {
     boolean result = false;
     
     Cursor c = db.rawQuery("PRAGMA table_info(" + table + ")", null);

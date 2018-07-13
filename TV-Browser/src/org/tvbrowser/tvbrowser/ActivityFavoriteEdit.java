@@ -824,18 +824,15 @@ public class ActivityFavoriteEdit extends ActionBarActivity implements ChannelFi
       final Context context = getApplicationContext();
       
       Log.d("info2", "hier4 " + mOldFavorite);
-      new Thread() {
-        @Override
-        public void run() {
-          if(mOldFavorite != null) {
-            Favorite.handleFavoriteMarking(context, mOldFavorite, Favorite.TYPE_MARK_REMOVE);
-          }
-          Log.d("info2", "hier5a");
-          Favorite.handleFavoriteMarking(context, mFavorite, Favorite.TYPE_MARK_ADD);
-          Log.d("info2", "hier5");
-          LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+      new Thread(() -> {
+        if(mOldFavorite != null) {
+          Favorite.handleFavoriteMarking(context, mOldFavorite, Favorite.TYPE_MARK_REMOVE);
         }
-      }.start();
+        Log.d("info2", "hier5a");
+        Favorite.handleFavoriteMarking(context, mFavorite, Favorite.TYPE_MARK_ADD);
+        Log.d("info2", "hier5");
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+      }).start();
     }
     
     finish();
@@ -861,7 +858,7 @@ public class ActivityFavoriteEdit extends ActionBarActivity implements ChannelFi
   }
 
   @Override
-  public int[] getCategoriyIndicies() {
+  public int[] getCategoryIndices() {
     return mFavorite.getAttributeRestrictionIndices();
   }
 
@@ -871,8 +868,8 @@ public class ActivityFavoriteEdit extends ActionBarActivity implements ChannelFi
   }
 
   @Override
-  public void setFilterValues(String name, String operation, int[] categoryIndicies) {
-    mFavorite.setAttributeRestrictionIndices(categoryIndicies);
+  public void setFilterValues(String name, String operation, int[] categoryIndices) {
+    mFavorite.setAttributeRestrictionIndices(categoryIndices);
     
     updateOkButton();
     

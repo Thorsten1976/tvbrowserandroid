@@ -16,6 +16,8 @@
  */
 package org.tvbrowser.tvbrowser;
 
+import android.support.annotation.NonNull;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -24,23 +26,24 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Random;
 
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.utils.IOUtils;
 
 /**
- * Class with informations about a webserver for data update.
+ * Class with information about a webserver for data update.
  * <p>
  * @author René Mach
  */
 public class Mirror implements Comparable<Mirror> {
-  private String mUrl;
-  private int mWeight;
+  private final String mUrl;
+  private final int mWeight;
   
-  private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+  private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
   
-  public Mirror(String url, int weight) {
+  private Mirror(String url, int weight) {
     mUrl = url;
     mWeight = weight;
   }
@@ -49,7 +52,7 @@ public class Mirror implements Comparable<Mirror> {
     return mUrl;
   }
   
-  public int getWeight() {
+  private int getWeight() {
     return mWeight;
   }
   
@@ -60,7 +63,7 @@ public class Mirror implements Comparable<Mirror> {
    * @return The array with Mirrors.
    */
   public static Mirror[] getMirrorsFor(String value) {
-    ArrayList<Mirror> mirrors = new ArrayList<Mirror>();
+    ArrayList<Mirror> mirrors = new ArrayList<>();
     String[] mirrorParts = value.split(";");
     
     for(String part : mirrorParts) {
@@ -74,7 +77,7 @@ public class Mirror implements Comparable<Mirror> {
           
           try {
             mirrors.add(new Mirror(mirrorValues[0], Integer.valueOf(mirrorValues[1])));
-          }catch(NumberFormatException e) {}
+          }catch(NumberFormatException ignored) {}
         }
       }
       else {
@@ -92,7 +95,7 @@ public class Mirror implements Comparable<Mirror> {
   }
 
   @Override
-  public int compareTo(Mirror another) {
+  public int compareTo(@NonNull Mirror another) {
     if(mWeight < another.mWeight) {
       return -1;
     }
@@ -104,11 +107,11 @@ public class Mirror implements Comparable<Mirror> {
   }
   
   public static Mirror getMirrorToUseForGroup(Mirror[] mirrors, String group, TvDataUpdateService update, boolean checkOnlyConnection) {
-    ArrayList<Mirror> toChooseFrom = new ArrayList<Mirror>(Arrays.asList(mirrors));
+    ArrayList<Mirror> toChooseFrom = new ArrayList<>(Arrays.asList(mirrors));
     
-    Mirror choosen = null;
+    Mirror chosen = null;
     
-    while(choosen == null && !toChooseFrom.isEmpty()) {
+    while(chosen == null && !toChooseFrom.isEmpty()) {
       int weightSum = 0;
       
       for(Mirror mirror : toChooseFrom) {
@@ -118,33 +121,33 @@ public class Mirror implements Comparable<Mirror> {
       int limit = new Random().nextInt(weightSum + 1);
       update.doLog("Mirror weight limit for group '" + group + "': " + limit);
       
-      final ArrayList<Mirror> mirrorsWithAcceptedWeight = new ArrayList<Mirror>();
+      final ArrayList<Mirror> mirrorsWithAcceptedWeight = new ArrayList<>();
       
       for(int i = toChooseFrom.size()-1; i >= 0; i--) {
         if(toChooseFrom.get(i).getWeight() >= limit) {
           mirrorsWithAcceptedWeight.add(toChooseFrom.get(i));
         }
         else {
-          update.doLog("NOT accepted miror for group (weigth to low) '" + group + "': " + toChooseFrom.get(i).getUrl());
+          update.doLog("NOT accepted mirror for group (weight to low) '" + group + "': " + toChooseFrom.get(i).getUrl());
         }
       }
       
-      while(choosen == null && !mirrorsWithAcceptedWeight.isEmpty()) {
+      while(chosen == null && !mirrorsWithAcceptedWeight.isEmpty()) {
         final Mirror test = mirrorsWithAcceptedWeight.remove((int)(Math.random() * mirrorsWithAcceptedWeight.size()));
         
         update.doLog("Accepted weight for group '" + group + "': " + test.getWeight() + " URL: " + test.getUrl());
         if((!checkOnlyConnection && useMirror(test,group,5000,update)) || IOUtils.isConnectedToServer(test.getUrl(), 5000)) {
-          update.doLog("Accepted miror for group '" + group + "': " + test.getUrl());
-          choosen = test;
+          update.doLog("Accepted mirror for group '" + group + "': " + test.getUrl());
+          chosen = test;
         }
         else {
           toChooseFrom.remove(test);
-          update.doLog("NOT accepted miror for group '" + group + "': " + test.getUrl());
+          update.doLog("NOT accepted mirror for group '" + group + "': " + test.getUrl());
         }
       }
     }
     
-    return choosen;
+    return chosen;
   }
   
   private static boolean useMirror(Mirror mirror, String group, int timeout, TvDataUpdateService update) {

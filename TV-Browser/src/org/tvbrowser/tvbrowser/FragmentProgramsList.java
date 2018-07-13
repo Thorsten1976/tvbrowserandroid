@@ -18,6 +18,7 @@ package org.tvbrowser.tvbrowser;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.tvbrowser.content.TvBrowserContentProvider;
@@ -30,6 +31,7 @@ import org.tvbrowser.utils.ProgramUtils;
 import org.tvbrowser.utils.UiUtils;
 import org.tvbrowser.view.SeparatorDrawable;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -43,12 +45,15 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.widget.SimpleCursorAdapter;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -57,14 +62,17 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import static org.tvbrowser.settings.SettingConstants.EXTRA_CHANNEL_ID;
+import static org.tvbrowser.settings.SettingConstants.EXTRA_END_TIME;
+import static org.tvbrowser.settings.SettingConstants.EXTRA_START_TIME;
 
 public class FragmentProgramsList extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, OnSharedPreferenceChangeListener, ShowDateInterface, ShowChannelInterface, MarkingsUpdateListener {
   public static final int NO_CHANNEL_SELECTION_ID = -1;
   
-  public static final int INDEX_DATE_TODAY = 3;
+  private static final int INDEX_DATE_TODAY = 3;
   public static final int INDEX_DATE_YESTERDAY = 2;
   public static final int INDEX_DATE_TODAY_TOMORROW = 0;
   
@@ -74,8 +82,6 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
   
   private Handler handler;
   private LoaderUpdater mLoaderUpdate;
-  //private boolean mKeepRunning;
-  //private Thread mUpdateThread;
   
   private long mChannelID;
   private long mScrollTime;
@@ -83,16 +89,12 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
   
   private String mDayClause;
   private WhereClause mFilterClause;
-  
-  private ProgramListViewBinderAndClickHandler mViewAndClickHandler;
-  
+
   private BroadcastReceiver mDataUpdateReceiver;
   private BroadcastReceiver mRefreshReceiver;
   private BroadcastReceiver mDontWantToSeeReceiver;
-  private BroadcastReceiver mMarkingsChangedReceiver;
   private BroadcastReceiver mChannelUpdateReceiver;
   
-  //private boolean mDontUpdate;
   private int mScrollPos;
   
   private ListView mListView;
@@ -105,19 +107,27 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
   private Spinner mDateSelection;
   private int mDayPreSelection = -1;
   
-  public FragmentProgramsList() {
-    this(NO_CHANNEL_SELECTION_ID,-1);
+  @NonNull
+  public static FragmentProgramsList getInstance(final long startTime, final long endTime, final long channelId) {
+    final Bundle bundle = new Bundle();
+    bundle.putLong(EXTRA_START_TIME, startTime);
+    bundle.putLong(EXTRA_END_TIME, endTime);
+    bundle.putLong(EXTRA_CHANNEL_ID, channelId);
+    final FragmentProgramsList fragmentProgramsList = new FragmentProgramsList();
+    fragmentProgramsList.setArguments(bundle);
+    return fragmentProgramsList;
   }
   
-  public FragmentProgramsList(int channelId, long startTime) {
-    this(channelId, startTime, -1);
-  }
-  
-  public FragmentProgramsList(int channelId, long startTime, long endTime) {
-    mScrollTime = startTime;
-    mChannelID = channelId;
-    mScrollPos = -1;
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    long endTime = -1L;
+    if (getArguments()!=null){
+    endTime = getArguments().getLong(EXTRA_END_TIME, -1L);
+    mScrollTime = getArguments().getLong(EXTRA_START_TIME, -1L);
+    mChannelID = getArguments().getLong(EXTRA_CHANNEL_ID, NO_CHANNEL_SELECTION_ID);
         
+    mScrollPos = -1;}
     if(endTime != -1 && endTime < System.currentTimeMillis()) {
       Calendar now = Calendar.getInstance();
       now.set(Calendar.HOUR_OF_DAY, 0);
@@ -125,25 +135,18 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
       now.set(Calendar.SECOND, 0);
       now.set(Calendar.MILLISECOND, 0);
       
-      if(startTime < now.getTimeInMillis()) {
+      if(mScrollTime < now.getTimeInMillis()) {
         mDayPreSelection = INDEX_DATE_YESTERDAY;
       }
       else {
         mDayPreSelection = INDEX_DATE_TODAY;
       }
     }
-  }
-  
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    
     handler = new Handler();
     
     try {
       mLoaderUpdate = new LoaderUpdater(FragmentProgramsList.this, handler);
-    } catch (UnsupportedFragmentException e) {
-      // Ignore
+    } catch (UnsupportedFragmentException ignored) {
     }
   }
   
@@ -171,7 +174,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
   }
   
   @Override
-  public void onSaveInstanceState(Bundle outState) {
+  public void onSaveInstanceState(@NonNull Bundle outState) {
     super.onSaveInstanceState(outState);
     
     outState.putLong(EXTRA_NEXT_UPDATE, mNextUpdate);
@@ -186,6 +189,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
     }
   }
   
+  @SuppressWarnings("ConstantConditions")
   @Override
   public void onAttach(Context context) {
     super.onAttach(context);
@@ -197,13 +201,11 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
     mDataUpdateReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(final Context context, final Intent intent) {
-        handler.post(new Runnable() {
-          public void run() {
-            updateDateSelection();
-            
-            if(intent != null) {
-              mLoaderUpdate.startUpdate();
-            }
+        handler.post(() -> {
+          updateDateSelection();
+
+          if(intent != null) {
+            mLoaderUpdate.startUpdate();
           }
         });
       }
@@ -225,12 +227,9 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
           mLoaderUpdate.startUpdate();
         }
         else {
-          handler.post(new Runnable() {
-            @Override
-            public void run() {
-              if(!mIsLoading) {
-                mProgramListAdapter.notifyDataSetChanged();
-              }
+          handler.post(() -> {
+            if(!mIsLoading) {
+              mProgramListAdapter.notifyDataSetChanged();
             }
           });
         }
@@ -240,12 +239,14 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
     IntentFilter intent = new IntentFilter(SettingConstants.DATA_UPDATE_DONE);
     
     getActivity().registerReceiver(mDataUpdateReceiver, intent);
-    LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mRefreshReceiver, SettingConstants.RERESH_FILTER);
+    LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mRefreshReceiver, SettingConstants.REFRESH_FILTER);
   }
   
   @Override
   public void onDetach() {
     
+    Activity activity = getActivity();
+    if(activity!=null){
     if(mDataUpdateReceiver != null) {
       getActivity().unregisterReceiver(mDataUpdateReceiver);
     }
@@ -254,14 +255,11 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
     }
     if(mDontWantToSeeReceiver != null) {
       LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mDontWantToSeeReceiver);
-    }
-    if(mMarkingsChangedReceiver != null) {
-      LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mMarkingsChangedReceiver);
-    }
+    }}
     super.onDetach();
   }
   
-  public void setDay(long dayStart) {
+  private void setDay(long dayStart) {
     if(dayStart >= 0) {
       mDayStart = dayStart;
       mDayClause = " AND ( " + TvBrowserContentProvider.DATA_KEY_STARTTIME + ">=" + dayStart + " AND " + TvBrowserContentProvider.DATA_KEY_STARTTIME + "<" + (dayStart + (24 * 60 * 60000)) + " ) ";
@@ -288,7 +286,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
   
   private boolean mIsShowingMarkings = false;
   
-  public void setMarkFilter(int pos) {
+  private void setMarkFilter(int pos) {
     switch(pos) {
       case 0: mFilterClause = new WhereClause("",null);break;
       case 1: mFilterClause = new WhereClause(" AND ( " + TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE + " ) ",null);break;
@@ -350,66 +348,59 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
               }
             }
           
-            Cursor c = mProgramListAdapter.getCursor();
             
-            if(IOUtils.prepareAccessFirst(c)) {
-              try {
+            Cursor c = null;
+            try {
+              c = mProgramListAdapter.getCursor();
+
+              if(IOUtils.prepareAccessFirst(c)) {
                 int index = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_STARTTIME);
                 int endIndex = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_ENDTIME);
                 int count = 0;
                 
-                if(c != null && !c.isClosed()) {
-                  do {
-                    long startTime = c.getLong(index);
-                    long endTime = c.getLong(endIndex);
-                    
-                    if(startTime < mScrollTime && endTime > mScrollTime) {
-                      testIndex = count++;
-                    }
-                    else if(startTime == mScrollTime) {
+                do {
+                  long startTime = c.getLong(index);
+                  long endTime = c.getLong(endIndex);
+
+                  if(startTime < mScrollTime && endTime > mScrollTime) {
+                    testIndex = count++;
+                  }
+                  else if(startTime == mScrollTime) {
+                    testIndex = count;
+                    break;
+                  }
+                  else if(startTime > mScrollTime) {
+                    if(testIndex == -1) {
                       testIndex = count;
-                      break;
                     }
-                    else if(startTime > mScrollTime) {
-                      if(testIndex == -1) {
-                        testIndex = count;
-                      }
-                      
-                      break;
-                    }
-                    else {
-                      count++;
-                    }
-                  }while(c.moveToNext());
-                }
-              }catch(IllegalStateException e) {}
-            }
-            
+
+                    break;
+                  }
+                  else {
+                    count++;
+                  }
+                }while(c.moveToNext());
+              }
+            }catch(IllegalStateException ignored) {}
+
             mScrollTime = -1;
             
             if(testIndex == -1) {
               testIndex = 0;
             }
             
-            final int scollIndex = testIndex;
+            final int scrollIndex = testIndex;
             
-            handler.post(new Runnable() {
-              @Override
-              public void run() {
-                if(mListView != null) {
-                  mListView.setSelection(scollIndex);
-                  handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                      mListView.setSelection(scollIndex);
-                    }
-                  });
-                }
+            handler.post(() -> {
+              if(mListView != null) {
+                mListView.setSelection(scrollIndex);
+                handler.post(() -> mListView.setSelection(scrollIndex));
               }
             });
           }
           else if(mScrollTime == 0 || mScrollTime < -1) {
-            Spinner test = (Spinner)((ViewGroup)getView().getParent()).findViewById(R.id.date_selection);
+            @SuppressWarnings("ConstantConditions")
+            Spinner test = ((ViewGroup)getView().getParent()).findViewById(R.id.date_selection);
             
             if(test != null && test.getSelectedItemPosition() > 0) {
               test.setSelection(0);
@@ -418,8 +409,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
               final AtomicInteger scrollIndex = new AtomicInteger(0);
               
               if(mScrollTime < -1) {
-                final Cursor c = mProgramListAdapter.getCursor();
-                
+                Cursor c = mProgramListAdapter.getCursor();
                 if(IOUtils.prepareAccessFirst(c)) {
                   do {
                     if(c.getLong(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_STARTTIME)) > System.currentTimeMillis()) {
@@ -431,12 +421,9 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
               
               mScrollTime = -1;
               
-              handler.post(new Runnable() {
-                @Override
-                public void run() {
-                  if(getView() != null) {
-                    mListView.setSelection(scrollIndex.get());
-                  }
+              handler.post(() -> {
+                if(getView() != null) {
+                  mListView.setSelection(scrollIndex.get());
                 }
               });
             }
@@ -446,34 +433,35 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
     }
   }
   
-  public void setChannelID(long id) {
+  private void setChannelID(long id) {
     mChannelID = id;
     
     mLoaderUpdate.startUpdate();
   }
   
   @Override
-  public View onCreateView(LayoutInflater inflater, ViewGroup container,
-      Bundle savedInstanceState) {
+  public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+                           Bundle savedInstanceState) {
     View view = inflater.inflate(R.layout.program_list_fragment, container, false);
     
-    mListView = (ListView)view.findViewById(R.id.program_list_fragment_list_view);
+    mListView = view.findViewById(R.id.program_list_fragment_list_view);
     
     initialize(view);
     
     return view;
   }
   
+  @SuppressWarnings("ConstantConditions")
   private void initialize(View rootView) {
     LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(getActivity());
     
     IntentFilter channelUpdateFilter = new IntentFilter(SettingConstants.CHANNEL_UPDATE_DONE);
     
-    mDateSelection = (Spinner)rootView.findViewById(R.id.date_selection);
+    mDateSelection = rootView.findViewById(R.id.date_selection);
     
-    ArrayList<DateSelection> dateEntries = new ArrayList<DateSelection>();
+    ArrayList<DateSelection> dateEntries = new ArrayList<>();
     
-    mDateAdapter = new ArrayAdapter<DateSelection>(getActivity(), android.R.layout.simple_spinner_item, dateEntries);
+    mDateAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_item, dateEntries);
     mDateAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
     mDateSelection.setAdapter(mDateAdapter);
     
@@ -482,6 +470,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
       public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
         DateSelection selection = mDateAdapter.getItem(pos);
         
+        if (selection!=null)
         setDay(selection.getTime());
       }
       
@@ -491,19 +480,19 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
       }
     });
     
-    mChannelSelection = (Spinner)rootView.findViewById(R.id.channel_selection);
+    mChannelSelection = rootView.findViewById(R.id.channel_selection);
     
-    final Button minus = (Button)rootView.findViewById(R.id.channel_minus);
+    final Button minus = rootView.findViewById(R.id.channel_minus);
     CompatUtils.setBackground(minus, ContextCompat.getDrawable(getActivity(),android.R.drawable.list_selector_background));
     
-    final Button plus = (Button)rootView.findViewById(R.id.channel_plus);
+    final Button plus = rootView.findViewById(R.id.channel_plus);
     CompatUtils.setBackground(plus, ContextCompat.getDrawable(getActivity(),android.R.drawable.list_selector_background));
             
-    final ArrayList<ChannelSelection> channelEntries = new ArrayList<ChannelSelection>();
+    final ArrayList<ChannelSelection> channelEntries = new ArrayList<>();
     
     final ArrayAdapter<ChannelSelection> channelAdapter = new ArrayAdapter<ChannelSelection>(getActivity(), android.R.layout.simple_spinner_item, channelEntries) {
       @Override
-      public View getDropDownView(int position, View convertView, ViewGroup parent) {
+      public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
         return getView(position, convertView, parent, android.R.layout.simple_spinner_dropdown_item);
       }
       
@@ -521,6 +510,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
         
         ChannelSelection sel = getItem(position);
         
+        if(sel!=null){
         TextView text = (TextView)convertView;
         
         if(sel.getID() == -1) {
@@ -530,7 +520,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
         else {
           if(logoValue == 0 || logoValue == 2 || sel.getLogo() == null) {
             if(showOrderNumber) {
-              text.setText(sel.getOrderNumber() + sel.getName());
+              text.setText(String.format(Locale.getDefault(), "%s %s", sel.getOrderNumber(), sel.getName()));
             }
             else {
               text.setText(sel.getName());
@@ -551,13 +541,14 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
           else {
             text.setCompoundDrawables(null, null, null, null);
           }
-        }
         
+        }}
         return convertView;
       }
       
+      @NonNull
       @Override
-      public View getView(int position, View convertView, ViewGroup parent) {
+      public View getView(int position, View convertView, @NonNull ViewGroup parent) {
         return getView(position, convertView, parent, android.R.layout.simple_spinner_item);
       }
     };
@@ -570,6 +561,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
           int pos, long id) {
         ChannelSelection selection = channelAdapter.getItem(pos);
         
+        if(selection!=null)
         setChannelID(selection.getID());
       }
       
@@ -579,38 +571,35 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
       }
     });
     
-    View.OnClickListener onClick = new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        int pos = mChannelSelection.getSelectedItemPosition();
-        
-        if(v.equals(minus)) {
-          if(--pos < 0) {
-            pos = mChannelSelection.getCount()-1;
-          }
-          
-          mChannelSelection.setSelection(pos);
+    View.OnClickListener onClick = v -> {
+      int pos = mChannelSelection.getSelectedItemPosition();
+
+      if(v.equals(minus)) {
+        if(--pos < 0) {
+          pos = mChannelSelection.getCount()-1;
         }
-        else {
-          if(++pos >= mChannelSelection.getCount()) {
-            pos = 0;
-          }
-          
-          mChannelSelection.setSelection(pos);
+
+        mChannelSelection.setSelection(pos);
+      }
+      else {
+        if(++pos >= mChannelSelection.getCount()) {
+          pos = 0;
         }
+
+        mChannelSelection.setSelection(pos);
       }
     };
     
     minus.setOnClickListener(onClick);
     plus.setOnClickListener(onClick);
     
-    final Spinner filter = (Spinner)rootView.findViewById(R.id.program_selection);
+    final Spinner filter = rootView.findViewById(R.id.program_selection);
     
-    ArrayList<String> filterEntries = new ArrayList<String>();
+    ArrayList<String> filterEntries = new ArrayList<>();
     
     final ArrayAdapter<String> filterAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_item, filterEntries) {
       @Override
-      public View getDropDownView(int position, View convertView, ViewGroup parent) {
+      public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
         return getView(position, convertView, parent, android.R.layout.simple_spinner_dropdown_item);
       }
       
@@ -639,8 +628,9 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
         return convertView;
       }
       
+      @NonNull
       @Override
-      public View getView(int position, View convertView, ViewGroup parent) {
+      public View getView(int position, View convertView, @NonNull ViewGroup parent) {
         return getView(position, convertView, parent, android.R.layout.simple_spinner_item);
       }
     };
@@ -676,15 +666,12 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
           channelAdapter.add(new ChannelSelection(-1, "0", getResources().getString(R.string.all_channels), null));
           
           ContentResolver cr = getActivity().getContentResolver();
-          
-          StringBuilder where = new StringBuilder(TvBrowserContentProvider.CHANNEL_KEY_SELECTION);
-          
-          where.append(((TvBrowser)getActivity()).getFilterSelection(true).replace(TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID, TvBrowserContentProvider.KEY_ID));
-          
-          Cursor channelCursor = cr.query(TvBrowserContentProvider.CONTENT_URI_CHANNELS, new String[] {TvBrowserContentProvider.KEY_ID,TvBrowserContentProvider.CHANNEL_KEY_NAME,TvBrowserContentProvider.CHANNEL_KEY_LOGO,TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER}, where.toString(), null, TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER + " , " + TvBrowserContentProvider.GROUP_KEY_GROUP_ID);
+
+          Cursor channelCursor = null;
           
           try {
-            if(channelCursor != null && channelCursor.moveToFirst()) {
+            channelCursor = cr.query(TvBrowserContentProvider.CONTENT_URI_CHANNELS, new String[] {TvBrowserContentProvider.KEY_ID,TvBrowserContentProvider.CHANNEL_KEY_NAME,TvBrowserContentProvider.CHANNEL_KEY_LOGO,TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER}, TvBrowserContentProvider.CHANNEL_KEY_SELECTION + ((TvBrowser) getActivity()).getFilterSelection(true).replace(TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID, TvBrowserContentProvider.KEY_ID), null, TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER + " , " + TvBrowserContentProvider.GROUP_KEY_GROUP_ID);
+            if(IOUtils.prepareAccessFirst(channelCursor)) {
               do {
                 Bitmap logo = UiUtils.createBitmapFromByteArray(channelCursor.getBlob(channelCursor.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_LOGO)));
                               
@@ -746,7 +733,8 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
           
           if(daySelection == -1 && endTime != -1 && startTime < System.currentTimeMillis() && endTime < System.currentTimeMillis() && startTime != endTime) {
             if(mDateAdapter.getCount() > INDEX_DATE_TODAY) {
-              if(startTime < mDateAdapter.getItem(INDEX_DATE_TODAY).getTime()) {
+              DateSelection dateSelection = mDateAdapter.getItem(INDEX_DATE_TODAY);
+              if(dateSelection!=null && startTime < dateSelection.getTime()) {
                 daySelection = INDEX_DATE_YESTERDAY;
               }
               else {
@@ -759,7 +747,6 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
             ((TvBrowser)getActivity()).addProgramListState(mDateSelection.getSelectedItemPosition(), current.getID(), filter.getSelectedItemPosition(), getCurrentScrollIndex());
           }
           
-       //   setDontUpdate(true);
           
           if(current == null || current.getID() != id) {
             for(int i = 0; i < channelEntries.size(); i++) {
@@ -790,7 +777,6 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
                         
           setScrollPos(scrollIndex);
           setScrollTime(startTime);
-        //  setDontUpdate(false);
           mLoaderUpdate.startUpdate();
                         
           ((TvBrowser)getActivity()).showProgramsListTab(backstackup);
@@ -846,7 +832,6 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
     
     super.onActivityCreated(savedInstanceState);
     mChannelID = NO_CHANNEL_SELECTION_ID;
-   // mDontUpdate = false;
     mScrollPos = -1;
     
     String[] projection = {
@@ -860,11 +845,10 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
         TvBrowserContentProvider.DATA_KEY_PICTURE_COPYRIGHT,
         TvBrowserContentProvider.DATA_KEY_CATEGORIES
     };
+
+    final ProgramListViewBinderAndClickHandler mViewAndClickHandler = new ProgramListViewBinderAndClickHandler(getActivity(), this, handler);
     
-    mViewAndClickHandler = new ProgramListViewBinderAndClickHandler(getActivity(),this,handler);
-    
-    // Create a new Adapter an bind it to the List View
-    mProgramListAdapter = new OrientationHandlingCursorAdapter(getActivity(),/*android.R.layout.simple_list_item_1*/R.layout.program_lists_entries,null,
+    mProgramListAdapter = new OrientationHandlingCursorAdapter(getActivity(), R.layout.program_lists_entries,null,
         projection,new int[] {R.id.startDateLabelPL,R.id.startTimeLabelPL,R.id.endTimeLabelPL,R.id.channelLabelPL,R.id.titleLabelPL,R.id.episodeLabelPL,R.id.genre_label_pl,R.id.picture_copyright_pl,R.id.info_label_pl},0,true,handler);
     
     mProgramListAdapter.setViewBinder(mViewAndClickHandler);
@@ -878,39 +862,8 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
     setDividerSize(PrefUtils.getStringValue(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
   }
   
-  /*public void setDontUpdate(boolean value) {
-    mDontUpdate = value;
-  }*/
- /* 
-  private void startUpdateThread() {
-    startUpdateThread(0);
-  }
-  
-  private void startUpdateThread(long nextUpdate) {
-    if(mKeepRunning && !mDontUpdate && nextUpdate <= System.currentTimeMillis()) {
-      if(getLoaderManager().hasRunningLoaders()) {
-        getLoaderManager().getLoader(0).cancelLoad();
-      }
-      
-      mUpdateThread = new Thread("FragmentProgramsList Update Thread") {
-        public void run() {
-          handler.post(new Runnable() {
-            @Override
-            public void run() {
-              if(mKeepRunning && !isRemoving() && !TvDataUpdateService.isRunning()) {
-                getLoaderManager().restartLoader(0, null, FragmentProgramsList.this);
-              }
-            }
-          });
-        }
-      };
-      
-      mUpdateThread.start();
-    }
-  }*/
-  
-  private static final String[] getProjection() {
-    String[] projection = null;
+  private static String[] getProjection() {
+    String[] projection;
     String[] infoCategories = TvBrowserContentProvider.INFO_CATEGORIES_COLUMNS_ARRAY;
     
     if(PrefUtils.getBooleanValue(R.string.SHOW_PICTURE_IN_LISTS, R.bool.show_pictures_in_lists_default)) {
@@ -936,20 +889,14 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
     projection[11] = TvBrowserContentProvider.CHANNEL_KEY_NAME;
     projection[12] = TvBrowserContentProvider.DATA_KEY_CATEGORIES;
     projection[13] = TvBrowserContentProvider.CHANNEL_KEY_LOGO;
-    
-    for(int i = 0; i < infoCategories.length; i++) {
-      projection[14+i] = infoCategories[i];
-    }
-    
-    int startIndex = 14 + infoCategories.length;
 
-    for(int i = startIndex ; i < (startIndex + TvBrowserContentProvider.MARKING_COLUMNS.length); i++) {
-      projection[i] = TvBrowserContentProvider.MARKING_COLUMNS[i-startIndex];
-    }
+    System.arraycopy(infoCategories, 0, projection, 14, infoCategories.length);
+    System.arraycopy(TvBrowserContentProvider.MARKING_COLUMNS, 0, projection, 14 + infoCategories.length, TvBrowserContentProvider.MARKING_COLUMNS.length);
     
     return projection;
   }
   
+  @SuppressWarnings("ConstantConditions")
   private String getWhereClause(boolean useCursorLoadLastTime) {
     long time = (useCursorLoadLastTime && mCursorLoadLastTime != 0) ? mCursorLoadLastTime : System.currentTimeMillis();
     
@@ -972,27 +919,29 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
 
   private boolean mIsLoading;
   
+  @NonNull
   @Override
   public Loader<Cursor> onCreateLoader(int id, Bundle args) {
     mIsLoading = true;
-    CursorLoader loader = new CursorLoader(getActivity(), TvBrowserContentProvider.CONTENT_URI_DATA_WITH_CHANNEL, getProjection(), getWhereClause(false) + mDayClause + mFilterClause.getWhere(), mFilterClause.getSelectionArgs(), TvBrowserContentProvider.DATA_KEY_STARTTIME + " , " + TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER + " , " + TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID);
-    
-    return loader;
+    //noinspection ConstantConditions
+    return new CursorLoader(getActivity(), TvBrowserContentProvider.CONTENT_URI_DATA_WITH_CHANNEL, getProjection(), getWhereClause(false) + mDayClause + mFilterClause.getWhere(), mFilterClause.getSelectionArgs(), TvBrowserContentProvider.DATA_KEY_STARTTIME + " , " + TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER + " , " + TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID);
   }
 
   @Override
-  public void onLoadFinished(Loader<Cursor> loader, Cursor c) {
+  public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor c) {
     mIsLoading = false;
     mNextUpdate = 0;
     mProgramListAdapter.swapCursor(c);
     
     new Thread("FIND PROGRAMLIST NEXT UPDATE") {
+      @SuppressWarnings("ConstantConditions")
       @Override
       public void run() {
         if(IOUtils.isDatabaseAccessible(getActivity())) {
-          Cursor test = getActivity().getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA, new String[] {TvBrowserContentProvider.DATA_KEY_ENDTIME}, getWhereClause(true) + " AND " + TvBrowserContentProvider.DATA_KEY_ENDTIME +">0", null, TvBrowserContentProvider.DATA_KEY_ENDTIME + " ASC LIMIT 1");
           
+          Cursor test = null;
           try {
+            test = getActivity().getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA, new String[] {TvBrowserContentProvider.DATA_KEY_ENDTIME}, getWhereClause(true) + " AND " + TvBrowserContentProvider.DATA_KEY_ENDTIME +">0", null, TvBrowserContentProvider.DATA_KEY_ENDTIME + " ASC LIMIT 1");
             if(IOUtils.prepareAccessFirst(test)) {
               mNextUpdate = test.getLong(test.getColumnIndex(TvBrowserContentProvider.DATA_KEY_ENDTIME));
             }
@@ -1016,7 +965,12 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
   }
 
   @Override
-  public void onLoaderReset(Loader<Cursor> loader) {
+  public void onDestroy() {
+    super.onDestroy();
+  }
+
+  @Override
+  public void onLoaderReset(@NonNull Loader<Cursor> loader) {
     mIsLoading = false;
     mProgramListAdapter.changeCursor(null);
   }
@@ -1028,7 +982,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
   @Override
   public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
     if(getActivity() != null && !isDetached() && key != null) {     
-      if(getString(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE) != null && getString(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE).equals(key)) {
+      if(getString(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE).equals(key)) {
         setDividerSize(PrefUtils.getStringValue(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
       }
       else if(mListView != null && (getString(R.string.PREF_COLOR_SEPARATOR_LINE).equals(key) || getString(R.string.PREF_COLOR_SEPARATOR_SPACE).equals(key))) {
@@ -1041,11 +995,11 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
     }
   }
   
-  public void setScrollPos(int pos) {
+  private void setScrollPos(int pos) {
     mScrollPos = pos;
   }
   
-  public int getCurrentScrollIndex() {
+  private int getCurrentScrollIndex() {
     int pos = mListView.getFirstVisiblePosition();
     
     View view = mListView.getChildAt(0);
@@ -1062,31 +1016,31 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
   }
   
   private static final class ChannelSelection {
-    private int mID;
-    private String mOrderNumber;
-    private String mName;
-    private Drawable mLogo;
+    private final int mID;
+    private final String mOrderNumber;
+    private final String mName;
+    private final Drawable mLogo;
     
-    public ChannelSelection(int ID, String orderNumber, String name, Drawable logo) {
+    ChannelSelection(int ID, String orderNumber, String name, Drawable logo) {
       mID = ID;
       mOrderNumber = orderNumber;
       mName = name;
       mLogo = logo;
     }
     
-    public int getID() {
+    int getID() {
       return mID;
     }
     
-    public String getOrderNumber() {
+    String getOrderNumber() {
       return mOrderNumber;
     }
     
-    public String getName() {
+    String getName() {
       return mName;
     }
     
-    public Drawable getLogo() {
+    Drawable getLogo() {
       return mLogo;
     }
     
@@ -1131,16 +1085,13 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
 
   @Override
   public void refreshMarkings() {
-    handler.post(new Runnable() {
-      @Override
-      public void run() {
-        if(!isDetached() && !mIsLoading && !isRemoving() && mLoaderUpdate.isRunning()) {
-          if(mIsShowingMarkings) {
-            setMarkFilter(2);
-          }
-          else {
-            mListView.invalidateViews();
-          }
+    handler.post(() -> {
+      if(!isDetached() && !mIsLoading && !isRemoving() && mLoaderUpdate.isRunning()) {
+        if(mIsShowingMarkings) {
+          setMarkFilter(2);
+        }
+        else {
+          mListView.invalidateViews();
         }
       }
     });

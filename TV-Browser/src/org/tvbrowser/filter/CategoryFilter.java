@@ -1,8 +1,8 @@
 package org.tvbrowser.filter;
 
 public interface CategoryFilter {
-  public int[] getCategoriyIndicies();
-  public String getName();
-  public String getOperation();
-  public void setFilterValues(String name, String operation, int[] categoryIndicies);
+  int[] getCategoryIndices();
+  String getName();
+  String getOperation();
+  void setFilterValues(String name, String operation, int[] categoryIndices);
 }

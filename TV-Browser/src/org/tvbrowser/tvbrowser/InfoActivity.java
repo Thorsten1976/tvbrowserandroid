@@ -16,21 +16,8 @@
  */
 package org.tvbrowser.tvbrowser;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-
-import org.tvbrowser.filter.ChannelFilter;
-import org.tvbrowser.settings.SettingConstants;
-import org.tvbrowser.utils.PrefUtils;
-import org.tvbrowser.utils.UiUtils;
-
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -38,12 +25,26 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.text.format.DateFormat;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 
-public class InfoActivity extends Activity {
+import org.tvbrowser.filter.ChannelFilter;
+import org.tvbrowser.settings.SettingConstants;
+import org.tvbrowser.utils.PrefUtils;
+import org.tvbrowser.utils.UiUtils;
+import org.tvbrowser.widgets.RunningProgramsListWidget;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.List;
+
+public class InfoActivity extends AppCompatActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -74,7 +75,7 @@ public class InfoActivity extends Activity {
       final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(InfoActivity.this);
       final int appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
       
-      final ArrayList<Integer> values = new ArrayList<Integer>();
+      final ArrayList<Integer> values = new ArrayList<>();
       
       int[] defaultValues = getResources().getIntArray(R.array.time_button_defaults);
       
@@ -88,16 +89,16 @@ public class InfoActivity extends Activity {
           
           Field setting = string.getDeclaredField("TIME_BUTTON_" + i);
           
-          Integer value = Integer.valueOf(pref.getInt(getResources().getString((Integer)setting.get(string)), defaultValues[i-1]));
+          Integer value = pref.getInt(getResources().getString((Integer) setting.get(string)), defaultValues[i - 1]);
           
           if(value >= -1 && !values.contains(value)) {
             values.add(value);
           }
-        } catch (Exception e) {}
+        } catch (Exception ignored) {}
       }
       
       for(int i = 7; i <= timeButtonCount; i++) {
-          Integer value = Integer.valueOf(pref.getInt("TIME_BUTTON_" + i, 0));
+          Integer value = pref.getInt("TIME_BUTTON_" + i, 0);
           
           if(value >= -1 && !values.contains(value)) {
             values.add(value);
@@ -124,11 +125,11 @@ public class InfoActivity extends Activity {
         }
       }
       
-      ArrayList<String> formatedTimes = new ArrayList<String>();
-      formatedTimes.add(getString(R.string.button_now));
+      List<String> formattedTimes = new ArrayList<>();
+      formattedTimes.add(getString(R.string.button_now));
       
       if(hasNext) {
-        formatedTimes.add(getString(R.string.button_after));
+        formattedTimes.add(getString(R.string.button_after));
       }
       
       for(int i = 0; i < values.size(); i++) {
@@ -136,44 +137,37 @@ public class InfoActivity extends Activity {
         cal.set(Calendar.HOUR_OF_DAY, values.get(i) / 60);
         cal.set(Calendar.MINUTE, values.get(i) % 60);
         
-        formatedTimes.add(DateFormat.getTimeFormat(InfoActivity.this).format(cal.getTime()));
+        formattedTimes.add(DateFormat.getTimeFormat(InfoActivity.this).format(cal.getTime()));
       }
       
       AlertDialog.Builder builder = new AlertDialog.Builder(InfoActivity.this);
       
       builder.setTitle(R.string.widget_running_select_time_title);
       
-      builder.setSingleChoiceItems(formatedTimes.toArray(new String[formatedTimes.size()]), selection, new DialogInterface.OnClickListener() {        
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-          int value = -1;
-          
-          if(which == 1 && hasNext) {
-            value = -2;
-          }
-          else if(which > 1 || (!hasNext && which > 0)) {
-            value = values.get(which-1-indexOffset);
-          }
-          
-          Editor edit = pref.edit();
-          edit.putInt(appWidgetId + "_" + getString(R.string.WIDGET_CONFIG_RUNNING_TIME), value);
-          edit.commit();
-          
-          Intent update = new Intent(SettingConstants.UPDATE_RUNNING_APP_WIDGET);
-          update.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-          
-          sendBroadcast(update);
-          
-          dialog.dismiss();
-          finish();
+      builder.setSingleChoiceItems(formattedTimes.toArray(new String[0]), selection, (dialog, which) -> {
+        int value = -1;
+
+        if(which == 1 && hasNext) {
+          value = -2;
         }
-      });
-      builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-        @Override
-        public void onCancel(DialogInterface dialog) {
-          finish();
+        else if(which > 1 || (!hasNext && which > 0)) {
+          value = values.get(which-1-indexOffset);
         }
+
+        Editor edit = pref.edit();
+        edit.putInt(appWidgetId + "_" + getString(R.string.WIDGET_CONFIG_RUNNING_TIME), value);
+        edit.commit();
+
+        Intent update = new Intent(getApplicationContext(), RunningProgramsListWidget.class);
+        update.setAction(SettingConstants.UPDATE_RUNNING_APP_WIDGET);
+        update.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+
+        sendBroadcast(update);
+
+        dialog.dismiss();
+        finish();
       });
+      builder.setOnCancelListener(dialog -> finish());
       
       if(appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
         builder.show();
@@ -196,20 +190,20 @@ public class InfoActivity extends Activity {
       UiUtils.showChannelFilterSelection(InfoActivity.this, new ChannelFilter() {
         @Override
         public void setFilterValues(String name, int[] filteredChannelIds) {
-          String value = "";
+          StringBuilder value = new StringBuilder();
           
           if(filteredChannelIds != null) {
             for(int i = 0; i < filteredChannelIds.length-1; i++) {
-              value += filteredChannelIds[i] + ",";
+              value.append(filteredChannelIds[i]).append(",");
             }
             
             if(filteredChannelIds.length > 0) {
-              value += String.valueOf(filteredChannelIds[filteredChannelIds.length-1]);
+              value.append(String.valueOf(filteredChannelIds[filteredChannelIds.length - 1]));
             }
           }
           
           Editor edit = pref.edit();
-          edit.putString(appWidgetId+"_"+getString(R.string.WIDGET_CONFIG_PROGRAM_LIST_CHANNELS), value);
+          edit.putString(appWidgetId+"_"+getString(R.string.WIDGET_CONFIG_PROGRAM_LIST_CHANNELS), value.toString());
           edit.commit();
           
           AppWidgetManager.getInstance(getApplicationContext()).notifyAppWidgetViewDataChanged(appWidgetId, R.id.important_widget_list_view);
@@ -237,12 +231,7 @@ public class InfoActivity extends Activity {
           
           return result;
         }
-      }, mViewParent, new Runnable() {
-        @Override
-        public void run() {
-          finish();
-        }
-      });
+      }, mViewParent, this::finish);
     }
     else {
       finish();
