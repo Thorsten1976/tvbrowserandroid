@@ -262,7 +262,7 @@ public class TvDataUpdateService extends Service {
     TvBrowserContentProvider.DATA_KEY_INFO_16_TO_9,
     TvBrowserContentProvider.DATA_KEY_INFO_MONO,
     TvBrowserContentProvider.DATA_KEY_INFO_STEREO,
-    TvBrowserContentProvider.DATA_KEY_INFO_DOLBY_SOURROUND,
+    TvBrowserContentProvider.DATA_KEY_INFO_DOLBY_SURROUND,
     TvBrowserContentProvider.DATA_KEY_INFO_DOLBY_DIGITAL_5_1,
     TvBrowserContentProvider.DATA_KEY_INFO_SECOND_AUDIO_PROGRAM,
     TvBrowserContentProvider.DATA_KEY_INFO_CLOSED_CAPTION,
@@ -274,7 +274,7 @@ public class TvDataUpdateService extends Service {
     TvBrowserContentProvider.DATA_KEY_INFO_AUDIO_DESCRIPTION,
     TvBrowserContentProvider.DATA_KEY_INFO_NEWS,
     TvBrowserContentProvider.DATA_KEY_INFO_SHOW,
-    TvBrowserContentProvider.DATA_KEY_INFO_MAGAZIN,
+    TvBrowserContentProvider.DATA_KEY_INFO_MAGAZINE,
     TvBrowserContentProvider.DATA_KEY_INFO_HD,
     TvBrowserContentProvider.DATA_KEY_INFO_DOCUMENTATION,
     TvBrowserContentProvider.DATA_KEY_INFO_ART,
@@ -329,7 +329,7 @@ public class TvDataUpdateService extends Service {
     
     mDaysToLoad = 2;
     
-    mBuilder = new NotificationCompat.Builder(this, App.get().getNotificationChannelId(App.TYPE_NOTIFICATION_DEFAULT));
+    mBuilder = new NotificationCompat.Builder(this, App.getNotificationChannelIdDefault(this));
     //mBuilder.setPriority(NotificationCompat.PRIORITY_LOW);
     mBuilder.setSmallIcon(R.drawable.ic_stat_notify);
     mBuilder.setOngoing(true);
@@ -394,7 +394,7 @@ public class TvDataUpdateService extends Service {
           
           final ConnectivityManager connMgr = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
           
-          NetworkInfo lan = CompatUtils.getLanNetworkIfPossible(connMgr);
+          NetworkInfo lan = connMgr.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
           NetworkInfo wifi = connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
           NetworkInfo mobile = connMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
           
@@ -414,7 +414,7 @@ public class TvDataUpdateService extends Service {
               @Override
               public void onReceive(Context context, Intent intent) {
                 boolean isConnected = false;
-                NetworkInfo lan = CompatUtils.getLanNetworkIfPossible(connMgr);
+                NetworkInfo lan = connMgr.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
                 NetworkInfo wifi = connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
                 NetworkInfo mobile = connMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
                 
@@ -1394,10 +1394,11 @@ public class TvDataUpdateService extends Service {
 
                 if (parts.length > 1 && parts[1] != null) {
                   int startTimeSync = Integer.parseInt(parts[0]);
+                  Integer value = knownChannels.get(parts[1]);
 
                   if (startTimeSync > startTime) {
                     dataSync.remove(i);
-                  } else if (startTime == startTimeSync && channelId == knownChannels.get(parts[1])) {
+                  } else if (value != null && startTime == startTimeSync && channelId == value) {
                     if (parts.length > 2) {
                       crc.reset();
 
@@ -1940,7 +1941,7 @@ public class TvDataUpdateService extends Service {
         }
         
         mDataDatabaseOperation.finish();
-        success.andUpdateBoolean(mDataDatabaseOperation.wasSuccessfull());
+        success.andUpdateBoolean(mDataDatabaseOperation.wasSuccessful());
       }
       else {
         success.setBoolean(false);
@@ -2918,12 +2919,14 @@ public class TvDataUpdateService extends Service {
     
     final File path = IOUtils.getDownloadDirectory(TvDataUpdateService.this.getApplicationContext());
     
-    File[] oldDataFiles = path.listFiles(pathname -> pathname.getName().toLowerCase(Locale.GERMAN).endsWith(".gz"));
-    
-    for(File oldFile : oldDataFiles) {
-      deleteFile(oldFile);
+    final File[] oldDataFiles = path.listFiles(pathname -> pathname.getName().toLowerCase(Locale.GERMAN).endsWith(".gz"));
+
+    if(oldDataFiles != null) {
+      for (File oldFile : oldDataFiles) {
+        deleteFile(oldFile);
+      }
     }
-    
+
     int[] levels = null;
           
     Set<String> exclusions = PrefUtils.getStringSetValue(R.string.I_DONT_WANT_TO_SEE_ENTRIES, null);

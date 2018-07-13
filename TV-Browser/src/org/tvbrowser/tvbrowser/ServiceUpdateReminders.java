@@ -22,7 +22,7 @@ import android.support.v4.app.NotificationCompat;
 public class ServiceUpdateReminders extends Service {
   public static final String EXTRA_FIRST_STARTUP = "extraFirstStartup";
   private static final int MAX_REMINDERS = 50;
-  private static final int ID_NOTIFITCATION = 2;
+  private static final int ID_NOTIFICATION = 2;
   
   private static final String[] PROJECTION = {
       TvBrowserContentProvider.KEY_ID,
@@ -39,11 +39,11 @@ public class ServiceUpdateReminders extends Service {
     super.onCreate();
 
     if(CompatUtils.isAtLeastAndroidO()) {
-      NotificationCompat.Builder b = new NotificationCompat.Builder(ServiceUpdateReminders.this, App.get().getNotificationChannelId(App.TYPE_NOTIFICATION_DEFAULT));
+      NotificationCompat.Builder b = new NotificationCompat.Builder(ServiceUpdateReminders.this, App.getNotificationChannelIdDefault(this));
       b.setSmallIcon(R.drawable.ic_stat_notify);
       b.setContentTitle(getResources().getText(R.string.notification_update_reminders));
 
-      startForeground(ID_NOTIFITCATION, b.build());
+      startForeground(ID_NOTIFICATION, b.build());
     }
   }
 
