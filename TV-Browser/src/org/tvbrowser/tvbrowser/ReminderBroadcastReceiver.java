@@ -16,10 +16,8 @@
  */
 package org.tvbrowser.tvbrowser;
 
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
 
 import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
@@ -43,10 +41,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
-import android.text.format.DateFormat;
 import android.util.Log;
 
 import org.tvbrowser.utils.CompatUtils;

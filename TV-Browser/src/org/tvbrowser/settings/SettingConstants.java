@@ -18,7 +18,6 @@ package org.tvbrowser.settings;
 
 import java.util.HashMap;
 
-import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.tvbrowser.R;
 import org.tvbrowser.utils.IOUtils;
@@ -40,7 +39,6 @@ import android.graphics.drawable.LayerDrawable;
 import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.util.SparseArrayCompat;
-import android.util.SparseArray;
 
 public final class SettingConstants {
 

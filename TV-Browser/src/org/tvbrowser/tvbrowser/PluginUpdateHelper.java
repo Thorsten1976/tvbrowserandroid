@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AlertDialog;
-import android.text.Html;
 import android.text.SpannableStringBuilder;
 import android.text.style.ClickableSpan;
 import android.text.style.URLSpan;

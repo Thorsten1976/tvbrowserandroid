@@ -1,10 +1,8 @@
 package org.tvbrowser.tvbrowser;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.v7.app.AlertDialog;
-import android.text.Html;
 import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.Button;
@@ -13,8 +11,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.vending.billing.util.IabHelper;
-import com.android.vending.billing.util.IabHelper.QueryInventoryFinishedListener;
-import com.android.vending.billing.util.IabResult;
 import com.android.vending.billing.util.Inventory;
 import com.android.vending.billing.util.Purchase;
 import com.android.vending.billing.util.SkuDetails;
