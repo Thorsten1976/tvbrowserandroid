@@ -20,6 +20,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import androidx.preference.PreferenceManager;
 
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.filter.FilterValues;
@@ -30,7 +31,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class PrefUtils {
@@ -45,7 +45,7 @@ public class PrefUtils {
       mPref = PreferenceManager.getDefaultSharedPreferences(mContext);
     }
   }
-  
+
   public static boolean setIntValue(int prefKey, int value) {
     boolean result = false;
     
@@ -134,7 +134,7 @@ public class PrefUtils {
     
     return null;
   }
-  
+
   public static int getStringValueAsInt(int prefKey, String defaultValue) throws NumberFormatException {
     if(mPref != null) {
       String value = mPref.getString(mContext.getString(prefKey), defaultValue);
@@ -287,13 +287,13 @@ public class PrefUtils {
   private static String getFilterSelection(final Context context, final Set<String> filterIds) {
     final HashSet<FilterValues> filterValues = new HashSet<>();
     
-    for(String filterId : filterIds) {
-      final FilterValues filter = FilterValues.load(filterId, context);
+      for (String filterId : filterIds) {
+        final FilterValues filter = FilterValues.load(filterId, context);
       
-      if(filter != null) {
-        filterValues.add(filter);
+        if (filter != null) {
+          filterValues.add(filter);
+        }
       }
-    }
     
     return getFilterSelection(context, false, filterValues);
   }

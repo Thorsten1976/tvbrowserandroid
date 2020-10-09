@@ -58,7 +58,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.preference.PreferenceManager;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import com.google.android.material.tabs.TabLayout;
@@ -115,6 +114,8 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
+
+import androidx.preference.PreferenceManager;
 
 import com.example.android.listviewdragginganimation.DynamicListView;
 import com.example.android.listviewdragginganimation.SortInterface;
@@ -2529,7 +2530,7 @@ public class TvBrowser extends AppCompatActivity {
           TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER
           };
 
-      final ArrayList<SortInterface> channelSource = new ArrayList<>();
+      final List<SortInterface> channelSource = new ArrayList<>();
 
       Cursor channels = cr.query(TvBrowserContentProvider.CONTENT_URI_CHANNELS_WITH_GROUP, projection, TvBrowserContentProvider.CHANNEL_KEY_SELECTION + "=1", null, TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER);
 

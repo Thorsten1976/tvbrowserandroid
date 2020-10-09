@@ -19,8 +19,9 @@ package org.tvbrowser.tvbrowser;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences.Editor;
-import android.preference.PreferenceManager;
 import android.util.Log;
+
+import androidx.preference.PreferenceManager;
 
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.utils.IOUtils;

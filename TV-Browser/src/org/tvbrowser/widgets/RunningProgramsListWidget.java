@@ -32,11 +32,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.preference.PreferenceManager;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
+
+import androidx.preference.PreferenceManager;
 
 /**
  * A widget for currently running programs.

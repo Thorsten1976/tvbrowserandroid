@@ -34,7 +34,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
-import android.preference.PreferenceManager;
+
+import androidx.preference.PreferenceManager;
 
 public class AutoDataUpdateReceiver extends BroadcastReceiver {
   private static Thread UPDATE_THREAD;

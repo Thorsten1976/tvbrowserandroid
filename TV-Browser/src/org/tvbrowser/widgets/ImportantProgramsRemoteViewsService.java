@@ -39,13 +39,14 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Binder;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.text.Spannable;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
+
+import androidx.preference.PreferenceManager;
 
 /**
  * Service for showing important programs as widget.

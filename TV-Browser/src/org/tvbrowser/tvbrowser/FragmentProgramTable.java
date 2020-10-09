@@ -50,7 +50,6 @@ import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.Handler;
-import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.core.content.ContextCompat;
@@ -70,6 +69,8 @@ import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+
+import androidx.preference.PreferenceManager;
 
 public class FragmentProgramTable extends Fragment {
   private boolean mKeepRunning;

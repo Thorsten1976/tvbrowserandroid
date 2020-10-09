@@ -36,8 +36,9 @@ import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.preference.PreferenceManager;
 import android.text.style.ImageSpan;
+
+import androidx.preference.PreferenceManager;
 
 /**
  * A class with a service connection to a specific TV-Browser Plugin.

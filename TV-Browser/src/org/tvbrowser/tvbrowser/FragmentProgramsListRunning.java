@@ -34,7 +34,6 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
-import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.loader.app.LoaderManager;
@@ -62,6 +61,8 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import androidx.preference.PreferenceManager;
 
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.settings.SettingConstants;

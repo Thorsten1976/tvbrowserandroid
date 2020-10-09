@@ -27,7 +27,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
@@ -36,6 +35,7 @@ import androidx.cursoradapter.widget.SimpleCursorAdapter;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import android.widget.ListView;
+import androidx.preference.PreferenceManager;
 
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.devplugin.PluginHandler;

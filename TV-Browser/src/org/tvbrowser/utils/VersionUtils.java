@@ -24,7 +24,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import android.util.Log;
@@ -36,6 +35,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import androidx.preference.PreferenceManager;
 
 import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
@@ -194,14 +194,14 @@ public final class VersionUtils {
         if (oldVersion < 304) {
           final Set<String> favoritesSet = defaultSharedPreferences.getStringSet("FAVORITE_LIST", new HashSet<>());
           int id = 1000;
-          for (final String favorite : favoritesSet) {
-            final Favorite fav = new Favorite(id++, favorite);
-            if (fav.isValid()) {
-              fav.save(applicationContext);
-            } else {
-              Favorite.handleFavoriteMarking(applicationContext, fav, Favorite.TYPE_MARK_REMOVE);
+            for (final String favorite : favoritesSet) {
+              final Favorite fav = new Favorite(id++, favorite);
+              if (fav.isValid()) {
+                fav.save(applicationContext);
+              } else {
+                Favorite.handleFavoriteMarking(applicationContext, fav, Favorite.TYPE_MARK_REMOVE);
+              }
             }
-          }
 
           defaultSharedPreferences.edit().remove("FAVORITE_LIST").commit();
         }

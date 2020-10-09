@@ -56,7 +56,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.os.RemoteException;
-import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
@@ -101,6 +100,8 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import androidx.preference.PreferenceManager;
 
 import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;

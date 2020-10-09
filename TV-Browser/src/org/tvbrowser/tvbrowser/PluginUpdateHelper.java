@@ -2,7 +2,6 @@ package org.tvbrowser.tvbrowser;
 
 import android.content.Intent;
 import android.os.Build;
-import android.preference.PreferenceManager;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -12,6 +11,8 @@ import android.text.style.ClickableSpan;
 import android.text.style.URLSpan;
 import android.util.Log;
 import android.view.View;
+
+import androidx.preference.PreferenceManager;
 
 import org.tvbrowser.devplugin.PluginDefinition;
 import org.tvbrowser.devplugin.PluginHandler;

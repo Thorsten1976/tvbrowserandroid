@@ -16,6 +16,8 @@
  */
 package org.tvbrowser.tvbrowser;
 
+import androidx.preference.PreferenceManager;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -90,7 +92,6 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.RemoteException;
-import android.preference.PreferenceManager;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -4429,7 +4430,7 @@ public class TvDataUpdateService extends Service {
       //noinspection ResultOfMethodCallIgnored
       in.read(fileInfoBuffer);
       
-      return new DataInfo(fileInfoBuffer[0],fileInfoBuffer[1],dataUrlFileHolder.getFrameCount((short)(fileInfoBuffer[2] & 0xFF)));
+      return new DataInfo(fileInfoBuffer[0], fileInfoBuffer[1], dataUrlFileHolder.getFrameCount((short) (fileInfoBuffer[2] & 0xFF)));
     }
 
     @Override
@@ -4490,7 +4491,7 @@ public class TvDataUpdateService extends Service {
         byte fileVersion = in.readByte();
         result.setVersion(in.readByte());
       
-        final DataInfo dataInfo = new DataInfo(fileVersion,result.mVersion,in.readShort());
+        final DataInfo dataInfo = new DataInfo(fileVersion, result.mVersion, in.readShort());
         
         String[] fileParts = file.getName().split("_");
         
@@ -4874,7 +4875,7 @@ public class TvDataUpdateService extends Service {
       byte fileVersion = in.readByte();
       byte dataVersion = in.readByte();
       
-      return new DataInfo(fileVersion,dataVersion,in.readShort());
+      return new DataInfo(fileVersion, dataVersion, in.readShort());
     }
 
     @Override

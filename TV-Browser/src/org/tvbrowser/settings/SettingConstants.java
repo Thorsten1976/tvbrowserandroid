@@ -36,9 +36,9 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.GradientDrawable.Orientation;
 import android.graphics.drawable.LayerDrawable;
-import android.preference.PreferenceManager;
 import androidx.core.content.ContextCompat;
 import androidx.collection.SparseArrayCompat;
+import androidx.preference.PreferenceManager;
 
 public final class SettingConstants {
 

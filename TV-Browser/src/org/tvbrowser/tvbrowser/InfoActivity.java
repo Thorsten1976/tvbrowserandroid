@@ -24,7 +24,6 @@ import android.content.SharedPreferences.Editor;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -32,6 +31,8 @@ import android.text.format.DateFormat;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.preference.PreferenceManager;
 
 import org.tvbrowser.filter.ChannelFilter;
 import org.tvbrowser.settings.SettingConstants;

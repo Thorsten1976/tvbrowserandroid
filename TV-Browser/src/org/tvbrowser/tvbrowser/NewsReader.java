@@ -16,6 +16,8 @@
  */
 package org.tvbrowser.tvbrowser;
 
+import androidx.preference.PreferenceManager;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.net.URLDecoder;
@@ -32,7 +34,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences.Editor;
 import android.os.Handler;
-import android.preference.PreferenceManager;
 import android.text.format.DateFormat;
 
 import static org.tvbrowser.utils.IOUtils.ISO_8859_15;
@@ -103,20 +104,20 @@ class NewsReader {
             }
             break;
           case XmlPullParser.TEXT:
-            switch (name) {
-              case "title":
-                currentNews.mDeNewsTitle = URLDecoder.decode(myParser.getText(), ISO_8859_15);
-                break;
-              case "title-en":
-                currentNews.mEnNewsTitle = URLDecoder.decode(myParser.getText(), ISO_8859_15);
-                break;
-              case "text":
-                currentNews.mDeNewsText = URLDecoder.decode(myParser.getText(), ISO_8859_15);
-                break;
-              case "text-en":
-                currentNews.mEnNewsText = URLDecoder.decode(myParser.getText(), ISO_8859_15);
-                break;
-            }
+              switch (name) {
+                case "title":
+                  currentNews.mDeNewsTitle = URLDecoder.decode(myParser.getText(), ISO_8859_15);
+                  break;
+                case "title-en":
+                  currentNews.mEnNewsTitle = URLDecoder.decode(myParser.getText(), ISO_8859_15);
+                  break;
+                case "text":
+                  currentNews.mDeNewsText = URLDecoder.decode(myParser.getText(), ISO_8859_15);
+                  break;
+                case "text-en":
+                  currentNews.mEnNewsText = URLDecoder.decode(myParser.getText(), ISO_8859_15);
+                  break;
+              }
             break;
         }
          

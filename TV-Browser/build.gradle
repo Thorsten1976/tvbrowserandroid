@@ -152,7 +152,7 @@ android {
 
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-project.txt'
-        }
+    }
     }
 
     sourceSets {
@@ -229,6 +229,7 @@ dependencies {
     implementation 'androidx.legacy:legacy-preference-v14:1.0.0'
     implementation 'androidx.vectordrawable:vectordrawable:1.0.1'
     implementation 'com.google.android.material:material:1.1.0-alpha09'
+    implementation 'androidx.preference:preference:1.1.1'
     implementation 'me.drakeet.support:toastcompat:1.1.0'
     implementation project(path: ':ListViewDraggingAnimation')
 }

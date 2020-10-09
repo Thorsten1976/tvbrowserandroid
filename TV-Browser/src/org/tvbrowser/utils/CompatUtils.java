@@ -45,7 +45,6 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.LocaleList;
 import android.os.PowerManager;
-import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.text.Html;
@@ -55,6 +54,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.TimePicker;
+
+import androidx.preference.PreferenceManager;
 
 /**
  * A class that uses the current available method of deprecated methods on the Build.VERSION of the running device.
@@ -291,16 +292,16 @@ public final class CompatUtils {
       } else {
         final Network[] networks = connectivityManager.getAllNetworks();
         if (networks != null) {
-          for (final Network network : networks) {
-            if (network != null) {
-              final NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
-              if (networkInfo != null && networkInfo.getType() == type) {
-                return networkInfo;
-              }
+        for (final Network network : networks) {
+          if (network != null) {
+            final NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
+            if (networkInfo != null && networkInfo.getType() == type) {
+              return networkInfo;
             }
           }
         }
       }
+    }
     }
     return null;
   }

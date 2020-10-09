@@ -44,7 +44,6 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
-import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.loader.app.LoaderManager;
@@ -63,6 +62,8 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import androidx.preference.PreferenceManager;
 
 import static org.tvbrowser.settings.SettingConstants.EXTRA_CHANNEL_ID;
 import static org.tvbrowser.settings.SettingConstants.EXTRA_END_TIME;
@@ -758,7 +759,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
               }
             }
           }
-          
+
           if(filterSelection >= 0) {
             filter.setSelection(filterSelection);
           }

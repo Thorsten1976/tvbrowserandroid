@@ -43,12 +43,13 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.preference.RingtonePreference;
 import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AlertDialog;
 import android.util.Log;
+
+import androidx.preference.PreferenceManager;
 
 public class TvbPreferenceFragment extends PreferenceFragment implements OnSharedPreferenceChangeListener {
   @Override
