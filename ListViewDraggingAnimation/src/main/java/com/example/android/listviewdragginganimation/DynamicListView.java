@@ -16,11 +16,6 @@
 
 package com.example.android.listviewdragginganimation;
 
-import java.util.ArrayList;
-
-import org.tvbrowser.tvbrowser.SortDropListener;
-import org.tvbrowser.tvbrowser.SortInterface;
-
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
@@ -33,6 +28,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
@@ -43,6 +39,8 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+
+import java.util.List;
 
 /**
  * The dynamic listview is an extension of listview that supports cell dragging
@@ -72,7 +70,7 @@ public class DynamicListView extends ListView {
     private final int MOVE_DURATION = 150;
 
     // Changed generic type for channel sort
-    private ArrayList<SortInterface> mItemList;
+    private List<SortInterface> mItemList;
 
     private int mLastEventY = -1;
 
@@ -128,7 +126,9 @@ public class DynamicListView extends ListView {
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
         final int SMOOTH_SCROLL_AMOUNT_AT_EDGE = 15;
         mSmoothScrollAmountAtEdge = (int)(SMOOTH_SCROLL_AMOUNT_AT_EDGE / metrics.density);
-        mHandler = new Handler();
+        Looper looper = Looper.myLooper();
+        //noinspection ConstantConditions
+        mHandler = new Handler(looper==null ? Looper.getMainLooper() : looper);
     }
     
     @Override
@@ -398,7 +398,7 @@ public class DynamicListView extends ListView {
     }
 
     // changed generic type of list
-    private void swapElements(ArrayList<SortInterface> arrayList, int indexOne, int indexTwo) {
+    private static void swapElements(List<SortInterface> arrayList, int indexOne, int indexTwo) {
         SortInterface temp = arrayList.get(indexOne);
         arrayList.set(indexOne, arrayList.get(indexTwo));
         arrayList.set(indexTwo, temp);
@@ -530,7 +530,7 @@ public class DynamicListView extends ListView {
     }
     
     // change start for channel sort
-    public void setArrayList(ArrayList<SortInterface> list) {
+    public void setArrayList(List<SortInterface> list) {
         mItemList = list;
     }
     
