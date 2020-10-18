@@ -64,6 +64,7 @@ import android.widget.TextView;
 
 import androidx.preference.PreferenceManager;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.tvbrowser.LoaderUpdater.UnsupportedFragmentException;
@@ -190,9 +191,10 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
           mLoaderUpdater.startUpdate();
         }
         else {
-          showEpisode = PrefUtils.getBooleanValue(R.string.SHOW_EPISODE_IN_RUNNING_LIST, R.bool.show_episode_in_running_list_default);
-          showInfo = PrefUtils.getBooleanValue(R.string.SHOW_INFO_IN_RUNNING_LIST, R.bool.show_info_in_running_list_default);
-          mShowOrderNumber = PrefUtils.getBooleanValue(R.string.SHOW_SORT_NUMBER_IN_RUNNING_LIST, R.bool.show_sort_number_in_running_list_default);
+          final PrefUtils prefUtils = App.get().prefs();
+          showEpisode = prefUtils.getBooleanValueWithDefaultKey(R.string.SHOW_EPISODE_IN_RUNNING_LIST, R.bool.show_episode_in_running_list_default);
+          showInfo = prefUtils.getBooleanValueWithDefaultKey(R.string.SHOW_INFO_IN_RUNNING_LIST, R.bool.show_info_in_running_list_default);
+          mShowOrderNumber = prefUtils.getBooleanValueWithDefaultKey(R.string.SHOW_SORT_NUMBER_IN_RUNNING_LIST, R.bool.show_sort_number_in_running_list_default);
           
           new Thread() {
             public void run() {
@@ -378,7 +380,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
         today.set(Calendar.SECOND, 0);
         today.set(Calendar.MILLISECOND, 0);
         
-        if(mWhereClauseTime != -1 && mWhereClauseTime != -2 && PrefUtils.getBooleanValue(R.string.RUNNING_PROGRAMS_NEXT_DAY, R.bool.running_programs_next_day_default)) {
+        if(mWhereClauseTime != -1 && mWhereClauseTime != -2 && App.get().prefs().getBooleanValueWithDefaultKey(R.string.RUNNING_PROGRAMS_NEXT_DAY, R.bool.running_programs_next_day_default)) {
           int test1 = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
           
           if((test1 - mWhereClauseTime) > 180 && mDayStart < System.currentTimeMillis() && mDayStart >= today.getTimeInMillis()) {
@@ -633,7 +635,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
       }
       
       if(!channelSet) {
-        String logoNamePref = PrefUtils.getStringValue(R.string.CHANNEL_LOGO_NAME_RUNNING, R.string.channel_logo_name_running_default);
+        String logoNamePref = App.get().prefs().getStringValueWithDefaultKey(R.string.CHANNEL_LOGO_NAME_RUNNING, R.string.channel_logo_name_running_default);
         
         boolean showChannelName = "0".equals(logoNamePref) || "2".equals(logoNamePref);
         boolean showChannelLogo = "0".equals(logoNamePref) || "1".equals(logoNamePref);
@@ -739,7 +741,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
   private View getCompactView(View convertView, ViewGroup parent, java.text.DateFormat timeFormat, ChannelProgramBlock block, int DEFAULT_TEXT_COLOR) {
     CompactLayoutViewHolder viewHolder = null;
     
-    float textScale = Float.valueOf(PrefUtils.getStringValue(R.string.PREF_PROGRAM_LISTS_TEXT_SCALE, R.string.pref_program_lists_text_scale_default));
+    float textScale = Float.parseFloat(App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_TEXT_SCALE, R.string.pref_program_lists_text_scale_default));
     
     if(convertView == null || ((CompactLayoutViewHolder)convertView.getTag()).orientationChanged(SettingConstants.ORIENTATION) || ((CompactLayoutViewHolder)convertView.getTag()).mCurrentScale !=  textScale) {
       convertView = getActivity().getLayoutInflater().inflate(R.layout.compact_program_panel, parent, false);
@@ -830,7 +832,8 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
-    SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+    final PrefUtils prefUtils = App.get().prefs();
+    SharedPreferences pref = prefUtils.getDefault();
     pref.registerOnSharedPreferenceChangeListener(this);
     
     if(handler == null) {
@@ -865,7 +868,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     
     mChannelSwitchListener = v -> {
       Integer id = (Integer)v.getTag();
-      boolean handle = PrefUtils.getBooleanValue(R.string.PREF_RUNNING_LIST_CLICK_TO_CHANNEL_TO_LIST, R.bool.pref_running_list_click_to_channel_to_list_default);
+      boolean handle = prefUtils.getBooleanValueWithDefaultKey(R.string.PREF_RUNNING_LIST_CLICK_TO_CHANNEL_TO_LIST, R.bool.pref_running_list_click_to_channel_to_list_default);
 
       if(handle && id != null) {
         Intent showChannel = new Intent(SettingConstants.SHOW_ALL_PROGRAMS_FOR_CHANNEL_INTENT);
@@ -956,7 +959,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     
     getListView().setDivider(drawable);
     
-    setDividerSize(PrefUtils.getStringValue(R.string.PREF_RUNNING_DIVIDER_SIZE, R.string.pref_running_divider_size_default));
+    setDividerSize(prefUtils.getStringValueWithDefaultKey(R.string.PREF_RUNNING_DIVIDER_SIZE, R.string.pref_running_divider_size_default));
     
    // getLoaderManager().initLoader(0, null, this);
   }
@@ -1041,7 +1044,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
 
         mLastExtraClick = System.currentTimeMillis();
         setWhereClauseTime(selectedTime);
-        PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, getActivity()).edit().putInt(getString(R.string.PREF_MISC_LAST_TIME_EXTRA_VALUE), selectedTime).commit();
+        App.get().prefs().edit().putInt(getString(R.string.PREF_MISC_LAST_TIME_EXTRA_VALUE), selectedTime).commit();
       }, time/60, time%60, DateFormat.is24HourFormat(getActivity()));
       
       pick.show();
@@ -1059,9 +1062,9 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
 
     now.setTag(-1);
     next.setTag(-2);
-    
+
     final View.OnClickListener listenerClick = v -> {
-      if(PrefUtils.getBooleanValue(R.string.PREF_RUNNING_PROGRAMS_SHOW_TIME_PICK_BUTTON_ONLY_WHEN_NEEDED, R.bool.pref_running_programs_show_time_pick_button_only_when_needed_default)) {
+      if(App.get().prefs().getBooleanValueWithDefaultKey(R.string.PREF_RUNNING_PROGRAMS_SHOW_TIME_PICK_BUTTON_ONLY_WHEN_NEEDED, R.bool.pref_running_programs_show_time_pick_button_only_when_needed_default)) {
         mTimeBar.removeView(mTimeExtra);
       }
 
@@ -1099,7 +1102,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
           now.setOnClickListener(listenerClick);
           mTimeBar.addView(now);
           
-          if(PrefUtils.getBooleanValue(R.string.PREF_RUNNING_PROGRAMS_SHOW_NEXT_BUTTON, R.bool.pref_running_programs_show_next_button_default)) {
+          if(App.get().prefs().getBooleanValueWithDefaultKey(R.string.PREF_RUNNING_PROGRAMS_SHOW_NEXT_BUTTON, R.bool.pref_running_programs_show_next_button_default)) {
             next.setOnClickListener(listenerClick);
             mTimeBar.addView(next);
           }
@@ -1142,13 +1145,13 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
               }
           }
           
-          if(PrefUtils.getBooleanValue(R.string.SORT_RUNNING_TIMES, R.bool.sort_running_times_default)) {
+          if(App.get().prefs().getBooleanValueWithDefaultKey(R.string.SORT_RUNNING_TIMES, R.bool.sort_running_times_default)) {
             Collections.sort(values);
           }
 
           Calendar cal = Calendar.getInstance();
           
-          int lastExtraTime = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_MISC_LAST_TIME_EXTRA_VALUE, R.integer.pref_misc_last_time_extra_value_default);
+          int lastExtraTime = App.get().prefs().getIntValueWithDefaultKey(R.string.PREF_MISC_LAST_TIME_EXTRA_VALUE, R.integer.pref_misc_last_time_extra_value_default);
           
           cal.set(Calendar.HOUR_OF_DAY, lastExtraTime/60);
           cal.set(Calendar.MINUTE, lastExtraTime%60);
@@ -1175,7 +1178,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
             return true;
           });
           
-          if(PrefUtils.getBooleanValue(R.string.PREF_RUNNING_PROGRAMS_SHOW_TIME_PICK_BUTTON_ONLY_WHEN_NEEDED, R.bool.pref_running_programs_show_time_pick_button_only_when_needed_default)
+          if(App.get().prefs().getBooleanValueWithDefaultKey(R.string.PREF_RUNNING_PROGRAMS_SHOW_TIME_PICK_BUTTON_ONLY_WHEN_NEEDED, R.bool.pref_running_programs_show_time_pick_button_only_when_needed_default)
               && lastExtraTime != mWhereClauseTime) {
             mTimeBar.removeView(mTimeExtra);
           }
@@ -1235,7 +1238,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
       
       mDateAdapter.clear();
       
-      long last = PrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_DATE_LAST_KNOWN, R.integer.meta_data_date_known_default);
+      long last = App.get().prefs().getLongValueWithDefaultKey(R.string.META_DATA_DATE_LAST_KNOWN, R.integer.meta_data_date_known_default);
       
       Calendar lastDay = Calendar.getInstance();
       lastDay.setTimeInMillis(last);
@@ -1293,10 +1296,11 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     int startIndex = 13 + infoCategories.length;
     
     String[] projection = new String[startIndex + TvBrowserContentProvider.MARKING_COLUMNS.length];
-    
-    showEpisode = PrefUtils.getBooleanValue(R.string.SHOW_EPISODE_IN_RUNNING_LIST, R.bool.show_episode_in_running_list_default);
-    showInfo = PrefUtils.getBooleanValue(R.string.SHOW_INFO_IN_RUNNING_LIST, R.bool.show_info_in_running_list_default);
-    mShowOrderNumber = PrefUtils.getBooleanValue(R.string.SHOW_SORT_NUMBER_IN_RUNNING_LIST, R.bool.show_sort_number_in_running_list_default);
+
+    final PrefUtils prefs = App.get().prefs();
+    showEpisode = prefs.getBooleanValueWithDefaultKey(R.string.SHOW_EPISODE_IN_RUNNING_LIST, R.bool.show_episode_in_running_list_default);
+    showInfo = prefs.getBooleanValueWithDefaultKey(R.string.SHOW_INFO_IN_RUNNING_LIST, R.bool.show_info_in_running_list_default);
+    mShowOrderNumber = prefs.getBooleanValueWithDefaultKey(R.string.SHOW_SORT_NUMBER_IN_RUNNING_LIST, R.bool.show_sort_number_in_running_list_default);
     
     projection[0] = TvBrowserContentProvider.KEY_ID;
     projection[1] = TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID;
@@ -1417,7 +1421,7 @@ String mPreviousEpisode;
     if(c != null) {
       SparseArrayCompat<ChannelProgramBlock> channelProgramMap = new SparseArrayCompat<>();
       SparseArrayCompat<ChannelProgramBlock> currentProgramMap = new SparseArrayCompat<>();
-      boolean showDontWantToSee = PrefUtils.getStringValue(R.string.PREF_I_DONT_WANT_TO_SEE_FILTER_TYPE, R.string.pref_i_dont_want_to_see_filter_type_default).equals(getResources().getStringArray(R.array.pref_simple_string_value_array2)[1]);
+      boolean showDontWantToSee = App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_I_DONT_WANT_TO_SEE_FILTER_TYPE, R.string.pref_i_dont_want_to_see_filter_type_default).equals(getResources().getStringArray(R.array.pref_simple_string_value_array2)[1]);
       
       mProgramBlockList.clear();
       mCurrentViewList.clear();
@@ -1691,7 +1695,7 @@ String mPreviousEpisode;
   public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
     if(!isDetached() && getActivity() != null) {
       if(getString(R.string.PREF_RUNNING_DIVIDER_SIZE).equals(key)) {
-        setDividerSize(PrefUtils.getStringValue(R.string.PREF_RUNNING_DIVIDER_SIZE, R.string.pref_running_divider_size_default));
+        setDividerSize(App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_RUNNING_DIVIDER_SIZE, R.string.pref_running_divider_size_default));
       }
       else if(getString(R.string.PREF_RUNNING_PROGRAMS_SHOW_TIME_PICK_BUTTON_ONLY_WHEN_NEEDED).equals(key)) {
         boolean enabled = sharedPreferences.getBoolean(key, getResources().getBoolean(R.bool.pref_running_programs_show_time_pick_button_only_when_needed_default));

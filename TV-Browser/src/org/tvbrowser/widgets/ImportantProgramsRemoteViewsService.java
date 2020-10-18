@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.tvbrowser.R;
@@ -206,19 +207,20 @@ public class ImportantProgramsRemoteViewsService extends RemoteViewsService {
               mMarkingReminderIndex = mCursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER);
               mMarkingFavoriteReminderIndex = mCursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER);
               mMarkingSyncIndex = mCursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_MARKING_SYNC);
+
+              final PrefUtils prefs = App.get().prefs();
+              final String logoNamePref = prefs.getStringValueWithDefaultKey(R.string.PREF_WIDGET_CHANNEL_LOGO_NAME, R.string.pref_widget_channel_logo_name_default);
               
-              final String logoNamePref = PrefUtils.getStringValue(R.string.PREF_WIDGET_CHANNEL_LOGO_NAME, R.string.pref_widget_channel_logo_name_default);
-              
-              mShowEpisode = PrefUtils.getBooleanValue(R.string.PREF_WIDGET_SHOW_EPISODE, R.bool.pref_widget_show_episode_default);
-              mShowCategories = PrefUtils.getBooleanValue(R.string.PREF_WIDGET_SHOW_CATEGORIES, R.bool.pref_widget_show_categories_default);
-              mShowMarkings = PrefUtils.getBooleanValue(R.string.PREF_WIDGET_SHOW_MARKINGS, R.bool.pref_widget_show_markings_default);
+              mShowEpisode = prefs.getBooleanValueWithDefaultKey(R.string.PREF_WIDGET_SHOW_EPISODE, R.bool.pref_widget_show_episode_default);
+              mShowCategories = prefs.getBooleanValueWithDefaultKey(R.string.PREF_WIDGET_SHOW_CATEGORIES, R.bool.pref_widget_show_categories_default);
+              mShowMarkings = prefs.getBooleanValueWithDefaultKey(R.string.PREF_WIDGET_SHOW_MARKINGS, R.bool.pref_widget_show_markings_default);
               mShowChannelName = (logoNamePref.equals("0") || logoNamePref.equals("2"));
               mShowChannelLogo = (logoNamePref.equals("0") || logoNamePref.equals("1") || logoNamePref.equals("3"));
               mShowBigChannelLogo = logoNamePref.equals("3");
-              mShowOrderNumber = PrefUtils.getBooleanValue(R.string.PREF_WIDGET_SHOW_SORT_NUMBER, R.bool.pref_widget_show_sort_number_default);
-              mChannelClickToProgramsList = PrefUtils.getBooleanValue(R.string.PREF_WIDGET_CLICK_TO_CHANNEL_TO_LIST, R.bool.pref_widget_click_to_channel_to_list_default);
-              mTextScale = Float.valueOf(PrefUtils.getStringValue(R.string.PREF_WIDGET_TEXT_SCALE, R.string.pref_widget_text_scale_default));
-              mVerticalPadding = UiUtils.convertDpToPixel((int)(Float.parseFloat(PrefUtils.getStringValue(R.string.PREF_WIDGET_VERTICAL_PADDING_SIZE, R.string.pref_widget_vertical_padding_size_default))/2),mContext.getResources());
+              mShowOrderNumber = prefs.getBooleanValueWithDefaultKey(R.string.PREF_WIDGET_SHOW_SORT_NUMBER, R.bool.pref_widget_show_sort_number_default);
+              mChannelClickToProgramsList = prefs.getBooleanValueWithDefaultKey(R.string.PREF_WIDGET_CLICK_TO_CHANNEL_TO_LIST, R.bool.pref_widget_click_to_channel_to_list_default);
+              mTextScale = Float.parseFloat(prefs.getStringValueWithDefaultKey(R.string.PREF_WIDGET_TEXT_SCALE, R.string.pref_widget_text_scale_default));
+              mVerticalPadding = UiUtils.convertDpToPixel((int)(Float.parseFloat(prefs.getStringValueWithDefaultKey(R.string.PREF_WIDGET_VERTICAL_PADDING_SIZE, R.string.pref_widget_vertical_padding_size_default))/2),mContext.getResources());
               
               for(String column : TvBrowserContentProvider.MARKING_COLUMNS) {
                 final int index = mCursor.getColumnIndex(column);
@@ -255,7 +257,6 @@ public class ImportantProgramsRemoteViewsService extends RemoteViewsService {
     }
     
     ImportantProgramsRemoteViewsFactory(Context context, Bundle extras) {
-      PrefUtils.initialize(context);
       mContext = context;
       
       SettingConstants.initializeLogoMap(context, false);

@@ -34,6 +34,7 @@ import android.view.ViewGroup;
 
 import androidx.preference.PreferenceManager;
 
+import org.tvbrowser.App;
 import org.tvbrowser.filter.ChannelFilter;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.utils.CompatUtils;
@@ -48,13 +49,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class InfoActivity extends AppCompatActivity {
-
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    
-    PrefUtils.initialize(InfoActivity.this);
-  }
   
   private ViewGroup mViewParent;
   
@@ -69,19 +63,19 @@ public class InfoActivity extends AppCompatActivity {
     super.onResume();
     
     Intent intent = getIntent();
-
+    PrefUtils prefs = App.get().prefs();
     long programID = intent.getLongExtra(SettingConstants.REMINDER_PROGRAM_ID_EXTRA, -1);
 
     if(intent.getAction() != null && intent.getAction().equals(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE)) {
       if(CompatUtils.showWidgetRefreshInfo()) {
-        setTheme(UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_TRANSLUCENT, PrefUtils.isDarkTheme()));
+        setTheme(UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_TRANSLUCENT, prefs.isDarkTheme()));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(InfoActivity.this);
         builder.setTitle(CompatUtils.fromHtml(getString(R.string.widget_warning_refresh_title)));
         builder.setMessage(R.string.widget_warning_refresh_message);
         builder.setCancelable(false);
         builder.setPositiveButton(android.R.string.ok, (dialog, which) -> {
-          PrefUtils.setBooleanValue(R.string.PREF_WIDGET_REFRESH_WARNING, false);
+          prefs.setValue(R.string.PREF_WIDGET_REFRESH_WARNING, false);
           finish();
         });
         builder.show();
@@ -91,7 +85,7 @@ public class InfoActivity extends AppCompatActivity {
       }
     }
     else if(programID >= 0) {
-      setTheme(UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_TRANSLUCENT, PrefUtils.isDarkTheme()));
+      setTheme(UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_TRANSLUCENT, prefs.isDarkTheme()));
 
       UiUtils.showProgramInfo(this, programID, this, getCurrentFocus(), new Handler());
     }
@@ -129,7 +123,7 @@ public class InfoActivity extends AppCompatActivity {
           }
       }
       
-      if(PrefUtils.getBooleanValue(R.string.SORT_RUNNING_TIMES, R.bool.sort_running_times_default)) {
+      if(prefs.getBooleanValueWithDefaultKey(R.string.SORT_RUNNING_TIMES, R.bool.sort_running_times_default)) {
         Collections.sort(values);
       }
       
@@ -204,7 +198,7 @@ public class InfoActivity extends AppCompatActivity {
       final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(InfoActivity.this);
       final int appWidgetId = intent.getIntExtra(SettingConstants.WIDGET_CHANNEL_SELECTION_EXTRA, AppWidgetManager.INVALID_APPWIDGET_ID);
 
-      setTheme(UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_DEFAULT, PrefUtils.isDarkTheme()));
+      setTheme(UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_DEFAULT, prefs.isDarkTheme()));
 
       UiUtils.showChannelFilterSelection(InfoActivity.this, new ChannelFilter() {
         @Override

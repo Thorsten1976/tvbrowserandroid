@@ -24,6 +24,7 @@ public final class App extends Application {
   public static final int TYPE_NOTIFICATION_REMINDER_NIGHT = 3;
 
 	private static App INSTANCE = null;
+	private PrefUtils mPrefUtils;
 
 	/**
 	 * <p>Single instance of this {@link Application} (per process).</p>
@@ -38,10 +39,16 @@ public final class App extends Application {
 		return INSTANCE;
 	}
 
+	public PrefUtils prefs() {
+		return mPrefUtils;
+	}
+
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		INSTANCE = this;
+		mPrefUtils = new PrefUtils(getApplicationContext());
+
 		SettingConstants.initialize(getApplicationContext());
 
 		if (CompatUtils.isAtLeastAndroidO()) {
@@ -120,8 +127,8 @@ public final class App extends Application {
 					|| service.getNotificationChannel(getNotificationChannelId(TYPE_NOTIFICATION_REMINDER_WORK)) == null
 					|| service.getNotificationChannel(getNotificationChannelId(TYPE_NOTIFICATION_REMINDER_NIGHT)) == null)) {
 					final String soundDefault = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString();
-					PrefUtils.initialize(getApplicationContext());
-					final int colorLED = PrefUtils.getIntValue(R.string.PREF_REMINDER_COLOR_LED, ContextCompat.getColor(getApplicationContext(), R.color.pref_reminder_color_led_default));
+					final int colorLED = mPrefUtils.getValue(R.string.PREF_REMINDER_COLOR_LED,
+							ContextCompat.getColor(getApplicationContext(), R.color.pref_reminder_color_led_default));
 
 					service.createNotificationChannel(createReminderNotificationChannel(TYPE_NOTIFICATION_REMINDER_DAY, vibrationPattern, soundDefault, attributes, colorLED));
 					service.createNotificationChannel(createReminderNotificationChannel(TYPE_NOTIFICATION_REMINDER_WORK, vibrationPattern, null, attributes, colorLED));
@@ -157,11 +164,11 @@ public final class App extends Application {
 				break;
 		}
 
-		final String stringSoundDefault = PrefUtils.getStringValue(prefIdSound, soundDefault);
+		final String stringSoundDefault = mPrefUtils.getValue(prefIdSound, soundDefault);
 
 		final Uri tone = stringSoundDefault != null ? Uri.parse(stringSoundDefault) : null;
-		final boolean led = PrefUtils.getBooleanValue(prefIdLED, idDefaultLED);
-		final boolean vibrate = PrefUtils.getBooleanValue(prefIdVibrate, idDefaultVibrate);
+		final boolean led = mPrefUtils.getBooleanValueWithDefaultKey(prefIdLED, idDefaultLED);
+		final boolean vibrate = mPrefUtils.getBooleanValueWithDefaultKey(prefIdVibrate, idDefaultVibrate);
 
 		final NotificationChannel notificationChannel = new NotificationChannel(getNotificationChannelId(type), getNotificationChannelName(type), NotificationManager.IMPORTANCE_DEFAULT);
 		notificationChannel.setVibrationPattern(vibrationPattern);

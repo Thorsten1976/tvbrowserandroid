@@ -23,6 +23,7 @@ import java.util.Hashtable;
 import java.util.Map;
 import java.util.Set;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.utils.IOUtils;
@@ -1064,10 +1065,10 @@ public class Favorite implements Serializable, Cloneable, Comparable<Favorite> {
             try {
               if(!reminderIdList.isEmpty()) {
                 if(favorite.remind()) {
-                  ProgramUtils.addReminderIds(context, reminderIdList);
+                  ProgramUtils.addReminderIds(reminderIdList);
                 }
                 else {
-                  ProgramUtils.removeReminderIds(context, reminderIdList);
+                  ProgramUtils.removeReminderIds(reminderIdList);
                 }
               }
               
@@ -1173,7 +1174,7 @@ public class Favorite implements Serializable, Cloneable, Comparable<Favorite> {
                   
           if(!updateValuesList.isEmpty()) {
             if(!removedReminderIdList.isEmpty()) {
-              ProgramUtils.removeReminderIds(context, removedReminderIdList);
+              ProgramUtils.removeReminderIds(removedReminderIdList);
             }
             
             try {
@@ -1205,7 +1206,7 @@ public class Favorite implements Serializable, Cloneable, Comparable<Favorite> {
   }
   
   public void save(Context context) {
-    Editor edit = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_FAVORITES, context).edit();
+    Editor edit = App.get().prefs().edit(PrefUtils.TYPE_PREFERENCES_FAVORITES);
     edit.putString(String.valueOf(getFavoriteId()), getSaveString());
     edit.commit();
   }
@@ -1303,7 +1304,7 @@ public class Favorite implements Serializable, Cloneable, Comparable<Favorite> {
             }
             
             if(!reminderIdList.isEmpty()) {
-              ProgramUtils.addReminderIds(context, reminderIdList);
+              ProgramUtils.addReminderIds(reminderIdList);
             }
             
             try {
@@ -1350,7 +1351,7 @@ public class Favorite implements Serializable, Cloneable, Comparable<Favorite> {
   }
   
   public static Favorite[] getAllFavorites(Context context) {
-    SharedPreferences prefFavorites = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_FAVORITES, context);
+    SharedPreferences prefFavorites = App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_FAVORITES);
     
     ArrayList<Favorite> favoriteList = new ArrayList<>();
     
@@ -1377,13 +1378,13 @@ public class Favorite implements Serializable, Cloneable, Comparable<Favorite> {
   public static void deleteFavorite(Context context, Favorite favorite) {
     Favorite.removeFavoriteMarkingInternal(context, context.getContentResolver(), favorite, false);
     
-    Editor edit = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_FAVORITES, context).edit();
+    Editor edit = App.get().prefs().edit(PrefUtils.TYPE_PREFERENCES_FAVORITES);
     edit.remove(String.valueOf(favorite.getFavoriteId()));
     edit.commit();
   }
   
   public static void deleteAllFavorites(Context context) {
-    Editor edit = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_FAVORITES, context).edit();
+    Editor edit = App.get().prefs().edit(PrefUtils.TYPE_PREFERENCES_FAVORITES);
     Favorite[] favorites = getAllFavorites(context);
     
     for(Favorite favorite : favorites) {

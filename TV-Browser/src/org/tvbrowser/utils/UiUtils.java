@@ -1237,7 +1237,7 @@ public final class UiUtils {
             values.put(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER, true);
           }
 
-          ProgramUtils.addReminderId(activity, programID);
+          ProgramUtils.addReminderId(programID);
           //addReminder(activity.getApplicationContext(),programID,0,UiUtils.class,true);
           break;
         case R.id.prog_remove_reminder:
@@ -1249,7 +1249,7 @@ public final class UiUtils {
           values.put(TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER, 0);
           values.put(TvBrowserContentProvider.DATA_KEY_REMOVED_REMINDER, true);
 
-          ProgramUtils.removeReminderId(activity, programID);
+          ProgramUtils.removeReminderId(programID);
 
           if (menuView != null) {
             markedColumns.remove(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER);
@@ -1410,7 +1410,7 @@ public final class UiUtils {
           if (title != null && !SettingConstants.UPDATING_FILTER) {
             SettingConstants.UPDATING_FILTER = true;
 
-            Set<String> exclusionValues = PrefUtils.getStringSetValue(R.string.I_DONT_WANT_TO_SEE_ENTRIES, null);
+            Set<String> exclusionValues = App.get().prefs().getValue(R.string.I_DONT_WANT_TO_SEE_ENTRIES, new HashSet<>());
             //ArrayList<>
             HashSet<String> newExclusionSet = new HashSet<>();
             final ArrayList<DontWantToSeeExclusion> exclusionList = new ArrayList<>();
@@ -1513,7 +1513,7 @@ public final class UiUtils {
           values.put(TvBrowserContentProvider.DATA_KEY_MARKING_SYNC, false);
           values.put(TvBrowserContentProvider.DATA_KEY_REMOVED_SYNC, true);
 
-          ProgramUtils.removeSyncId(activity, programID);
+          ProgramUtils.removeSyncId(programID);
 
           if (menuView != null) {
             markedColumns.remove(TvBrowserContentProvider.DATA_KEY_MARKING_SYNC);
@@ -1640,6 +1640,7 @@ public final class UiUtils {
   }
 
   private static LayerDrawable getMarkingsDrawable(Context context, Cursor cursor, long startTime, long endTime, String[] markedColumns, boolean vertical) {
+    PrefUtils prefs = App.get().prefs();
     if (markedColumns == null && cursor != null) {
       ArrayList<String> markedColumnList = new ArrayList<>();
 
@@ -1662,7 +1663,7 @@ public final class UiUtils {
 
     Paint second = null;
 
-    if (PrefUtils.getBooleanValue(R.string.PREF_SHOW_PROGRESS, R.bool.pref_show_progress_default) && startTime <= System.currentTimeMillis() && System.currentTimeMillis() <= endTime) {
+    if (prefs.getBooleanValueWithDefaultKey(R.string.PREF_SHOW_PROGRESS, R.bool.pref_show_progress_default) && startTime <= System.currentTimeMillis() && System.currentTimeMillis() <= endTime) {
       base.setColor(getColor(ON_AIR_PROGRESS_KEY, context));
       second = new Paint();
       second.setStyle(Paint.Style.FILL_AND_STROKE);
@@ -1685,7 +1686,7 @@ public final class UiUtils {
         for (int i = 0; i < markedColumns.length; i++) {
           Integer color = SettingConstants.MARK_COLOR_KEY_MAP.get(markedColumns[i]);
 
-          if (markedColumns[i].equals(TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE) && PrefUtils.getStringValue(R.string.PREF_I_DONT_WANT_TO_SEE_FILTER_TYPE, R.string.pref_i_dont_want_to_see_filter_type_default).equals(context.getResources().getStringArray(R.array.pref_simple_string_value_array2)[0])) {
+          if (markedColumns[i].equals(TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE) && prefs.getStringValueWithDefaultKey(R.string.PREF_I_DONT_WANT_TO_SEE_FILTER_TYPE, R.string.pref_i_dont_want_to_see_filter_type_default).equals(context.getResources().getStringArray(R.array.pref_simple_string_value_array2)[0])) {
             color = null;
           }
 
@@ -1701,7 +1702,7 @@ public final class UiUtils {
       } else {
         Integer color = SettingConstants.MARK_COLOR_KEY_MAP.get(markedColumns[0]);
 
-        if (markedColumns[0].equals(TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE) && PrefUtils.getStringValue(R.string.PREF_I_DONT_WANT_TO_SEE_FILTER_TYPE, R.string.pref_i_dont_want_to_see_filter_type_default).equals(context.getResources().getStringArray(R.array.pref_simple_string_value_array2)[0])) {
+        if (markedColumns[0].equals(TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE) && prefs.getStringValueWithDefaultKey(R.string.PREF_I_DONT_WANT_TO_SEE_FILTER_TYPE, R.string.pref_i_dont_want_to_see_filter_type_default).equals(context.getResources().getStringArray(R.array.pref_simple_string_value_array2)[0])) {
           color = null;
         }
 
@@ -1858,7 +1859,7 @@ Log.d("info22", pattern);
 
     if (title != null) {
       if (values == null) {
-        Set<String> exclusionValues = PrefUtils.getStringSetValue(R.string.I_DONT_WANT_TO_SEE_ENTRIES, null);
+        Set<String> exclusionValues = App.get().prefs().getValue(R.string.I_DONT_WANT_TO_SEE_ENTRIES, new HashSet<>());
 
         values = new DontWantToSeeExclusion[exclusionValues.size()];
 
@@ -1899,7 +1900,7 @@ Log.d("info22", pattern);
 
     switch (key) {
       case EXPIRED_COLOR_KEY:
-        if (PrefUtils.isDarkTheme()) {
+        if (App.get().prefs().isDarkTheme()) {
           color = SettingConstants.EXPIRED_DARK_COLOR;
         } else {
           color = SettingConstants.EXPIRED_LIGHT_COLOR;
@@ -2005,7 +2006,7 @@ Log.d("info22", pattern);
 
   public static String getDontWantToSeeFilterString(Context context) {
     String returnValue = "";
-    if (PrefUtils.getStringValue(R.string.PREF_I_DONT_WANT_TO_SEE_FILTER_TYPE, R.string.pref_i_dont_want_to_see_filter_type_default).equals(context.getResources().getStringArray(R.array.pref_simple_string_value_array2)[0])) {
+    if (App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_I_DONT_WANT_TO_SEE_FILTER_TYPE, R.string.pref_i_dont_want_to_see_filter_type_default).equals(context.getResources().getStringArray(R.array.pref_simple_string_value_array2)[0])) {
       returnValue = " AND ( NOT " + TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE + " ) ";
     }
 
@@ -2364,7 +2365,7 @@ Log.d("info22", pattern);
         }
       }
 
-      int[] color = IOUtils.getActivatedColorFor(PrefUtils.getStringValue(SettingConstants.CATEGORY_COLOR_PREF_KEY_ARR[i], null));
+      int[] color = IOUtils.getActivatedColorFor(App.get().prefs().getValue(SettingConstants.CATEGORY_COLOR_PREF_KEY_ARR[i], null));
 
       SpannableString name = new SpannableString(names[i]);
 
@@ -2618,7 +2619,7 @@ Log.d("info22", pattern);
 
     icon.setBounds(0, 0, (int) (icon.getIntrinsicWidth() * zoom), (int) (icon.getIntrinsicHeight() * zoom));
 
-    if (!PrefUtils.isDarkTheme()) {
+    if (!App.get().prefs().isDarkTheme()) {
       icon.setColorFilter(new PorterDuffColorFilter(Color.BLACK, PorterDuff.Mode.MULTIPLY));
     } else {
       icon.setColorFilter(null);
@@ -2832,7 +2833,7 @@ Log.d("info22", pattern);
         }
       };
 
-      int layout = PrefUtils.getBooleanValue(R.string.PREF_DETAIL_ALLOW_SWIPE, R.bool.pref_detail_allow_swipe) ? R.layout.dialog_detail_swipe : R.layout.dialog_detail;
+      int layout = App.get().prefs().getBooleanValueWithDefaultKey(R.string.PREF_DETAIL_ALLOW_SWIPE, R.bool.pref_detail_allow_swipe) ? R.layout.dialog_detail_swipe : R.layout.dialog_detail;
 
       mLayout = ((LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(layout, parent instanceof ViewGroup ? (ViewGroup) parent : null, false);
       mHandler.postDelayed(mShowWaiting, 700);
@@ -2850,7 +2851,8 @@ Log.d("info22", pattern);
         if (IOUtils.prepareAccessFirst(c)) {
           mHasSpannableActors = false;
           result = Boolean.TRUE;
-          float textScale = Float.parseFloat(PrefUtils.getStringValue(R.string.DETAIL_TEXT_SCALE, R.string.detail_text_scale_default));
+          final PrefUtils prefs = App.get().prefs();
+          float textScale = Float.parseFloat(prefs.getStringValueWithDefaultKey(R.string.DETAIL_TEXT_SCALE, R.string.detail_text_scale_default));
 
           final long startTime = c.getLong(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_STARTTIME));
           final long endTime = c.getLong(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_ENDTIME));
@@ -2888,7 +2890,7 @@ Log.d("info22", pattern);
                   userRemind.set(true);
 
                   ServiceUpdateRemindersAndAutoUpdate.startReminderUpdate(context);
-                  ProgramUtils.addReminderId(context, id);
+                  ProgramUtils.addReminderId(id);
 
                   mHandler.post(() -> {
                     handleReminder.setImageResource(R.drawable.ic_action_remove_alarm);
@@ -2900,7 +2902,7 @@ Log.d("info22", pattern);
                   favoriteRemind.set(false);
 
                   IOUtils.removeReminder(context, id);
-                  ProgramUtils.removeReminderId(context, id);
+                  ProgramUtils.removeReminderId(id);
                   ServiceUpdateRemindersAndAutoUpdate.startReminderUpdate(context);
 
                   mHandler.post(() -> {
@@ -2921,7 +2923,7 @@ Log.d("info22", pattern);
             });
           }
 
-          final int favoriteMatchHighlightColor = PrefUtils.getIntValue(R.string.PREF_DETAIL_HIGHLIGHT_COLOR, ContextCompat.getColor(context, R.color.pref_detail_highlight_color_default));
+          final int favoriteMatchHighlightColor = prefs.getValue(R.string.PREF_DETAIL_HIGHLIGHT_COLOR, ContextCompat.getColor(context, R.color.pref_detail_highlight_color_default));
 
           final Favorite[] markedFromFavorites = Favorite.getFavoritesForUniqueId(context, id);
           final ArrayList<FavoriteTypePattern> patternList = new ArrayList<>();
@@ -2959,7 +2961,7 @@ Log.d("info22", pattern);
 
           final Resources resources = context.getResources();
 
-          if (!PrefUtils.isDarkTheme() && !(finish.get() instanceof InfoActivity)) {
+          if (!prefs.isDarkTheme() && !(finish.get() instanceof InfoActivity)) {
             date.setTextColor(ContextCompat.getColor(context, R.color.detail_date_channel_color_light));
           }
 
@@ -2972,7 +2974,7 @@ Log.d("info22", pattern);
 
             if (IOUtils.prepareAccessFirst(channel)) {
               final StringBuilder channelName = new StringBuilder();
-              if (PrefUtils.getBooleanValue(R.string.SHOW_SORT_NUMBER_IN_DETAILS, R.bool.show_sort_number_in_details_default)) {
+              if (prefs.getBooleanValueWithDefaultKey(R.string.SHOW_SORT_NUMBER_IN_DETAILS, R.bool.show_sort_number_in_details_default)) {
                 final int columnIndex = channel.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER);
                 if (!channel.isNull(columnIndex)) {
                   channelName.append(channel.getString(columnIndex)).append(". ");
@@ -2995,15 +2997,15 @@ Log.d("info22", pattern);
 
                 BitmapDrawable l = new BitmapDrawable(resources, logo);
 
-                int color = PrefUtils.getIntValue(R.string.PREF_LOGO_BACKGROUND_COLOR, ContextCompat.getColor(context, R.color.pref_logo_background_color_default));
+                int color = prefs.getValue(R.string.PREF_LOGO_BACKGROUND_COLOR, ContextCompat.getColor(context, R.color.pref_logo_background_color_default));
 
                 GradientDrawable background = new GradientDrawable(Orientation.BOTTOM_TOP, new int[]{color, color});
 
                 int add = 2;
 
-                if (PrefUtils.getBooleanValue(R.string.PREF_LOGO_BORDER, R.bool.pref_logo_border_default)) {
+                if (prefs.getBooleanValueWithDefaultKey(R.string.PREF_LOGO_BORDER, R.bool.pref_logo_border_default)) {
                   add = 3;
-                  background.setStroke(1, PrefUtils.getIntValue(R.string.PREF_LOGO_BORDER_COLOR, ContextCompat.getColor(context, R.color.pref_logo_border_color_default)));
+                  background.setStroke(1, prefs.getValue(R.string.PREF_LOGO_BORDER_COLOR, ContextCompat.getColor(context, R.color.pref_logo_border_color_default)));
                 }
 
                 background.setBounds(0, 0, width + add, height + add);
@@ -3110,7 +3112,7 @@ Log.d("info22", pattern);
             //title.setText(titleTest + "/" + originalTitle);
           }
 
-          if (!PrefUtils.getBooleanValue(R.string.SHOW_PICTURE_IN_DETAILS, R.bool.show_picture_in_details_default) || c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_PICTURE)) || c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_PICTURE_COPYRIGHT))) {
+          if (!prefs.getBooleanValueWithDefaultKey(R.string.SHOW_PICTURE_IN_DETAILS, R.bool.show_picture_in_details_default) || c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_PICTURE)) || c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_PICTURE_COPYRIGHT))) {
             pictureCopyright.setVisibility(View.GONE);
             pictureDescription.setVisibility(View.GONE);
           } else {
@@ -3125,11 +3127,11 @@ Log.d("info22", pattern);
             if (image != null) {
               BitmapDrawable b = new BitmapDrawable(resources, image);
 
-              float zoom = Float.parseFloat(PrefUtils.getStringValue(R.string.DETAIL_PICTURE_ZOOM, R.string.detail_picture_zoom_default)) * resources.getDisplayMetrics().density;
+              float zoom = Float.parseFloat(prefs.getStringValueWithDefaultKey(R.string.DETAIL_PICTURE_ZOOM, R.string.detail_picture_zoom_default)) * resources.getDisplayMetrics().density;
 
               b.setBounds(0, 0, (int) (image.getWidth() * zoom), (int) (image.getHeight() * zoom));
 
-              if (PrefUtils.getStringValue(R.string.DETAIL_PICTURE_DESCRIPTION_POSITION, R.string.detail_picture_description_position_default).equals("0")) {
+              if (prefs.getStringValueWithDefaultKey(R.string.DETAIL_PICTURE_DESCRIPTION_POSITION, R.string.detail_picture_description_position_default).equals("0")) {
                 pictureDescription.setCompoundDrawables(b, null, null, null);
               } else {
                 pictureDescription.setCompoundDrawables(null, b, null, null);
@@ -3137,7 +3139,7 @@ Log.d("info22", pattern);
             }
           }
 
-          if (PrefUtils.getBooleanValue(R.string.SHOW_GENRE_IN_DETAILS, R.bool.show_genre_in_details_default) && !c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_GENRE))) {
+          if (prefs.getBooleanValueWithDefaultKey(R.string.SHOW_GENRE_IN_DETAILS, R.bool.show_genre_in_details_default) && !c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_GENRE))) {
             checkAndAddHiglightingForFavorites(genre, c.getString(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_GENRE)) + (year.length() > 0 ? " - " + year : ""), patternList, false, backgroundColorSpan);
 //                    genre.setText();
           } else if (year.length() > 0) {
@@ -3149,7 +3151,7 @@ Log.d("info22", pattern);
 
           Spannable infoValue = IOUtils.getInfoString(c.getInt(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_CATEGORIES)), resources);
 
-          if (PrefUtils.getBooleanValue(R.string.SHOW_INFO_IN_DETAILS, R.bool.show_info_in_details_default) && infoValue != null) {
+          if (prefs.getBooleanValueWithDefaultKey(R.string.SHOW_INFO_IN_DETAILS, R.bool.show_info_in_details_default) && infoValue != null) {
             info.setText(infoValue);
           } else {
             info.setVisibility(View.GONE);
@@ -3171,7 +3173,7 @@ Log.d("info22", pattern);
             originalEpisode = c.getString(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_EPISODE_TITLE_ORIGINAL));
           }
 
-          if (PrefUtils.getBooleanValue(R.string.SHOW_EPISODE_IN_DETAILS, R.bool.show_episode_in_details_default) && !c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_EPISODE_TITLE))) {
+          if (prefs.getBooleanValueWithDefaultKey(R.string.SHOW_EPISODE_IN_DETAILS, R.bool.show_episode_in_details_default) && !c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_EPISODE_TITLE))) {
             String episodeTest = c.getString(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_EPISODE_TITLE));
 
             if (originalEpisode == null || episodeTest.equals(originalEpisode)) {
@@ -3181,7 +3183,7 @@ Log.d("info22", pattern);
               checkAndAddHiglightingForFavorites(episode, number + episodeTest + "/" + originalEpisode, patternList, false, backgroundColorSpan);
               //episode.setText(number + episodeTest + "/" + originalEpisode);
             }
-          } else if (PrefUtils.getBooleanValue(R.string.SHOW_EPISODE_IN_DETAILS, R.bool.show_episode_in_details_default) && number.trim().length() > 0) {
+          } else if (prefs.getBooleanValueWithDefaultKey(R.string.SHOW_EPISODE_IN_DETAILS, R.bool.show_episode_in_details_default) && number.trim().length() > 0) {
             checkAndAddHiglightingForFavorites(episode, number, patternList, false, backgroundColorSpan);
             //episode.setText(number);
           } else {
@@ -3192,13 +3194,13 @@ Log.d("info22", pattern);
           String descriptionValue = null;
           boolean showShortDescription = true;
 
-          boolean showEpgPaidInfo = PrefUtils.getBooleanValue(R.string.PREF_EPGPAID_DESCRIPTION_MISSING_INFO, R.bool.pref_epgpaid_description_missing_default);
-          long epgPaidUntil = PrefUtils.getLongValueWithDefaultKey(R.string.PREF_EPGPAID_ACCESS_UNTIL,R.integer.pref_epgpaid_access_until_default);
+          boolean showEpgPaidInfo = prefs.getBooleanValueWithDefaultKey(R.string.PREF_EPGPAID_DESCRIPTION_MISSING_INFO, R.bool.pref_epgpaid_description_missing_default);
+          long epgPaidUntil = prefs.getLongValueWithDefaultKey(R.string.PREF_EPGPAID_ACCESS_UNTIL,R.integer.pref_epgpaid_access_until_default);
 
           final boolean wasActive = epgPaidUntil < System.currentTimeMillis() && epgPaidUntil != context.getResources().getInteger(R.integer.pref_epgpaid_access_until_default);
 
           if (showEpgPaidInfo) {
-            final Set<String> channelIds = PrefUtils.getStringSetValue(R.string.PREF_EPGPAID_DATABASE_CHANNEL_IDS, new HashSet<>());
+            final Set<String> channelIds = prefs.getValue(R.string.PREF_EPGPAID_DATABASE_CHANNEL_IDS, new HashSet<>());
 
             showEpgPaidInfo = channelIds.contains(String.valueOf(channelID));
 
@@ -3293,7 +3295,7 @@ Log.d("info22", pattern);
             description.setVisibility(View.GONE);
           }
 
-          if (PrefUtils.getBooleanValue(R.string.SHOW_LINK_IN_DETAILS, R.bool.show_link_in_details_default) && !c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_WEBSITE_LINK))) {
+          if (prefs.getBooleanValueWithDefaultKey(R.string.SHOW_LINK_IN_DETAILS, R.bool.show_link_in_details_default) && !c.isNull(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_WEBSITE_LINK))) {
             String linkText = c.getString(c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_WEBSITE_LINK));
             link.setText(linkText);
             link.setMovementMethod(LinkMovementMethod.getInstance());
@@ -3607,7 +3609,7 @@ Log.d("info22", pattern);
 
       try {
         int[] attrs1 = new int[] { android.R.attr.textColorSecondary };
-        TypedArray a = theme.obtainStyledAttributes(UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_DEFAULT, PrefUtils.isDarkTheme()), attrs1);
+        TypedArray a = theme.obtainStyledAttributes(UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_DEFAULT, App.get().prefs().isDarkTheme()), attrs1);
         int DEFAULT_TEXT_COLOR = a.getColor(0, Color.WHITE);
         a.recycle();
 

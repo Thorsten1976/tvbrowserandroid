@@ -158,6 +158,7 @@ public class TvDataUpdateService extends Service {
   
   private Set<String> mEpgPaidChannelIds;
   private BroadcastReceiver mReceiverConnectivityChange;
+  private PrefUtils mPrefUtils;
   
   private boolean mIsAutoUpdate;
   private boolean mOnlyWifi;
@@ -344,14 +345,15 @@ public class TvDataUpdateService extends Service {
     mBuilder.setOnlyAlertOnce(true);
 
     mHandler = new Handler();
+    mPrefUtils = App.get().prefs();
     startForeground(ID_NOTIFY, mBuilder.build());
   }
-  
+
   @Override
   public IBinder onBind(Intent intent) {
     return null;
   }
-  
+
   @Override
   public synchronized int onStartCommand(final Intent intent, int flags, int startId) {
     if(!isRunning() && IOUtils.isDatabaseAccessible(this)) {
@@ -360,7 +362,7 @@ public class TvDataUpdateService extends Service {
           setPriority(NORM_PRIORITY);
           Logging.openLogForDataUpdate(TvDataUpdateService.this);
           
-          mInstableConnectionAcceptable = PrefUtils.getBooleanValue(R.string.PREF_DATA_UPDATE_INSTABLE_CONNECTION_ACCEPTABLE, R.bool.pref_data_update_instable_conncetion_acceptable_default);
+          mInstableConnectionAcceptable = mPrefUtils.getBooleanValueWithDefaultKey(R.string.PREF_DATA_UPDATE_INSTABLE_CONNECTION_ACCEPTABLE, R.bool.pref_data_update_instable_conncetion_acceptable_default);
           
           if(mInstableConnectionAcceptable) {
             mInternetConnectionTimeout = 30000;
@@ -376,7 +378,7 @@ public class TvDataUpdateService extends Service {
             doLog("Extra Data Update Type: " + intent.getIntExtra(SettingConstants.EXTRA_DATA_UPDATE_TYPE, TYPE_UPDATE_AUTO));
           }
           
-          mOnlyWifi = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, TvDataUpdateService.this).getBoolean(getString(R.string.PREF_AUTO_UPDATE_ONLY_WIFI), getResources().getBoolean(R.bool.pref_auto_update_only_wifi_default));
+          mOnlyWifi = mPrefUtils.getDefault().getBoolean(getString(R.string.PREF_AUTO_UPDATE_ONLY_WIFI), getResources().getBoolean(R.bool.pref_auto_update_only_wifi_default));
           boolean isInternetConnectionAutoUpdate = false;
           mIsAutoUpdate = false;
 
@@ -504,11 +506,11 @@ public class TvDataUpdateService extends Service {
   }
   
   private void loadEpgPaidChannelIdsForDataUpdate() {
-    final String userName = PrefUtils.getStringValue(R.string.PREF_EPGPAID_USER, null);
-    final String password = PrefUtils.getStringValue(R.string.PREF_EPGPAID_PASSWORD, null);
+    final String userName = mPrefUtils.getValue(R.string.PREF_EPGPAID_USER, null);
+    final String password = mPrefUtils.getValue(R.string.PREF_EPGPAID_PASSWORD, null);
 
-    if(PrefUtils.getBooleanValue(R.string.PREF_PRIVACY_TERMS_ACCEPTED_EPGPAID,R.bool.pref_privacy_terms_default) && userName != null && password != null && userName.trim().length() > 0 && password.trim().length() > 0) {
-      mEpgPaidChannelIds = PrefUtils.getStringSetValue(R.string.PREF_EPGPAID_DATABASE_CHANNEL_IDS, new HashSet<>());
+    if(mPrefUtils.getBooleanValueWithDefaultKey(R.string.PREF_PRIVACY_TERMS_ACCEPTED_EPGPAID,R.bool.pref_privacy_terms_default) && userName != null && password != null && userName.trim().length() > 0 && password.trim().length() > 0) {
+      mEpgPaidChannelIds = mPrefUtils.getValue(R.string.PREF_EPGPAID_DATABASE_CHANNEL_IDS, new HashSet<>());
     }
     else {
       mEpgPaidChannelIds = new HashSet<>(0);
@@ -659,7 +661,7 @@ public class TvDataUpdateService extends Service {
           
           readCurrentVersionIDs();
           
-          Set<String> exclusions = PrefUtils.getStringSetValue(R.string.I_DONT_WANT_TO_SEE_ENTRIES, null);
+          Set<String> exclusions = mPrefUtils.getValue(R.string.I_DONT_WANT_TO_SEE_ENTRIES, null);
           
           if(exclusions != null) {
             mDontWantToSeeValues = new DontWantToSeeExclusion[exclusions.size()];
@@ -819,14 +821,14 @@ public class TvDataUpdateService extends Service {
     releaseWakeLock();
     
     if(mCurrentChannelData != null) {
-      long lastChannelUpdate = PrefUtils.getLongValue(R.string.PREF_LAST_CHANNEL_UPDATE, 0);
+      long lastChannelUpdate = mPrefUtils.getValue(R.string.PREF_LAST_CHANNEL_UPDATE, 0L);
       
       Editor edit = PreferenceManager.getDefaultSharedPreferences(TvDataUpdateService.this).edit();
       edit.putLong(getString(R.string.PREF_LAST_CHANNEL_UPDATE), System.currentTimeMillis());
       
       if((lastChannelUpdate + (2 * 24 * 60 * 60000L)) < System.currentTimeMillis()) {
-        Set<String> currentFirstDeletedChannels = PrefUtils.getStringSetValue(R.string.PREF_FIRST_DELETED_CHANNELS, new HashSet<>());
-        Set<String> keptDeletedChannels = PrefUtils.getStringSetValue(R.string.PREF_KEPT_DELETED_CHANNELS, new HashSet<>());
+        Set<String> currentFirstDeletedChannels = mPrefUtils.getValue(R.string.PREF_FIRST_DELETED_CHANNELS, new HashSet<>());
+        Set<String> keptDeletedChannels = mPrefUtils.getValue(R.string.PREF_KEPT_DELETED_CHANNELS, new HashSet<>());
         
         HashSet<String> firstDeletedNew = new HashSet<>();
         HashSet<String> secondDeletedUserChannels = new HashSet<>();
@@ -892,7 +894,7 @@ public class TvDataUpdateService extends Service {
   }
   
   private void startSynchronizeUp(boolean info, final String value, final String address) {
-    if(PrefUtils.getBooleanValue(R.string.PREF_PRIVACY_TERMS_ACCEPTED_SYNC,R.bool.pref_privacy_terms_default)) {
+    if(mPrefUtils.getBooleanValueWithDefaultKey(R.string.PREF_PRIVACY_TERMS_ACCEPTED_SYNC,R.bool.pref_privacy_terms_default)) {
       NotificationManager notification = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
       synchronizeUp(info, value, address, notification);
@@ -905,7 +907,7 @@ public class TvDataUpdateService extends Service {
   }
   
   private void synchronizeUp(boolean info, final String value, final String address, final NotificationManager notification) {
-    if(PrefUtils.getBooleanValue(R.string.PREF_PRIVACY_TERMS_ACCEPTED_SYNC,R.bool.pref_privacy_terms_default)) {
+    if(mPrefUtils.getBooleanValueWithDefaultKey(R.string.PREF_PRIVACY_TERMS_ACCEPTED_SYNC,R.bool.pref_privacy_terms_default)) {
       mBuilder.setProgress(100, 0, true);
       mBuilder.setContentText(getResources().getText(R.string.update_data_notification_synchronize));
       notification.notify(ID_NOTIFY, mBuilder.build());
@@ -1129,7 +1131,7 @@ public class TvDataUpdateService extends Service {
         final URL documentUrl = new URL(SettingConstants.URL_SYNC_BASE + "data/scripts/syncDown.php?type=reminderFromDesktop");
         connection = documentUrl.openConnection();
         
-        final SharedPreferences pref = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_TRANSPORTATION, TvDataUpdateService.this);
+        final SharedPreferences pref = mPrefUtils.getShared(PrefUtils.TYPE_PREFERENCES_TRANSPORTATION);
         
         final String car = pref.getString(SettingConstants.USER_NAME, null);
         final String bicycle = pref.getString(SettingConstants.USER_PASSWORD, null);
@@ -1442,7 +1444,7 @@ public class TvDataUpdateService extends Service {
 
       if(!updateValuesList.isEmpty()) {
         if(!idList.isEmpty()) {
-          ProgramUtils.addSyncIds(TvDataUpdateService.this, idList);
+          ProgramUtils.addSyncIds(idList);
         }
         
         try {
@@ -1477,7 +1479,7 @@ public class TvDataUpdateService extends Service {
     mBuilder.setContentText(getResources().getText(R.string.channel_notification_text));
     startForeground(ID_NOTIFY, mBuilder.build());
     
-    final Editor edit = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, TvDataUpdateService.this).edit();
+    final Editor edit = mPrefUtils.edit();
     edit.remove(getString(R.string.PREF_EPGPAID_DATABASE_CHANNEL_IDS));
     edit.commit();
     
@@ -2382,8 +2384,8 @@ public class TvDataUpdateService extends Service {
     String car = pref.getString(SettingConstants.USER_NAME, null);
     String bicycle = pref.getString(SettingConstants.USER_PASSWORD, null);
     
-    boolean syncFav = PrefUtils.getBooleanValue(R.string.PREF_SYNC_FAV_TO_DESKTOP, R.bool.pref_sync_fav_to_desktop_default);
-    boolean syncMarkings = PrefUtils.getBooleanValue(R.string.PREF_SYNC_MARKED_TO_DESKTOP, R.bool.pref_sync_marked_to_desktop_default);
+    boolean syncFav = mPrefUtils.getBooleanValueWithDefaultKey(R.string.PREF_SYNC_FAV_TO_DESKTOP, R.bool.pref_sync_fav_to_desktop_default);
+    boolean syncMarkings = mPrefUtils.getBooleanValueWithDefaultKey(R.string.PREF_SYNC_MARKED_TO_DESKTOP, R.bool.pref_sync_marked_to_desktop_default);
     
     if((syncFav || syncMarkings) && car != null && bicycle != null && car.trim().length() > 0 && bicycle.trim().length() > 0) {
       String userpass = car.trim() + ":" + bicycle.trim();
@@ -2491,7 +2493,7 @@ public class TvDataUpdateService extends Service {
       String car = pref.getString(SettingConstants.USER_NAME, null);
       String bicycle = pref.getString(SettingConstants.USER_PASSWORD, null);
       
-      if(PrefUtils.getBooleanValue(R.string.PREF_SYNC_FAV_FROM_DESKTOP, R.bool.pref_sync_fav_from_desktop_default) && car != null && bicycle != null && car.trim().length() > 0 && bicycle.trim().length() > 0) {
+      if(mPrefUtils.getBooleanValueWithDefaultKey(R.string.PREF_SYNC_FAV_FROM_DESKTOP, R.bool.pref_sync_fav_from_desktop_default) && car != null && bicycle != null && car.trim().length() > 0 && bicycle.trim().length() > 0) {
         String userpass = car.trim() + ":" + bicycle.trim();
         String basicAuth = "basic " + Base64.encodeToString(userpass.getBytes(), Base64.NO_WRAP);
         
@@ -2663,7 +2665,7 @@ public class TvDataUpdateService extends Service {
         getContentResolver().applyBatch(TvBrowserContentProvider.AUTHORITY, updateValuesList);
       }
       
-      Editor edit = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, TvDataUpdateService.this).edit();
+      Editor edit = mPrefUtils.edit();
       edit.putLong(getString(R.string.PREF_LAST_KNOWN_DATA_DATE), lastKnownDate);
       edit.commit();
     }catch(Throwable t) {
@@ -2687,8 +2689,8 @@ public class TvDataUpdateService extends Service {
       syncPrograms(notification,R.string.update_data_notification_synchronize_favorites, mSyncFavorites, TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE, TvBrowserContentProvider.DATA_KEY_MARKING_SYNC, TvBrowserContentProvider.DATA_KEY_REMOVED_SYNC);
       mSyncFavorites = null;
           
-      boolean fromRemider = PrefUtils.getBooleanValue(R.string.PREF_SYNC_REMINDERS_FROM_DESKTOP, R.bool.pref_sync_reminders_from_desktop_default);
-      boolean toRemider = PrefUtils.getBooleanValue(R.string.PREF_SYNC_REMINDERS_TO_DESKTOP, R.bool.pref_sync_reminders_to_desktop_default);
+      boolean fromRemider = mPrefUtils.getBooleanValueWithDefaultKey(R.string.PREF_SYNC_REMINDERS_FROM_DESKTOP, R.bool.pref_sync_reminders_from_desktop_default);
+      boolean toRemider = mPrefUtils.getBooleanValueWithDefaultKey(R.string.PREF_SYNC_REMINDERS_TO_DESKTOP, R.bool.pref_sync_reminders_to_desktop_default);
       
       if(fromRemider) {
         synchronizeRemindersDown(false, notification);
@@ -2698,8 +2700,8 @@ public class TvDataUpdateService extends Service {
         synchronizeUp(false, null, SettingConstants.URL_SYNC_BASE + "data/scripts/syncUp.php?type=reminderFromApp", notification);
       }
       
-      if(PrefUtils.getBooleanValue(R.string.PREF_NEWS_SHOW, R.bool.pref_news_show_default)) {
-        long lastNewsUpdate = PrefUtils.getLongValue(R.string.NEWS_DATE_LAST_DOWNLOAD, 0);
+      if(mPrefUtils.getBooleanValueWithDefaultKey(R.string.PREF_NEWS_SHOW, R.bool.pref_news_show_default)) {
+        long lastNewsUpdate = mPrefUtils.getValue(R.string.NEWS_DATE_LAST_DOWNLOAD, 0L);
         long daysSinceLastNewsUpdate = (System.currentTimeMillis() - lastNewsUpdate) / (24 * 60 * 60000L);
         
         if(daysSinceLastNewsUpdate > 3 && (Math.random() * 7 < daysSinceLastNewsUpdate)) {
@@ -2711,19 +2713,19 @@ public class TvDataUpdateService extends Service {
         }
       }
     }
-    
-    PrefUtils.updateDataMetaData(TvDataUpdateService.this);
+
+    mPrefUtils.updateDataMetaData(TvDataUpdateService.this);
     
     try {
-      doLog("FIRST KNOWN DATA ID: " + PrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_ID_FIRST_KNOWN, R.integer.meta_data_id_default));
-      doLog("FIRST KNOWN DATA DATE: " + new Date(PrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_DATE_FIRST_KNOWN, R.integer.meta_data_date_known_default)));
-      doLog("LAST KNOWN DATA ID: " + PrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_ID_LAST_KNOWN, R.integer.meta_data_id_default));
-      doLog("LAST KNOWN DATA DATE: " + new Date(PrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_DATE_LAST_KNOWN, R.integer.meta_data_date_known_default)));
+      doLog("FIRST KNOWN DATA ID: " + mPrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_ID_FIRST_KNOWN, R.integer.meta_data_id_default));
+      doLog("FIRST KNOWN DATA DATE: " + new Date(mPrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_DATE_FIRST_KNOWN, R.integer.meta_data_date_known_default)));
+      doLog("LAST KNOWN DATA ID: " + mPrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_ID_LAST_KNOWN, R.integer.meta_data_id_default));
+      doLog("LAST KNOWN DATA DATE: " + new Date(mPrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_DATE_LAST_KNOWN, R.integer.meta_data_date_known_default)));
     }catch(Throwable tt) {
       doLog(tt.toString());
     }
     Intent inform = new Intent(SettingConstants.DATA_UPDATE_DONE);
-    inform.putExtra(SettingConstants.EXTRA_DATA_DATE_LAST_KNOWN, PrefUtils.getLongValue(R.string.PREF_LAST_KNOWN_DATA_DATE, SettingConstants.DATA_LAST_DATE_NO_DATA));
+    inform.putExtra(SettingConstants.EXTRA_DATA_DATE_LAST_KNOWN, mPrefUtils.getValue(R.string.PREF_LAST_KNOWN_DATA_DATE, SettingConstants.DATA_LAST_DATE_NO_DATA));
     
     TvDataUpdateService.this.sendBroadcast(inform);
     
@@ -2734,7 +2736,7 @@ public class TvDataUpdateService extends Service {
     
     doLog("Unsuccessful downloads: " + mUnsuccessfulDownloads);
         
-    Editor edit = PreferenceManager.getDefaultSharedPreferences(TvDataUpdateService.this).edit();
+    Editor edit = mPrefUtils.edit();
     edit.putLong(getString(R.string.LAST_DATA_UPDATE), System.currentTimeMillis());
     edit.commit();
     
@@ -2747,11 +2749,11 @@ public class TvDataUpdateService extends Service {
       UiUtils.updateRunningProgramsWidget(getApplicationContext());
     }
     
-    int autoChannelUpdateFrequency = PrefUtils.getStringValueAsInt(R.string.PREF_AUTO_CHANNEL_UPDATE_FREQUENCY, R.string.pref_auto_channel_update_frequency_default);
+    int autoChannelUpdateFrequency = mPrefUtils.getStringValueAsInt(R.string.PREF_AUTO_CHANNEL_UPDATE_FREQUENCY, R.string.pref_auto_channel_update_frequency_default);
     
-    doLog("Can update channels: " + syncAllowed + " autoChannelUpdateFrequency: " + autoChannelUpdateFrequency + " last successful auto channel update: " + new Date(PrefUtils.getLongValue(R.string.PREF_AUTO_CHANNEL_UPDATE_LAST, 0)) + " last unsuccessful channel update: " + new Date(PrefUtils.getLongValue(R.string.PREF_AUTO_CHANNEL_UPDATE_LAST_NO_SUCCESS, 0)));
+    doLog("Can update channels: " + syncAllowed + " autoChannelUpdateFrequency: " + autoChannelUpdateFrequency + " last successful auto channel update: " + new Date(mPrefUtils.getValue(R.string.PREF_AUTO_CHANNEL_UPDATE_LAST, 0L)) + " last unsuccessful channel update: " + new Date(mPrefUtils.getValue(R.string.PREF_AUTO_CHANNEL_UPDATE_LAST_NO_SUCCESS, 0L)));
     
-    if(syncAllowed && mIsConnected && autoChannelUpdateFrequency != -1 && ((PrefUtils.getLongValue(R.string.PREF_AUTO_CHANNEL_UPDATE_LAST, 0) + (autoChannelUpdateFrequency * 24 * 60 * 60000L)) < System.currentTimeMillis()) && ((PrefUtils.getLongValue(R.string.PREF_AUTO_CHANNEL_UPDATE_LAST_NO_SUCCESS, 0) + (2 * 24 * 60 * 60000L)) < System.currentTimeMillis())) {
+    if(syncAllowed && mIsConnected && autoChannelUpdateFrequency != -1 && ((mPrefUtils.getValue(R.string.PREF_AUTO_CHANNEL_UPDATE_LAST, 0L) + (autoChannelUpdateFrequency * 24 * 60 * 60000L)) < System.currentTimeMillis()) && ((mPrefUtils.getValue(R.string.PREF_AUTO_CHANNEL_UPDATE_LAST_NO_SUCCESS, 0L) + (2 * 24 * 60 * 60000L)) < System.currentTimeMillis())) {
       updateChannels(true);
     }
     else {
@@ -2913,7 +2915,7 @@ public class TvDataUpdateService extends Service {
 
     int[] levels = null;
           
-    Set<String> exclusions = PrefUtils.getStringSetValue(R.string.I_DONT_WANT_TO_SEE_ENTRIES, null);
+    Set<String> exclusions = mPrefUtils.getValue(R.string.I_DONT_WANT_TO_SEE_ENTRIES, null);
     
     if(exclusions != null) {
       mDontWantToSeeValues = new DontWantToSeeExclusion[exclusions.size()];
@@ -2925,8 +2927,8 @@ public class TvDataUpdateService extends Service {
       }
     }
     
-    if(PrefUtils.getBooleanValue(R.string.LOAD_FULL_DATA, R.bool.load_full_data_default)) {
-      if(PrefUtils.getBooleanValue(R.string.LOAD_PICTURE_DATA, R.bool.load_picture_data_default)) {
+    if(mPrefUtils.getBooleanValueWithDefaultKey(R.string.LOAD_FULL_DATA, R.bool.load_full_data_default)) {
+      if(mPrefUtils.getBooleanValueWithDefaultKey(R.string.LOAD_PICTURE_DATA, R.bool.load_picture_data_default)) {
         levels = new int[5];
       }
       else {
@@ -2937,7 +2939,7 @@ public class TvDataUpdateService extends Service {
         levels[j] = j;
       }
     }
-    else if (PrefUtils.getBooleanValue(R.string.LOAD_PICTURE_DATA, R.bool.load_picture_data_default)) {
+    else if (mPrefUtils.getBooleanValueWithDefaultKey(R.string.LOAD_PICTURE_DATA, R.bool.load_picture_data_default)) {
       levels = new int[3];
       
       levels[0] = 0;
@@ -3068,7 +3070,7 @@ public class TvDataUpdateService extends Service {
                       Editor edit = PreferenceManager.getDefaultSharedPreferences(TvDataUpdateService.this).edit();
                       edit.putLong(getString(R.string.EPG_DONATE_LAST_DATA_DOWNLOAD), System.currentTimeMillis());
                       
-                      if(PrefUtils.getLongValue(R.string.EPG_DONATE_FIRST_DATA_DOWNLOAD, -1) == -1) {
+                      if(mPrefUtils.getValue(R.string.EPG_DONATE_FIRST_DATA_DOWNLOAD, -1L) == -1L) {
                         edit.putLong(getString(R.string.EPG_DONATE_FIRST_DATA_DOWNLOAD), System.currentTimeMillis());
                       }
                       
@@ -3418,7 +3420,7 @@ public class TvDataUpdateService extends Service {
       mCurrentData = null;
     }
 
-    if(downloadCountTemp > 0 || !PrefUtils.getBooleanValue(R.string.PREF_EPGPAID_FIRST_DOWNLOAD_DONE, false)) {
+    if(downloadCountTemp > 0 || !mPrefUtils.getValue(R.string.PREF_EPGPAID_FIRST_DOWNLOAD_DONE, false)) {
       to.setTimeZone(TimeZone.getTimeZone("UTC"));
       to.set(Calendar.HOUR_OF_DAY, 23);
       to.set(Calendar.MINUTE, 59);
@@ -3490,7 +3492,7 @@ public class TvDataUpdateService extends Service {
         }
       }
       
-      final Editor edit = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, TvDataUpdateService.this).edit();
+      final Editor edit = mPrefUtils.edit();
       edit.putStringSet(getString(R.string.PREF_EPGPAID_DATABASE_CHANNEL_IDS), epgPaidChannelDatabaseKeys);
       edit.commit();
     }catch(Exception ignored) {
@@ -3499,14 +3501,14 @@ public class TvDataUpdateService extends Service {
   }
   
   private void updateEpgPaidData(File pathBase, NotificationManager notification, long endDateTime) {
-    if(PrefUtils.getBooleanValue(R.string.PREF_PRIVACY_TERMS_ACCEPTED_EPGPAID,R.bool.pref_privacy_terms_default)) {
+    if(mPrefUtils.getBooleanValueWithDefaultKey(R.string.PREF_PRIVACY_TERMS_ACCEPTED_EPGPAID,R.bool.pref_privacy_terms_default)) {
       final Calendar utc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
       utc.set(Calendar.HOUR_OF_DAY, 0);
       utc.set(Calendar.MINUTE, 0);
       utc.set(Calendar.SECOND, 0);
       utc.set(Calendar.MILLISECOND, 0);
 
-      utc.add(Calendar.DAY_OF_YEAR, PrefUtils.getStringValueAsInt(R.string.PREF_EPGPAID_DOWNLOAD_MAX, R.string.pref_epgpaid_download_max_default) + 1);
+      utc.add(Calendar.DAY_OF_YEAR, mPrefUtils.getStringValueAsInt(R.string.PREF_EPGPAID_DOWNLOAD_MAX, R.string.pref_epgpaid_download_max_default) + 1);
 
       endDateTime = Math.min(endDateTime, utc.getTimeInMillis());
 
@@ -3541,14 +3543,14 @@ public class TvDataUpdateService extends Service {
       doLog("EPGpaidData propertiesCurrent path: " + fileSummaryCurrent.getAbsolutePath());
       doLog("EPGpaidData propertiesCurrent size: " + propertiesCurrent.size());
 
-      final String userName = PrefUtils.getStringValue(R.string.PREF_EPGPAID_USER, null);
-      final String password = PrefUtils.getStringValue(R.string.PREF_EPGPAID_PASSWORD, null);
+      final String userName = mPrefUtils.getValue(R.string.PREF_EPGPAID_USER, null);
+      final String password = mPrefUtils.getValue(R.string.PREF_EPGPAID_PASSWORD, null);
 
       if (userName != null && password != null
           && userName.trim().length() > 0 && password.trim().length() > 0
           && epgPaidConnection.loginBool(userName, password)) {
-        if (!PrefUtils.getBooleanValue(R.string.PREF_EPGPAID_FIRST_DOWNLOAD_DONE, false)) {
-          final Editor edit = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, getApplicationContext()).edit();
+        if (!mPrefUtils.getValue(R.string.PREF_EPGPAID_FIRST_DOWNLOAD_DONE, false)) {
+          final Editor edit = mPrefUtils.edit();
           edit.putBoolean(getString(R.string.PREF_EPGPAID_FIRST_DOWNLOAD_DONE), true);
           edit.commit();
         }

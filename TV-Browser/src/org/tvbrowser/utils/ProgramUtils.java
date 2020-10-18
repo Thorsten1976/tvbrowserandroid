@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.devplugin.Channel;
 import org.tvbrowser.devplugin.ChannelOrdered;
@@ -289,7 +290,7 @@ public class ProgramUtils {
   
   public static boolean isMarkedByPluginWithIcon(Context context, long programId, String pluginId) {
     boolean marked = false;
-    SharedPreferences pref = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_MARKINGS, context);
+    SharedPreferences pref = App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_MARKINGS);
     marked = pref.contains(String.valueOf(programId));
     
     if(marked && pluginId != null) {
@@ -316,14 +317,14 @@ public class ProgramUtils {
   public static boolean isMarkedWithIcon(Context context, long programId) {
     boolean marked = false;
     
-    marked = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_MARKINGS, context).contains(String.valueOf(programId));
+    marked = App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_MARKINGS).contains(String.valueOf(programId));
     
     return marked;
   }
   
   private static synchronized boolean markProgram(Context context, long programId, String pluginId) {
     boolean result = false;
-    SharedPreferences pref = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_MARKINGS, context);
+    SharedPreferences pref = App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_MARKINGS);
     
     String value = pref.getString(String.valueOf(programId), "").trim();
     
@@ -360,8 +361,8 @@ public class ProgramUtils {
   }
   
   private static synchronized boolean unmarkProgram(Context context, long programId, String pluginId) {
-    boolean result = false;
-    SharedPreferences pref = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_MARKINGS, context);
+    boolean result;
+    SharedPreferences pref = App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_MARKINGS);
     
     String value = pref.getString(String.valueOf(programId), null).trim();
     
@@ -393,14 +394,14 @@ public class ProgramUtils {
     return result;
   }
   
-  public static void handleFirstAndLastKnownProgramId(Context context, long firstProgramId, long lastProgramId) {
-    handleKnownIdInternal(context, firstProgramId, lastProgramId, PrefUtils.TYPE_PREFERENCES_MARKINGS);
-    handleKnownIdInternal(context, firstProgramId, lastProgramId, PrefUtils.TYPE_PREFERENCES_MARKING_REMINDERS);
-    handleKnownIdInternal(context, firstProgramId, lastProgramId, PrefUtils.TYPE_PREFERENCES_MARKING_SYNC);
+  public static void handleFirstAndLastKnownProgramId(long firstProgramId, long lastProgramId) {
+    handleKnownIdInternal(firstProgramId, lastProgramId, PrefUtils.TYPE_PREFERENCES_MARKINGS);
+    handleKnownIdInternal(firstProgramId, lastProgramId, PrefUtils.TYPE_PREFERENCES_MARKING_REMINDERS);
+    handleKnownIdInternal(firstProgramId, lastProgramId, PrefUtils.TYPE_PREFERENCES_MARKING_SYNC);
   }
   
-  private static void handleKnownIdInternal(Context context, long firstProgramId, long lastProgramId, int prefType) {
-    SharedPreferences pref = PrefUtils.getSharedPreferences(prefType, context);
+  private static void handleKnownIdInternal(long firstProgramId, long lastProgramId, @PrefUtils.PreferencesType int prefType) {
+    SharedPreferences pref = App.get().prefs().getShared(prefType);
     Editor edit = pref.edit();
     
     if(firstProgramId == -1) {
@@ -448,8 +449,9 @@ public class ProgramUtils {
   
   public static CharSequence getMarkIcons(Context context, long programId, String title) {
     CharSequence result = title;
-    
-    if(PrefUtils.getBooleanValue(R.string.PREF_MARK_ICON_SHOW, R.bool.pref_mark_icon_show_default)) {
+
+    final PrefUtils prefs = App.get().prefs();
+    if(prefs.getBooleanValueWithDefaultKey(R.string.PREF_MARK_ICON_SHOW, R.bool.pref_mark_icon_show_default)) {
       SpannableStringBuilder markIcons = new SpannableStringBuilder();
       
       int favoriteMarkIconType = Favorite.getFavoriteMarkIconType(context, programId);
@@ -461,7 +463,7 @@ public class ProgramUtils {
         markIcons.setSpan(Favorite.getMarkIcon(context, favoriteMarkIconType), markIcons.length()-Favorite.KEY_MARKING_ICON.length(), markIcons.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
       }
       
-      if(PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_MARKING_REMINDERS, context).contains(String.valueOf(programId))) {
+      if(prefs.getShared(PrefUtils.TYPE_PREFERENCES_MARKING_REMINDERS).contains(String.valueOf(programId))) {
         markIcons.append(" ");
         markIcons.append(KEY_ICON_REMINDER);
         
@@ -472,7 +474,7 @@ public class ProgramUtils {
         markIcons.setSpan(ICON_REMINDER, markIcons.length()-KEY_ICON_REMINDER.length(), markIcons.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
       }
       
-      if(PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_MARKING_SYNC, context).contains(String.valueOf(programId))) {
+      if(prefs.getShared(PrefUtils.TYPE_PREFERENCES_MARKING_SYNC).contains(String.valueOf(programId))) {
         markIcons.append(" ");
         markIcons.append(KEY_ICON_SYNC);
         
@@ -483,7 +485,7 @@ public class ProgramUtils {
         markIcons.setSpan(ICON_SYNC, markIcons.length()-KEY_ICON_SYNC.length(), markIcons.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
       }
       
-      SharedPreferences pref = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_MARKINGS, context);
+      SharedPreferences pref = prefs.getShared(PrefUtils.TYPE_PREFERENCES_MARKINGS);
       
       String value = pref.getString(String.valueOf(programId), null);
       
@@ -519,7 +521,7 @@ public class ProgramUtils {
     WhereClause result = new WhereClause(TvBrowserContentProvider.DATA_KEY_MARKING_MARKING, null);
     
     if(context != null) {
-      SharedPreferences pref = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_MARKINGS, context);
+      SharedPreferences pref = App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_MARKINGS);
       
       Map<String,?> prefMap = pref.getAll();
       Set<String> keySet = prefMap.keySet();
@@ -598,40 +600,40 @@ public class ProgramUtils {
     }
   }
   
-  public static void addReminderId(Context context, long programId) {
-    addMarkId(context, programId, PrefUtils.TYPE_PREFERENCES_MARKING_REMINDERS);
+  public static void addReminderId(long programId) {
+    addMarkId(programId);
   }
   
-  public static void addReminderIds(Context context, ArrayList<String> idList) {
-    addMarkIds(context, idList, PrefUtils.TYPE_PREFERENCES_MARKING_REMINDERS);
+  public static void addReminderIds(ArrayList<String> idList) {
+    addMarkIds(idList, PrefUtils.TYPE_PREFERENCES_MARKING_REMINDERS);
   }
   
-  public static void removeReminderId(Context context, long programId) {
-    removeMarkId(context, programId, PrefUtils.TYPE_PREFERENCES_MARKING_REMINDERS);
+  public static void removeReminderId(long programId) {
+    removeMarkId(programId, PrefUtils.TYPE_PREFERENCES_MARKING_REMINDERS);
   }
   
-  public static void removeReminderIds(Context context, ArrayList<String> idList) {
-    removeMarkIds(context, idList, PrefUtils.TYPE_PREFERENCES_MARKING_REMINDERS);
+  public static void removeReminderIds(ArrayList<String> idList) {
+    removeMarkIds(idList);
   }
     
-  public static void addSyncIds(Context context, ArrayList<String> idList) {
-    addMarkIds(context, idList, PrefUtils.TYPE_PREFERENCES_MARKING_SYNC);
+  public static void addSyncIds(ArrayList<String> idList) {
+    addMarkIds(idList, PrefUtils.TYPE_PREFERENCES_MARKING_SYNC);
   }
   
-  public static void removeSyncId(Context context, long programId) {
-    removeMarkId(context, programId, PrefUtils.TYPE_PREFERENCES_MARKING_SYNC);
+  public static void removeSyncId(long programId) {
+    removeMarkId(programId, PrefUtils.TYPE_PREFERENCES_MARKING_SYNC);
   }
     
-  private static void addMarkId(Context context, long programId, int type) {
-    Editor edit = PrefUtils.getSharedPreferences(type, context).edit();
+  private static void addMarkId(long programId) {
+    Editor edit = App.get().prefs().edit(PrefUtils.TYPE_PREFERENCES_MARKING_REMINDERS);
     
     edit.putBoolean(String.valueOf(programId), true);
     
     edit.commit();
   }
   
-  private static void addMarkIds(Context context, ArrayList<String> idList, int type) {
-    Editor edit = PrefUtils.getSharedPreferences(type, context).edit();
+  private static void addMarkIds(ArrayList<String> idList, @PrefUtils.PreferencesType int type) {
+    Editor edit = App.get().prefs().edit(type);
     
     for(String programId : idList) {
       edit.putBoolean(programId, true);
@@ -640,16 +642,16 @@ public class ProgramUtils {
     edit.commit();
   }
   
-  private static void removeMarkId(Context context, long programId, int type) {
-    Editor edit = PrefUtils.getSharedPreferences(type, context).edit();
+  private static void removeMarkId(long programId, int type) {
+    Editor edit = App.get().prefs().edit(type);
     
     edit.remove(String.valueOf(programId));
     
     edit.commit();
   }
   
-  private static void removeMarkIds(Context context, ArrayList<String> idList, int type) {
-    Editor edit = PrefUtils.getSharedPreferences(type, context).edit();
+  private static void removeMarkIds(ArrayList<String> idList) {
+    Editor edit = App.get().prefs().edit(PrefUtils.TYPE_PREFERENCES_MARKING_REMINDERS);
     
     for(String programId : idList) {
       edit.remove(programId);

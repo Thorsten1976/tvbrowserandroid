@@ -23,6 +23,7 @@ import android.util.Log;
 
 import androidx.preference.PreferenceManager;
 
+import org.tvbrowser.App;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.utils.IOUtils;
 import org.tvbrowser.utils.PrefUtils;
@@ -43,7 +44,7 @@ public class Logging {
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
   
   public synchronized static void log(String tag, String message, int type, Context context) {
-    PrefUtils.initialize(context);
+
     RandomAccessFile log = getLogFileForType(type, context);
 
     if(log != null) {
@@ -78,11 +79,9 @@ public class Logging {
   
   public static synchronized void openLogForDataUpdate(Context context) {
     boolean writeLog = false;
-    
-    PrefUtils.initialize(context);
-    
+
     try {
-      writeLog = PrefUtils.getBooleanValue(R.string.WRITE_DATA_UPDATE_LOG, R.bool.write_data_update_log_default);
+      writeLog = App.get().prefs().getBooleanValueWithDefaultKey(R.string.WRITE_DATA_UPDATE_LOG, R.bool.write_data_update_log_default);
     }catch(Exception ignored) {}
 
     if(DATA_UPDATE_LOG == null && writeLog) {
@@ -121,10 +120,11 @@ public class Logging {
     else {
       String fileName = null;
       int lastPosKey = 0;
-      
+
+      final PrefUtils prefs = App.get().prefs();
       if(type == TYPE_REMINDER) {
         tag = "Reminder";
-        if(PrefUtils.getBooleanValue(R.string.WRITE_REMINDER_LOG, R.bool.write_reminder_log_default)) {
+        if(prefs.getBooleanValueWithDefaultKey(R.string.WRITE_REMINDER_LOG, R.bool.write_reminder_log_default)) {
           fileName = SettingConstants.LOG_FILE_NAME_REMINDER;
           lastPosKey = R.string.REMINDER_LOG_LAST_POS;
         }
@@ -132,7 +132,7 @@ public class Logging {
       else if(type == TYPE_PLUGIN) {
         tag = "Plugin";
         
-        if(PrefUtils.getBooleanValue(R.string.LOG_WRITE_PLUGIN_LOG, R.bool.log_write_plugin_log_default)) {
+        if(prefs.getBooleanValueWithDefaultKey(R.string.LOG_WRITE_PLUGIN_LOG, R.bool.log_write_plugin_log_default)) {
           fileName = SettingConstants.LOG_FILE_NAME_PLUGINS;
           lastPosKey = R.string.LOG_PLUGIN_LAST_POST;
         }
@@ -147,7 +147,7 @@ public class Logging {
           
           log = new RandomAccessFile(logFile, "rw");
           
-          long pos = PrefUtils.getLongValueWithDefaultKey(lastPosKey, R.integer.log_last_pos_default);
+          long pos = prefs.getLongValueWithDefaultKey(lastPosKey, R.integer.log_last_pos_default);
           
           if(!logFileExists || pos > (5 * 1024 * 1024)) {
             log.seek(0);

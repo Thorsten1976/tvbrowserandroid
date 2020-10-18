@@ -53,7 +53,7 @@ public class BroadcastReceiverReminder extends BroadcastReceiver {
 
   @Override
   public void onReceive(final Context context, Intent intent) {
-    PrefUtils.initialize(context);
+
     SettingConstants.initialize(context);
 
     Logging.log(tag, "ReminderBroadcastaReceiver.onReceive " + intent + " " + context, Logging.TYPE_REMINDER, context);
@@ -63,8 +63,9 @@ public class BroadcastReceiverReminder extends BroadcastReceiver {
     
     if(!SettingConstants.isReminderPaused(context) && programID >= 0) {
       Uri defaultUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-      
-      String tone = PrefUtils.getStringValue(R.string.PREF_REMINDER_SOUND_VALUE, null);
+
+      final PrefUtils prefs = App.get().prefs();
+      String tone = prefs.getValue(R.string.PREF_REMINDER_SOUND_VALUE, null);
       
       Uri soundUri = defaultUri;
       
@@ -73,22 +74,22 @@ public class BroadcastReceiverReminder extends BroadcastReceiver {
       }
                   
       boolean sound = tone == null || tone.trim().length() > 0;
-      boolean vibrate = PrefUtils.getBooleanValue(R.string.PREF_REMINDER_VIBRATE, R.bool.pref_reminder_vibrate_default);
-      boolean led = PrefUtils.getBooleanValue(R.string.PREF_REMINDER_LED, R.bool.pref_reminder_led_default);
+      boolean vibrate = prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_VIBRATE, R.bool.pref_reminder_vibrate_default);
+      boolean led = prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_LED, R.bool.pref_reminder_led_default);
       
       boolean showReminder = true;
 
-      boolean isWorkMode = PrefUtils.getBooleanValue(R.string.PREF_REMINDER_WORK_MODE_ACTIVATED, R.bool.pref_reminder_work_mode_activated_default);
-      boolean isNightMode = PrefUtils.getBooleanValue(R.string.PREF_REMINDER_NIGHT_MODE_ACTIVATED, R.bool.pref_reminder_night_mode_activated_default);
+      boolean isWorkMode = prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_ACTIVATED, R.bool.pref_reminder_work_mode_activated_default);
+      boolean isNightMode = prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_NIGHT_MODE_ACTIVATED, R.bool.pref_reminder_night_mode_activated_default);
 
-      Logging.log(tag, new Date(System.currentTimeMillis()) + ": ProgramID for Reminder '" + programID + "' NIGHT MODE ACTIVATED '" + PrefUtils.getBooleanValue(R.string.PREF_REMINDER_NIGHT_MODE_ACTIVATED, R.bool.pref_reminder_night_mode_activated_default) + "' sound '" + sound + "' vibrate '" + vibrate + "' led '" + led + "'", Logging.TYPE_REMINDER, context);
+      Logging.log(tag, new Date(System.currentTimeMillis()) + ": ProgramID for Reminder '" + programID + "' NIGHT MODE ACTIVATED '" + prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_NIGHT_MODE_ACTIVATED, R.bool.pref_reminder_night_mode_activated_default) + "' sound '" + sound + "' vibrate '" + vibrate + "' led '" + led + "'", Logging.TYPE_REMINDER, context);
       
       //TODO add setting for priority
-      int priority = getPriorityForPreferenceValue(PrefUtils.getStringValue(R.string.PREF_REMINDER_PRIORITY_VALUE, R.string.pref_reminder_priority_default));
+      int priority = getPriorityForPreferenceValue(prefs.getStringValueWithDefaultKey(R.string.PREF_REMINDER_PRIORITY_VALUE, R.string.pref_reminder_priority_default));
       
       if(isNightMode) {
-        int start = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_NIGHT_MODE_START, R.integer.pref_reminder_night_mode_start_default);
-        int end =  PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_NIGHT_MODE_END, R.integer.pref_reminder_night_mode_end_default);
+        int start = prefs.getIntValueWithDefaultKey(R.string.PREF_REMINDER_NIGHT_MODE_START, R.integer.pref_reminder_night_mode_start_default);
+        int end =  prefs.getIntValueWithDefaultKey(R.string.PREF_REMINDER_NIGHT_MODE_END, R.integer.pref_reminder_night_mode_end_default);
         
         Calendar now = Calendar.getInstance();
         
@@ -105,12 +106,12 @@ public class BroadcastReceiverReminder extends BroadcastReceiver {
         isNightMode = start <= minutes && minutes <= end;
 
         if(isNightMode) {
-          showReminder = !PrefUtils.getBooleanValue(R.string.PREF_REMINDER_NIGHT_MODE_NO_REMINDER, R.bool.pref_reminder_night_mode_no_reminder_default);
+          showReminder = !prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_NIGHT_MODE_NO_REMINDER, R.bool.pref_reminder_night_mode_no_reminder_default);
           
           Logging.log(tag, new Date(System.currentTimeMillis()) + ": ProgramID for Reminder '" + programID + "' CURRENTLY NIGHT MODE, Don't show '" + !showReminder + "'", Logging.TYPE_REMINDER, context);
           
           if(showReminder) {
-            tone = PrefUtils.getStringValue(R.string.PREF_REMINDER_NIGHT_MODE_SOUND_VALUE, R.string.pref_reminder_night_mode_sound_value_default);
+            tone = prefs.getStringValueWithDefaultKey(R.string.PREF_REMINDER_NIGHT_MODE_SOUND_VALUE, R.string.pref_reminder_night_mode_sound_value_default);
             
             if(tone != null) {
               soundUri = Uri.parse(tone);
@@ -120,9 +121,9 @@ public class BroadcastReceiverReminder extends BroadcastReceiver {
             }
             
             sound = tone == null || tone.trim().length() > 0;
-            vibrate = PrefUtils.getBooleanValue(R.string.PREF_REMINDER_NIGHT_MODE_VIBRATE, R.bool.pref_reminder_night_mode_vibrate_default);
-            led = PrefUtils.getBooleanValue(R.string.PREF_REMINDER_NIGHT_MODE_LED, R.bool.pref_reminder_night_mode_led_default);
-            priority = getPriorityForPreferenceValue(PrefUtils.getStringValue(R.string.PREF_REMINDER_NIGHT_MODE_PRIORITY_VALUE, R.string.pref_reminder_priority_default));
+            vibrate = prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_NIGHT_MODE_VIBRATE, R.bool.pref_reminder_night_mode_vibrate_default);
+            led = prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_NIGHT_MODE_LED, R.bool.pref_reminder_night_mode_led_default);
+            priority = getPriorityForPreferenceValue(prefs.getStringValueWithDefaultKey(R.string.PREF_REMINDER_NIGHT_MODE_PRIORITY_VALUE, R.string.pref_reminder_priority_default));
           }
         }
       }
@@ -162,12 +163,12 @@ public class BroadcastReceiverReminder extends BroadcastReceiver {
         }
         
         if(isWorkMode) {
-          showReminder = !PrefUtils.getBooleanValue(R.string.PREF_REMINDER_WORK_MODE_NO_REMINDER, R.bool.pref_reminder_work_mode_no_reminder_default);
+          showReminder = !prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_NO_REMINDER, R.bool.pref_reminder_work_mode_no_reminder_default);
           
           Logging.log(tag, new Date(System.currentTimeMillis()) + ": ProgramID for Reminder '" + programID + "' CURRENTLY WORK MODE, Don't show '" + !showReminder + "'", Logging.TYPE_REMINDER, context);
           
           if(showReminder) {
-            tone = PrefUtils.getStringValue(R.string.PREF_REMINDER_WORK_MODE_SOUND_VALUE, R.string.pref_reminder_work_mode_sound_value_default);
+            tone = prefs.getStringValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_SOUND_VALUE, R.string.pref_reminder_work_mode_sound_value_default);
             
             if(tone != null) {
               soundUri = Uri.parse(tone);
@@ -177,9 +178,9 @@ public class BroadcastReceiverReminder extends BroadcastReceiver {
             }
             
             sound = tone == null || tone.trim().length() > 0;
-            vibrate = PrefUtils.getBooleanValue(R.string.PREF_REMINDER_WORK_MODE_VIBRATE, R.bool.pref_reminder_work_mode_vibrate_default);
-            led = PrefUtils.getBooleanValue(R.string.PREF_REMINDER_WORK_MODE_LED, R.bool.pref_reminder_work_mode_led_default);
-            priority = getPriorityForPreferenceValue(PrefUtils.getStringValue(R.string.PREF_REMINDER_WORK_MODE_PRIORITY_VALUE, R.string.pref_reminder_priority_default));
+            vibrate = prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_VIBRATE, R.bool.pref_reminder_work_mode_vibrate_default);
+            led = prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_LED, R.bool.pref_reminder_work_mode_led_default);
+            priority = getPriorityForPreferenceValue(prefs.getStringValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_PRIORITY_VALUE, R.string.pref_reminder_priority_default));
           }
         }
         
@@ -275,9 +276,9 @@ public class BroadcastReceiverReminder extends BroadcastReceiver {
               }
 
               if(led) {
-                Log.d("info11", PrefUtils.getIntValue(R.string.PREF_REMINDER_COLOR_LED, ContextCompat.getColor(context, R.color.pref_reminder_color_led_default)) + " " + Color.GREEN + " " + Color.RED + " " + Color.YELLOW);
+                Log.d("info11", prefs.getValue(R.string.PREF_REMINDER_COLOR_LED, ContextCompat.getColor(context, R.color.pref_reminder_color_led_default)) + " " + Color.GREEN + " " + Color.RED + " " + Color.YELLOW);
 
-                builder.setLights(PrefUtils.getIntValue(R.string.PREF_REMINDER_COLOR_LED, ContextCompat.getColor(context, R.color.pref_reminder_color_led_default)), 1000, 2000);
+                builder.setLights(prefs.getValue(R.string.PREF_REMINDER_COLOR_LED, ContextCompat.getColor(context, R.color.pref_reminder_color_led_default)), 1000, 2000);
               }
             }
 
@@ -341,48 +342,49 @@ public class BroadcastReceiverReminder extends BroadcastReceiver {
   private int[] getValuesForDay(int day) {
     int start = -1;
     int end = -1;
-    
+
+    final PrefUtils prefs = App.get().prefs();
     switch(day) {
       case Calendar.MONDAY:
-        if(PrefUtils.getBooleanValue(R.string.PREF_REMINDER_WORK_MODE_MONDAY_ACTIVATED, R.bool.pref_reminder_work_mode_monday_activated_default)) {
-          start = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_MONDAY_START, R.integer.pref_reminder_work_mode_start_default);
-          end = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_MONDAY_END, R.integer.pref_reminder_work_mode_end_default);
+        if(prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_MONDAY_ACTIVATED, R.bool.pref_reminder_work_mode_monday_activated_default)) {
+          start = prefs.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_MONDAY_START, R.integer.pref_reminder_work_mode_start_default);
+          end = prefs.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_MONDAY_END, R.integer.pref_reminder_work_mode_end_default);
         }
         break;
       case Calendar.TUESDAY:
-        if(PrefUtils.getBooleanValue(R.string.PREF_REMINDER_WORK_MODE_TUESDAY_ACTIVATED, R.bool.pref_reminder_work_mode_tuesday_activated_default)) {
-          start = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_TUESDAY_START, R.integer.pref_reminder_work_mode_start_default);
-          end = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_TUESDAY_END, R.integer.pref_reminder_work_mode_end_default);
+        if(prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_TUESDAY_ACTIVATED, R.bool.pref_reminder_work_mode_tuesday_activated_default)) {
+          start = prefs.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_TUESDAY_START, R.integer.pref_reminder_work_mode_start_default);
+          end = prefs.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_TUESDAY_END, R.integer.pref_reminder_work_mode_end_default);
         }
         break;
       case Calendar.WEDNESDAY:
-        if(PrefUtils.getBooleanValue(R.string.PREF_REMINDER_WORK_MODE_WEDNESDAY_ACTIVATED, R.bool.pref_reminder_work_mode_wednesday_activated_default)) {
-          start = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_WEDNESDAY_START, R.integer.pref_reminder_work_mode_start_default);
-          end = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_WEDNESDAY_END, R.integer.pref_reminder_work_mode_end_default);
+        if(prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_WEDNESDAY_ACTIVATED, R.bool.pref_reminder_work_mode_wednesday_activated_default)) {
+          start = prefs.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_WEDNESDAY_START, R.integer.pref_reminder_work_mode_start_default);
+          end = prefs.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_WEDNESDAY_END, R.integer.pref_reminder_work_mode_end_default);
         }
         break;
       case Calendar.THURSDAY:
-        if(PrefUtils.getBooleanValue(R.string.PREF_REMINDER_WORK_MODE_THURSDAY_ACTIVATED, R.bool.pref_reminder_work_mode_thursday_activated_default)) {
-          start = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_THURSDAY_START, R.integer.pref_reminder_work_mode_start_default);
-          end = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_THURSDAY_END, R.integer.pref_reminder_work_mode_end_default);
+        if(prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_THURSDAY_ACTIVATED, R.bool.pref_reminder_work_mode_thursday_activated_default)) {
+          start = prefs.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_THURSDAY_START, R.integer.pref_reminder_work_mode_start_default);
+          end = prefs.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_THURSDAY_END, R.integer.pref_reminder_work_mode_end_default);
         }
         break;
       case Calendar.FRIDAY:
-        if(PrefUtils.getBooleanValue(R.string.PREF_REMINDER_WORK_MODE_FRIDAY_ACTIVATED, R.bool.pref_reminder_work_mode_friday_activated_default)) {
-          start = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_FRIDAY_START, R.integer.pref_reminder_work_mode_start_default);
-          end = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_FRIDAY_END, R.integer.pref_reminder_work_mode_end_default);
+        if(prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_FRIDAY_ACTIVATED, R.bool.pref_reminder_work_mode_friday_activated_default)) {
+          start = prefs.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_FRIDAY_START, R.integer.pref_reminder_work_mode_start_default);
+          end = prefs.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_FRIDAY_END, R.integer.pref_reminder_work_mode_end_default);
         }
         break;
       case Calendar.SATURDAY:
-        if(PrefUtils.getBooleanValue(R.string.PREF_REMINDER_WORK_MODE_SATURDAY_ACTIVATED, R.bool.pref_reminder_work_mode_saturday_activated_default)) {
-          start = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_SATURDAY_START, R.integer.pref_reminder_work_mode_start_default);
-          end = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_SATURDAY_END, R.integer.pref_reminder_work_mode_end_default);
+        if(prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_SATURDAY_ACTIVATED, R.bool.pref_reminder_work_mode_saturday_activated_default)) {
+          start = prefs.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_SATURDAY_START, R.integer.pref_reminder_work_mode_start_default);
+          end = prefs.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_SATURDAY_END, R.integer.pref_reminder_work_mode_end_default);
         }
         break;
       case Calendar.SUNDAY:
-        if(PrefUtils.getBooleanValue(R.string.PREF_REMINDER_WORK_MODE_SUNDAY_ACTIVATED, R.bool.pref_reminder_work_mode_sunday_activated_default)) {
-          start = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_SUNDAY_START, R.integer.pref_reminder_work_mode_start_default);
-          end = PrefUtils.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_SUNDAY_END, R.integer.pref_reminder_work_mode_end_default);
+        if(prefs.getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_SUNDAY_ACTIVATED, R.bool.pref_reminder_work_mode_sunday_activated_default)) {
+          start = prefs.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_SUNDAY_START, R.integer.pref_reminder_work_mode_start_default);
+          end = prefs.getIntValueWithDefaultKey(R.string.PREF_REMINDER_WORK_MODE_SUNDAY_END, R.integer.pref_reminder_work_mode_end_default);
         }
         break;
     }

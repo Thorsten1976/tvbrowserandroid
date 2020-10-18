@@ -16,9 +16,9 @@
  */
 package org.tvbrowser.tvbrowser;
 
+import org.tvbrowser.App;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.utils.IOUtils;
-import org.tvbrowser.utils.PrefUtils;
 
 import android.app.Service;
 import android.content.Context;
@@ -69,8 +69,8 @@ public class ServiceUpdateDataTable extends Service {
     mWakeLock.acquire(60000);
     
     IOUtils.deleteOldData(getApplicationContext());
-    
-    PrefUtils.updateDataMetaData(getApplicationContext());
+
+    App.get().prefs().updateDataMetaData(getApplicationContext());
     LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(new Intent(SettingConstants.REFRESH_VIEWS));
     
     if(mWakeLock.isHeld()) {

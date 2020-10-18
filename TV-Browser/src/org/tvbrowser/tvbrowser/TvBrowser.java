@@ -95,7 +95,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.WindowManager.BadTokenException;
 import android.widget.AdapterView;
@@ -271,15 +270,14 @@ public class TvBrowser extends AppCompatActivity {
 
   @Override
   protected void onApplyThemeResource(Theme theme, int resid, boolean first) {
-    PrefUtils.initialize(TvBrowser.this);
-
-    if(PrefUtils.getIntValueWithDefaultKey(R.string.OLD_VERSION, R.integer.old_version_default) < 283) {
-      Editor edit = PreferenceManager.getDefaultSharedPreferences(TvBrowser.this).edit();
+    PrefUtils prefs = App.get().prefs();
+    if(prefs.getIntValueWithDefaultKey(R.string.OLD_VERSION, R.integer.old_version_default) < 283) {
+      Editor edit = prefs.edit();
       edit.putBoolean(getString(R.string.DARK_STYLE), true);
       edit.commit();
     }
 
-    resid = UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_DEFAULT, mIsDarkTheme = PrefUtils.isDarkTheme());
+    resid = UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_DEFAULT, mIsDarkTheme = prefs.isDarkTheme());
 
     super.onApplyThemeResource(theme, resid, first);
   }
@@ -301,13 +299,13 @@ public class TvBrowser extends AppCompatActivity {
     mCurrentFilter = new HashSet<>();
     mCurrentFilterId = new HashSet<>();
     mInfoType = INFO_TYPE_NOTHING;
-    PrefUtils.initialize(this);
 
-    if(PrefUtils.getBooleanValue(R.string.PREF_RUNNING_START_WITH_NEXT,R.bool.pref_running_start_with_next_default)) {
+    final PrefUtils prefs = App.get().prefs();
+    if(prefs.getBooleanValueWithDefaultKey(R.string.PREF_RUNNING_START_WITH_NEXT,R.bool.pref_running_start_with_next_default)) {
       START_TIME = -2;
     }
 
-    PrefUtils.updateKnownOpenDate(getApplicationContext());
+    prefs.updateKnownOpenDate();
 
     final Intent start = getIntent();
 
@@ -404,7 +402,7 @@ public class TvBrowser extends AppCompatActivity {
       }
     });
 
-    final int startTab = Integer.parseInt(PrefUtils.getStringValue(R.string.TAB_TO_SHOW_AT_START, R.string.tab_to_show_at_start_default));
+    final int startTab = Integer.parseInt(App.get().prefs().getStringValueWithDefaultKey(R.string.TAB_TO_SHOW_AT_START, R.string.tab_to_show_at_start_default));
     if(mTvBrowserPagerAdapter.getCount() > startTab) {
       mViewPager.setCurrentItem(startTab);
     }
@@ -416,9 +414,10 @@ public class TvBrowser extends AppCompatActivity {
   @Override
   protected void onPause() {
 
-    long timeDiff = System.currentTimeMillis() - mResumeTime + PrefUtils.getLongValueWithDefaultKey(R.string.PREF_RUNNING_TIME, R.integer.pref_running_time_default);
+    final PrefUtils prefs = App.get().prefs();
+    long timeDiff = System.currentTimeMillis() - mResumeTime + prefs.getLongValueWithDefaultKey(R.string.PREF_RUNNING_TIME, R.integer.pref_running_time_default);
 
-    Editor edit = PreferenceManager.getDefaultSharedPreferences(TvBrowser.this).edit();
+    Editor edit = prefs.edit();
     edit.putLong(getString(R.string.PREF_RUNNING_TIME), timeDiff);
     edit.commit();
 
@@ -438,7 +437,8 @@ public class TvBrowser extends AppCompatActivity {
   }
 
   private void showTerms() {
-    if(!PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getBoolean(SettingConstants.EULA_ACCEPTED, false)) {
+    final PrefUtils prefs = App.get().prefs();
+    if(!prefs.getDefault().getBoolean(SettingConstants.EULA_ACCEPTED, false)) {
       AlertDialog.Builder builder = new AlertDialog.Builder(TvBrowser.this);
       builder.setTitle(R.string.terms_of_use);
 
@@ -448,7 +448,7 @@ public class TvBrowser extends AppCompatActivity {
 
       builder.setView(layout);
       builder.setPositiveButton(R.string.terms_of_use_accept, (dialog, which) -> {
-        Editor edit = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+        Editor edit = prefs.edit();
         edit.putBoolean(SettingConstants.EULA_ACCEPTED, true);
         edit.commit();
 
@@ -502,21 +502,22 @@ public class TvBrowser extends AppCompatActivity {
       }
     };
 
-    if(PrefUtils.isNewDate(getApplicationContext())) {
+    final PrefUtils prefs = App.get().prefs();
+    if(prefs.isNewDate()) {
       handler.postDelayed(() -> {
         Log.d("info6", "SEND DATA UPDATE DONE AFTER DATE CHANGE " + System.currentTimeMillis());
         Intent refresh = new Intent(SettingConstants.DATA_UPDATE_DONE);
         TvBrowser.this.sendBroadcast(refresh);
       }, 2000);
 
-      PrefUtils.updateKnownOpenDate(getApplicationContext());
+      prefs.updateKnownOpenDate();
     }
 
     IntentFilter filter = new IntentFilter(SettingConstants.DATA_UPDATE_DONE);
 
     TvBrowser.this.registerReceiver(mUpdateDoneBroadcastReceiver, filter);
 
-    mCurrentFilterId = PrefUtils.getStringSetValue(R.string.CURRENT_FILTER_ID, new HashSet<>());
+    mCurrentFilterId = prefs.getValue(R.string.CURRENT_FILTER_ID, new HashSet<>());
     mCurrentFilter.clear();
 
     if(!mCurrentFilterId.isEmpty()) {
@@ -674,15 +675,16 @@ public class TvBrowser extends AppCompatActivity {
   private static boolean SHOWING_DONATION_INFO = false;
 
   private void showEpgPaidInfo() {
+    PrefUtils prefs = App.get().prefs();
     Log.d("info6", "showEpgPaidInfo");
-    final long firstStart = PrefUtils.getLongValue(R.string.PREF_EPGPAID_FIRST_START, -1);
+    final long firstStart = prefs.getValue(R.string.PREF_EPGPAID_FIRST_START, -1L);
 
     if(firstStart == -1) {
-      final Editor edit = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, TvBrowser.this).edit();
+      final Editor edit =prefs.edit();
       edit.putLong(getString(R.string.PREF_EPGPAID_FIRST_START), System.currentTimeMillis());
       edit.commit();
-    } else if(!SHOWING_EPGPAID_INFO && !PrefUtils.getBooleanValue(R.string.PREF_EPGPAID_INFO_SHOWN, R.bool.pref_epgpaid_info_shown_default) && (System.currentTimeMillis() - (9 * 24 * 60 * 60000L)) > firstStart
-        && PrefUtils.getStringValue(R.string.PREF_EPGPAID_USER, "").trim().length() == 0 && PrefUtils.getStringValue(R.string.PREF_EPGPAID_PASSWORD, "").trim().length() == 0) {
+    } else if(!SHOWING_EPGPAID_INFO && !prefs.getBooleanValueWithDefaultKey(R.string.PREF_EPGPAID_INFO_SHOWN, R.bool.pref_epgpaid_info_shown_default) && (System.currentTimeMillis() - (9 * 24 * 60 * 60000L)) > firstStart
+        && prefs.getValue(R.string.PREF_EPGPAID_USER, "").trim().length() == 0 && prefs.getValue(R.string.PREF_EPGPAID_PASSWORD, "").trim().length() == 0) {
       final AlertDialog.Builder builder = new AlertDialog.Builder(TvBrowser.this);
       builder.setTitle(R.string.dialog_epgpaid_info_title);
 
@@ -704,18 +706,18 @@ public class TvBrowser extends AppCompatActivity {
       showAlertDialog(builder, true, () -> {
         SHOWING_EPGPAID_INFO = true;
 
-        final Editor edit = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, TvBrowser.this).edit();
+        final Editor edit = prefs.edit();
         edit.putBoolean(getString(R.string.PREF_EPGPAID_INFO_SHOWN), true);
         edit.commit();
       });
-    } else if(PrefUtils.getStringValue(R.string.PREF_EPGPAID_USER, "").trim().length() > 0 && PrefUtils.getStringValue(R.string.PREF_EPGPAID_PASSWORD, "").trim().length() > 0) {
-      final long dateUntil = PrefUtils.getLongValueWithDefaultKey(R.string.PREF_EPGPAID_ACCESS_UNTIL, R.integer.pref_epgpaid_access_until_default);
-      final long expirationShown = PrefUtils.getLongValueWithDefaultKey(R.string.PREF_EPGPAID_EXPIRATION_SHOWN, R.integer.pref_epgpaid_access_until_default);
+    } else if(prefs.getValue(R.string.PREF_EPGPAID_USER, "").trim().length() > 0 && prefs.getValue(R.string.PREF_EPGPAID_PASSWORD, "").trim().length() > 0) {
+      final long dateUntil = prefs.getLongValueWithDefaultKey(R.string.PREF_EPGPAID_ACCESS_UNTIL, R.integer.pref_epgpaid_access_until_default);
+      final long expirationShown = prefs.getLongValueWithDefaultKey(R.string.PREF_EPGPAID_EXPIRATION_SHOWN, R.integer.pref_epgpaid_access_until_default);
 
       if(dateUntil != 0 && (dateUntil > System.currentTimeMillis()) && (dateUntil - (14 * 24 * 60 * 60000L)) < System.currentTimeMillis() && (expirationShown + (180 * 24 * 60 * 60000L))  < System.currentTimeMillis()) {
         String message = getString(R.string.dialog_epgpaid_info_expiration_message).replace("{0}", DateFormat.getMediumDateFormat(getApplicationContext()).format(new java.util.Date(dateUntil)));
 
-        showAlertDialog(getString(R.string.dialog_epgpaid_info_expiration_title), message, null, null, () -> PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, getApplicationContext()).edit().putLong(getString(R.string.PREF_EPGPAID_EXPIRATION_SHOWN), System.currentTimeMillis()).commit(), null, null, false, true);
+        showAlertDialog(getString(R.string.dialog_epgpaid_info_expiration_title), message, null, null, () -> prefs.edit().putLong(getString(R.string.PREF_EPGPAID_EXPIRATION_SHOWN), System.currentTimeMillis()).commit(), null, null, false, true);
       }
     }
   }
@@ -911,11 +913,12 @@ public class TvBrowser extends AppCompatActivity {
       return;
     }
 
-    Log.d("info6", "selectingChannels " + selectingChannels + " " + PrefUtils.getChannelsSelected(getApplicationContext()));
-    if (!selectingChannels && !PrefUtils.getChannelsSelected(getApplicationContext())) {
+    final PrefUtils prefs = App.get().prefs();
+    Log.d("info6", "selectingChannels " + selectingChannels + " " + prefs.getChannelsSelected());
+    if (!selectingChannels && !prefs.getChannelsSelected()) {
       askChannelDownload(R.string.select_channels);
       }
-      else if(PrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_DATE_LAST_KNOWN, R.integer.meta_data_date_known_default) < System.currentTimeMillis()) {
+      else if(prefs.getLongValueWithDefaultKey(R.string.META_DATA_DATE_LAST_KNOWN, R.integer.meta_data_date_known_default) < System.currentTimeMillis()) {
       if (isOnline()) {
         checkTermsAcceptedInUIThread();
       }
@@ -990,8 +993,9 @@ public class TvBrowser extends AppCompatActivity {
   }
 
   private void showChannelSelection() {
-    if(PrefUtils.getStringValue(R.string.PREF_AUTO_CHANNEL_UPDATE_CHANNELS_INSERTED, null) != null ||
-     PrefUtils.getStringValue(R.string.PREF_AUTO_CHANNEL_UPDATE_CHANNELS_UPDATED, null) != null) {
+    final PrefUtils prefs = App.get().prefs();
+    if(prefs.getValue(R.string.PREF_AUTO_CHANNEL_UPDATE_CHANNELS_INSERTED, null) != null ||
+            prefs.getValue(R.string.PREF_AUTO_CHANNEL_UPDATE_CHANNELS_UPDATED, null) != null) {
       showChannelUpdateInfo();
     }
     else {
@@ -1089,7 +1093,8 @@ public class TvBrowser extends AppCompatActivity {
             connection = documentUrl.openConnection();
             IOUtils.setConnectionTimeoutDefault(connection);
 
-            SharedPreferences pref = getSharedPreferences("transportation", Context.MODE_PRIVATE);
+            final PrefUtils prefs = App.get().prefs();
+            SharedPreferences pref = prefs.getShared(PrefUtils.TYPE_PREFERENCES_TRANSPORTATION);
 
             String car = pref.getString(SettingConstants.USER_NAME, null);
             String bicycle = pref.getString(SettingConstants.USER_PASSWORD, null);
@@ -1208,7 +1213,7 @@ public class TvBrowser extends AppCompatActivity {
                 handler.post(() -> {
                   SettingConstants.initializeLogoMap(TvBrowser.this, true);
                   updateProgramListChannelBar();
-                  PrefUtils.updateChannelSelectionState(getApplicationContext());
+                  prefs.updateChannelSelectionState(getApplicationContext());
                   ToastCompat.makeText(getApplicationContext(), R.string.synchronize_done, ToastCompat.LENGTH_LONG).show();
                   checkTermsAccepted();
                 });
@@ -1277,7 +1282,7 @@ public class TvBrowser extends AppCompatActivity {
             connection = documentUrl.openConnection();
             IOUtils.setConnectionTimeoutDefault(connection);
 
-            SharedPreferences pref = getSharedPreferences("transportation", Context.MODE_PRIVATE);
+            SharedPreferences pref = App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_TRANSPORTATION);
 
             String car = pref.getString(SettingConstants.USER_NAME, null);
             String bicycle = pref.getString(SettingConstants.USER_PASSWORD, null);
@@ -1441,7 +1446,7 @@ public class TvBrowser extends AppCompatActivity {
       builder.setMessage(R.string.backup_preferences_save_text);
 
       builder.setPositiveButton(android.R.string.ok, (dialog, which) -> {
-        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        SharedPreferences pref = App.get().prefs().getDefault();
         Map<String,?> preferences = pref.getAll();
 
         StringBuilder backup = new StringBuilder();
@@ -1528,7 +1533,8 @@ public class TvBrowser extends AppCompatActivity {
             connection = documentUrl.openConnection();
             IOUtils.setConnectionTimeoutDefault(connection);
 
-            SharedPreferences pref = getSharedPreferences("transportation", Context.MODE_PRIVATE);
+            final PrefUtils prefUtils = App.get().prefs();
+            SharedPreferences pref = prefUtils.getShared(PrefUtils.TYPE_PREFERENCES_TRANSPORTATION);
 
             String car = pref.getString(SettingConstants.USER_NAME, null);
             String bicycle = pref.getString(SettingConstants.USER_PASSWORD, null);
@@ -1542,7 +1548,7 @@ public class TvBrowser extends AppCompatActivity {
               read = new BufferedReader(new InputStreamReader(new GZIPInputStream(connection.getInputStream()), Charset.defaultCharset()));
 
               String line;
-              Editor edit = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+              Editor edit = prefUtils.edit();
 
               TvBrowserContentProvider.INFORM_FOR_CHANGES = false;
 
@@ -2127,8 +2133,9 @@ public class TvBrowser extends AppCompatActivity {
       // create default logo for channels without logo
       final Bitmap defaultLogo = BitmapFactory.decodeResource( getResources(), R.drawable.ic_launcher);
 
-      final Set<String> firstDeletedChannels = PrefUtils.getStringSetValue(R.string.PREF_FIRST_DELETED_CHANNELS, new HashSet<>());
-      final Set<String> keptDeletedChannels = PrefUtils.getStringSetValue(R.string.PREF_KEPT_DELETED_CHANNELS, new HashSet<>());
+      final PrefUtils prefs = App.get().prefs();
+      final Set<String> firstDeletedChannels = prefs.getValue(R.string.PREF_FIRST_DELETED_CHANNELS, new HashSet<>());
+      final Set<String> keptDeletedChannels = prefs.getValue(R.string.PREF_KEPT_DELETED_CHANNELS, new HashSet<>());
 
       final int firstDeletedColor = ContextCompat.getColor(this, R.color.pref_first_deleted_channels);
       final int keptDeletedColor = ContextCompat.getColor(this, R.color.pref_kept_deleted_channels);
@@ -2352,7 +2359,7 @@ public class TvBrowser extends AppCompatActivity {
           if(somethingChanged) {
             SettingConstants.initializeLogoMap(TvBrowser.this, true);
             updateProgramListChannelBar();
-            PrefUtils.updateChannelSelectionState(getApplicationContext());
+            prefs.updateChannelSelectionState(getApplicationContext());
           }
 
           // if something was selected we need to download new data
@@ -2836,7 +2843,8 @@ public class TvBrowser extends AppCompatActivity {
           UiUtils.createAdapterForSpinner(TvBrowser.this, autoUpdate, R.array.pref_auto_update_type_names);
           UiUtils.createAdapterForSpinner(TvBrowser.this, frequency, R.array.pref_auto_update_frequency);
 
-          String currentDownloadDays = PrefUtils.getStringValue(R.string.DAYS_TO_DOWNLOAD, R.string.days_to_download_default);
+          final PrefUtils prefs = App.get().prefs();
+          String currentDownloadDays = prefs.getStringValueWithDefaultKey(R.string.DAYS_TO_DOWNLOAD, R.string.days_to_download_default);
 
           final String[] possibleDownloadDays = getResources().getStringArray(R.array.download_days);
 
@@ -2847,10 +2855,10 @@ public class TvBrowser extends AppCompatActivity {
             }
           }
 
-          pictures.setChecked(PrefUtils.getBooleanValue(R.string.LOAD_PICTURE_DATA, R.bool.load_picture_data_default));
+          pictures.setChecked(prefs.getBooleanValueWithDefaultKey(R.string.LOAD_PICTURE_DATA, R.bool.load_picture_data_default));
 
-          String currentAutoUpdateValue = PrefUtils.getStringValue(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default);
-          String currentAutoUpdateFrequency = PrefUtils.getStringValue(R.string.PREF_AUTO_UPDATE_FREQUENCY, R.string.pref_auto_update_frequency_default);
+          String currentAutoUpdateValue = prefs.getStringValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default);
+          String currentAutoUpdateFrequency = prefs.getStringValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_FREQUENCY, R.string.pref_auto_update_frequency_default);
 
           switch (currentAutoUpdateValue) {
             case "0":
@@ -2884,9 +2892,9 @@ public class TvBrowser extends AppCompatActivity {
             }
           }
 
-          onlyWiFi.setChecked(PrefUtils.getBooleanValue(R.string.PREF_AUTO_UPDATE_ONLY_WIFI, R.bool.pref_auto_update_only_wifi_default));
+          onlyWiFi.setChecked(prefs.getBooleanValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_ONLY_WIFI, R.bool.pref_auto_update_only_wifi_default));
 
-          final AtomicInteger currentAutoUpdateTime = new AtomicInteger(PrefUtils.getIntValue(R.string.PREF_AUTO_UPDATE_START_TIME, R.integer.pref_auto_update_start_time_default));
+          final AtomicInteger currentAutoUpdateTime = new AtomicInteger(prefs.getValue(R.string.PREF_AUTO_UPDATE_START_TIME, getResources().getInteger(R.integer.pref_auto_update_start_time_default)));
 
           Calendar now = Calendar.getInstance();
 
@@ -2971,7 +2979,7 @@ public class TvBrowser extends AppCompatActivity {
 
             Editor settings = PreferenceManager.getDefaultSharedPreferences(TvBrowser.this).edit();
 
-            if(PrefUtils.getStringValueAsInt(R.string.PREF_AUTO_UPDATE_RANGE, R.string.pref_auto_update_range_default) < Integer.parseInt(value)) {
+            if(prefs.getStringValueAsInt(R.string.PREF_AUTO_UPDATE_RANGE, R.string.pref_auto_update_range_default) < Integer.parseInt(value)) {
               settings.putString(getString(R.string.PREF_AUTO_UPDATE_RANGE), value);
             }
 
@@ -3035,7 +3043,7 @@ public class TvBrowser extends AppCompatActivity {
     Fragment fragment = mTvBrowserPagerAdapter.getRegisteredFragment(2);
 
     if(fragment instanceof FragmentFavorites) {
-      ((FragmentFavorites)fragment).updateSynchroButton(handler,null);
+      ((FragmentFavorites)fragment).updateSynchroButton(handler);
     }
 
     if(syncChannels) {
@@ -3103,14 +3111,15 @@ public class TvBrowser extends AppCompatActivity {
     View view = getLayoutInflater().inflate(R.layout.dialog_terms_accept, getParentViewGroup(), false);
     ((TextView)view.findViewById(R.id.dialog_terms_accept_terms)).setText(CompatUtils.fromHtml(getString(R.string.privacy_statement_text)));
     CheckBox check = view.findViewById(R.id.dialog_terms_accept_selection);
-    check.setChecked(PrefUtils.getBooleanValue(R.string.PREF_PRIVACY_TERMS_ACCEPTED_SYNC,R.bool.pref_privacy_terms_default));
+    final PrefUtils prefs = App.get().prefs();
+    check.setChecked(prefs.getBooleanValueWithDefaultKey(R.string.PREF_PRIVACY_TERMS_ACCEPTED_SYNC,R.bool.pref_privacy_terms_default));
 
     final AlertDialog.Builder builder = new AlertDialog.Builder(TvBrowser.this);
     builder.setCancelable(false);
     builder.setTitle(R.string.action_privacy);
     builder.setView(view);
     builder.setPositiveButton(android.R.string.ok, (dialog, which) -> {
-      PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, TvBrowser.this).edit().putBoolean(getString(R.string.PREF_PRIVACY_TERMS_ACCEPTED_SYNC),check.isChecked()).apply();
+      prefs.edit().putBoolean(getString(R.string.PREF_PRIVACY_TERMS_ACCEPTED_SYNC),check.isChecked()).apply();
 
       if(check.isChecked()) {
         showUserSetting(syncChannels);
@@ -3118,7 +3127,7 @@ public class TvBrowser extends AppCompatActivity {
     });
     builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> {
       if(!check.isChecked()) {
-        PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, TvBrowser.this).edit().putBoolean(getString(R.string.PREF_PRIVACY_TERMS_ACCEPTED_SYNC), false).apply();
+        prefs.edit().putBoolean(getString(R.string.PREF_PRIVACY_TERMS_ACCEPTED_SYNC), false).apply();
         updateSynchroMenu();
       }
     });
@@ -3137,7 +3146,7 @@ public class TvBrowser extends AppCompatActivity {
 
     RelativeLayout username_password_setup = (RelativeLayout)getLayoutInflater().inflate(R.layout.username_password_setup, getParentViewGroup(), false);
 
-    final SharedPreferences pref = getSharedPreferences("transportation", Context.MODE_PRIVATE);
+    final SharedPreferences pref = App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_TRANSPORTATION);
 
     final EditText userName = username_password_setup.findViewById(R.id.username_entry);
     final EditText password = username_password_setup.findViewById(R.id.password_entry);
@@ -3177,7 +3186,7 @@ public class TvBrowser extends AppCompatActivity {
   }
 
   private void checkTermsAcceptedInUIThread() {
-    final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    final SharedPreferences pref = App.get().prefs().getDefault();
 
     String terms = pref.getString(SettingConstants.TERMS_ACCEPTED, "");
 
@@ -3237,7 +3246,7 @@ public class TvBrowser extends AppCompatActivity {
 
   private void editDontWantToSee() {
     if(!SettingConstants.UPDATING_FILTER) {
-      Set<String> currentExclusions = PrefUtils.getStringSetValue(R.string.I_DONT_WANT_TO_SEE_ENTRIES, null);
+      Set<String> currentExclusions = App.get().prefs().getValue(R.string.I_DONT_WANT_TO_SEE_ENTRIES, null);
 
       final ArrayList<ExclusionEdit> mCurrentExclusionList = new ArrayList<>();
 
@@ -3492,11 +3501,12 @@ public class TvBrowser extends AppCompatActivity {
     Fragment fragment = mTvBrowserPagerAdapter.getRegisteredFragment(2);
 
     if(fragment instanceof FragmentFavorites) {
-      ((FragmentFavorites)fragment).updateSynchroButton(handler,null);
+      ((FragmentFavorites)fragment).updateSynchroButton(handler);
       ((FragmentFavorites)fragment).updateProgramsList();
     }
 
-    final boolean programTableActivated = PrefUtils.getBooleanValue(R.string.PROG_TABLE_ACTIVATED, R.bool.prog_table_activated_default);
+    final PrefUtils prefs = App.get().prefs();
+    final boolean programTableActivated = prefs.getBooleanValueWithDefaultKey(R.string.PROG_TABLE_ACTIVATED, R.bool.prog_table_activated_default);
     final Fragment test = mTvBrowserPagerAdapter.getRegisteredFragment(3);
 
     if(!programTableActivated && test instanceof FragmentProgramTable) {
@@ -3517,9 +3527,9 @@ public class TvBrowser extends AppCompatActivity {
     }
 
     if(mDebugMenuItem != null) {
-      boolean dataUpdateLogEnabled = PrefUtils.getBooleanValue(R.string.WRITE_DATA_UPDATE_LOG, R.bool.write_data_update_log_default);
-      boolean reminderLogEnabled = PrefUtils.getBooleanValue(R.string.WRITE_REMINDER_LOG, R.bool.write_reminder_log_default);
-      boolean pluginLogEnabled = PrefUtils.getBooleanValue(R.string.LOG_WRITE_PLUGIN_LOG, R.bool.log_write_plugin_log_default);
+      boolean dataUpdateLogEnabled = prefs.getBooleanValueWithDefaultKey(R.string.WRITE_DATA_UPDATE_LOG, R.bool.write_data_update_log_default);
+      boolean reminderLogEnabled = prefs.getBooleanValueWithDefaultKey(R.string.WRITE_REMINDER_LOG, R.bool.write_reminder_log_default);
+      boolean pluginLogEnabled = prefs.getBooleanValueWithDefaultKey(R.string.LOG_WRITE_PLUGIN_LOG, R.bool.log_write_plugin_log_default);
 
       mDebugMenuItem.setVisible(dataUpdateLogEnabled || reminderLogEnabled || pluginLogEnabled);
       mSendReminderLogItem.setEnabled(reminderLogEnabled);
@@ -3535,7 +3545,7 @@ public class TvBrowser extends AppCompatActivity {
     updateScrollMenu();
 
     if(mUpdateItem != null && !TvDataUpdateService.isRunning()) {
-      if("0".equals(PrefUtils.getStringValue(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default))) {
+      if("0".equals(prefs.getStringValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default))) {
         mUpdateItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
       }
       else {
@@ -3546,9 +3556,9 @@ public class TvBrowser extends AppCompatActivity {
 
     new BroadcastReceiverUpdateAlarmValue().onReceive(TvBrowser.this, null);
 
-    if(PrefUtils.isDarkTheme() != mIsDarkTheme) {
-      Favorite.resetMarkIcons(PrefUtils.isDarkTheme());
-      ProgramUtils.resetReminderAndSyncMarkIcon(PrefUtils.isDarkTheme());
+    if(prefs.isDarkTheme() != mIsDarkTheme) {
+      Favorite.resetMarkIcons(prefs.isDarkTheme());
+      ProgramUtils.resetReminderAndSyncMarkIcon(prefs.isDarkTheme());
 
       PluginServiceConnection[] plugins = PluginHandler.getAvailablePlugins();
 
@@ -3561,10 +3571,10 @@ public class TvBrowser extends AppCompatActivity {
       finish = true;
     }
 
-    finish = finish || (mCurrentTabLayoutFavorites != null && !mCurrentTabLayoutFavorites.equals(PrefUtils.getStringValue(R.string.PREF_FAVORITE_TAB_LAYOUT, R.string.pref_favorite_tab_layout_default)));
+    finish = finish || (mCurrentTabLayoutFavorites != null && !mCurrentTabLayoutFavorites.equals(prefs.getStringValueWithDefaultKey(R.string.PREF_FAVORITE_TAB_LAYOUT, R.string.pref_favorite_tab_layout_default)));
 
-    final String databasePath = PrefUtils.getStringValue(R.string.PREF_DATABASE_PATH, R.string.pref_database_path_default);
-    final String oldPath = PrefUtils.getStringValue(R.string.PREF_DATABASE_OLD_PATH, R.string.pref_database_path_default);
+    final String databasePath = prefs.getStringValueWithDefaultKey(R.string.PREF_DATABASE_PATH, R.string.pref_database_path_default);
+    final String oldPath = prefs.getStringValueWithDefaultKey(R.string.PREF_DATABASE_OLD_PATH, R.string.pref_database_path_default);
 
     if(!oldPath.equals(databasePath)) {
       File source;
@@ -3584,7 +3594,7 @@ public class TvBrowser extends AppCompatActivity {
         target = new File(databasePath, TvBrowserContentProvider.DATABASE_TVB_NAME);
       }
 
-      final SharedPreferences pref = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, TvBrowser.this);
+      final SharedPreferences pref = prefs.getDefault();
 
       if(target.getParentFile().canWrite()) {
         final boolean finish2 = finish;
@@ -3658,9 +3668,9 @@ public class TvBrowser extends AppCompatActivity {
     else {
       new Thread("CHECK EPGPAID CREDENTIALS") {
         public void run() {
-          if(PrefUtils.getBooleanValue(R.string.PREF_PRIVACY_TERMS_ACCEPTED_EPGPAID,R.bool.pref_privacy_terms_default)) {
-            final String userName = PrefUtils.getStringValue(R.string.PREF_EPGPAID_USER, null);
-            final String password = PrefUtils.getStringValue(R.string.PREF_EPGPAID_PASSWORD, null);
+          if(prefs.getBooleanValueWithDefaultKey(R.string.PREF_PRIVACY_TERMS_ACCEPTED_EPGPAID,R.bool.pref_privacy_terms_default)) {
+            final String userName = prefs.getValue(R.string.PREF_EPGPAID_USER, null);
+            final String password = prefs.getValue(R.string.PREF_EPGPAID_PASSWORD, null);
 
             if (userName != null && password != null && userName.trim().length() > 0 && password.trim().length() > 0) {
               final EPGpaidDataConnection epgPaidTest = new EPGpaidDataConnection();
@@ -3697,16 +3707,17 @@ public class TvBrowser extends AppCompatActivity {
     builder.setMessage(CompatUtils.fromHtml(getString(R.string.info_version_new)));
     builder.setPositiveButton(android.R.string.ok, null);
 
+    final PrefUtils prefs = App.get().prefs();
     if(showDisable) {
       builder.setNegativeButton(R.string.info_version_dont_show_again, (dialog, which) -> {
-        Editor edit = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, TvBrowser.this).edit();
+        Editor edit = prefs.edit();
         edit.putBoolean(getString(R.string.PREF_INFO_VERSION_UPDATE_SHOW), false);
         edit.commit();
       });
     }
 
     showAlertDialog(builder, false, null, () -> {
-      Editor edit = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, TvBrowser.this).edit();
+      Editor edit = prefs.edit();
       edit.putBoolean(getString(R.string.PREF_INFO_VERSION_UPDATE_SHOW), false);
       edit.commit();
     });
@@ -3738,21 +3749,22 @@ public class TvBrowser extends AppCompatActivity {
     androidVersion.setText(Build.VERSION.RELEASE);
 
     TextView lastUpdate = about.findViewById(R.id.data_update);
-    lastUpdate.setText(DateFormat.getLongDateFormat(TvBrowser.this).format(new Date(PrefUtils.getLongValue(R.string.LAST_DATA_UPDATE, 0))));
+    final PrefUtils prefs = App.get().prefs();
+    lastUpdate.setText(DateFormat.getLongDateFormat(TvBrowser.this).format(new Date(prefs.getValue(R.string.LAST_DATA_UPDATE, 0L))));
 
     TextView nextUpdate = about.findViewById(R.id.next_data_update);
 
-    switch(Integer.parseInt(PrefUtils.getStringValue(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default))) {
+    switch(Integer.parseInt(prefs.getStringValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default))) {
       case 0: nextUpdate.setText(R.string.next_data_update_manually);break;
       case 1: nextUpdate.setText(R.string.next_data_update_connection);break;
       case 2: {
-        Date date = new Date(PrefUtils.getLongValue(R.string.AUTO_UPDATE_CURRENT_START_TIME, 0));
+        Date date = new Date(prefs.getValue(R.string.AUTO_UPDATE_CURRENT_START_TIME, 0L));
         nextUpdate.setText(DateFormat.getMediumDateFormat(TvBrowser.this).format(date) + " " + DateFormat.getTimeFormat(TvBrowser.this).format(date));
       } break;
     }
 
     TextView dataRange = about.findViewById(R.id.data_range);
-    dataRange.setText(DateFormat.getMediumDateFormat(TvBrowser.this).format(new Date(PrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_DATE_FIRST_KNOWN, R.integer.meta_data_date_known_default))) + " - " + DateFormat.getMediumDateFormat(TvBrowser.this).format(new Date(PrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_DATE_LAST_KNOWN, R.integer.meta_data_date_known_default))));
+    dataRange.setText(DateFormat.getMediumDateFormat(TvBrowser.this).format(new Date(prefs.getLongValueWithDefaultKey(R.string.META_DATA_DATE_FIRST_KNOWN, R.integer.meta_data_date_known_default))) + " - " + DateFormat.getMediumDateFormat(TvBrowser.this).format(new Date(prefs.getLongValueWithDefaultKey(R.string.META_DATA_DATE_LAST_KNOWN, R.integer.meta_data_date_known_default))));
 
     ((TextView)about.findViewById(R.id.rundate_value)).setText(DateFormat.getLongDateFormat(getApplicationContext()).format(mRundate.getTime()));
 
@@ -3783,7 +3795,7 @@ public class TvBrowser extends AppCompatActivity {
 
     builder.setTitle(R.string.action_pause_reminder);
 
-    if(PrefUtils.getBooleanValue(R.string.PREF_REMINDER_STATE_KEEP, R.bool.pref_reminder_state_keep_default)) {
+    if(App.get().prefs().getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_STATE_KEEP, R.bool.pref_reminder_state_keep_default)) {
       builder.setMessage(R.string.action_reminder_disable_text);
     }
     else {
@@ -4046,8 +4058,9 @@ public class TvBrowser extends AppCompatActivity {
         Log.d("info6", "showChannelUpdateInfo RUN");
         StringBuilder selection = new StringBuilder();
 
-        String insertedChannels = PrefUtils.getStringValue(R.string.PREF_AUTO_CHANNEL_UPDATE_CHANNELS_INSERTED, null);
-        String updateChannels = PrefUtils.getStringValue(R.string.PREF_AUTO_CHANNEL_UPDATE_CHANNELS_UPDATED, null);
+      final PrefUtils prefs = App.get().prefs();
+      String insertedChannels = prefs.getValue(R.string.PREF_AUTO_CHANNEL_UPDATE_CHANNELS_INSERTED, null);
+        String updateChannels = prefs.getValue(R.string.PREF_AUTO_CHANNEL_UPDATE_CHANNELS_UPDATED, null);
 
         Editor edit = PreferenceManager.getDefaultSharedPreferences(TvBrowser.this).edit();
 
@@ -4072,7 +4085,7 @@ public class TvBrowser extends AppCompatActivity {
           showChannelSelectionInternal(selection.toString(), getString(R.string.dialog_select_channels_update_title), getString(R.string.dialog_select_channels_update_help), false);
         }
         else if(IOUtils.isDatabaseAccessible(TvBrowser.this)) {
-          Set<String> deletedChannels = PrefUtils.getStringSetValue(R.string.PREF_SECOND_DELETED_CHANNELS, new HashSet<>());
+          Set<String> deletedChannels = prefs.getValue(R.string.PREF_SECOND_DELETED_CHANNELS, new HashSet<>());
 
           edit.remove(getString(R.string.PREF_SECOND_DELETED_CHANNELS));
           edit.commit();
@@ -4121,7 +4134,8 @@ public class TvBrowser extends AppCompatActivity {
 
   private void testTimeZone() {
     Log.d("info6", "testTimeZone");
-    if(PrefUtils.getBooleanValue(R.string.PREF_WARNING_TIMEZONE_SHOW, R.bool.pref_warning_timezone_show_default) && "de".equals(Locale.getDefault().getLanguage()) && TimeZone.getDefault().getRawOffset() != TimeZone.getTimeZone("CET").getRawOffset()) {
+    final PrefUtils prefs = App.get().prefs();
+    if(prefs.getBooleanValueWithDefaultKey(R.string.PREF_WARNING_TIMEZONE_SHOW, R.bool.pref_warning_timezone_show_default) && "de".equals(Locale.getDefault().getLanguage()) && TimeZone.getDefault().getRawOffset() != TimeZone.getTimeZone("CET").getRawOffset()) {
       AlertDialog.Builder builder = new AlertDialog.Builder(TvBrowser.this);
 
       builder.setTitle(R.string.dialog_warning_timezone_title);
@@ -4135,7 +4149,7 @@ public class TvBrowser extends AppCompatActivity {
       builder.setNegativeButton(android.R.string.cancel, null);
 
       builder.setNeutralButton(R.string.info_version_dont_show_again, (dialog, which) -> {
-        Editor edit = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, TvBrowser.this).edit();
+        Editor edit = prefs.edit();
         edit.putBoolean(getString(R.string.PREF_WARNING_TIMEZONE_SHOW), false);
         edit.commit();
       });
@@ -4158,7 +4172,7 @@ public class TvBrowser extends AppCompatActivity {
       }
 
       ArrayList<FilterValues> channelFilterList = new ArrayList<>();
-      SharedPreferences filterPreferences = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_FILTERS, TvBrowser.this);
+      SharedPreferences filterPreferences = App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_FILTERS);
       Map<String,?> filterValues = filterPreferences.getAll();
 
       for(String key : filterValues.keySet()) {
@@ -4271,7 +4285,7 @@ public class TvBrowser extends AppCompatActivity {
   }
 
   private void showMarkingData() {
-    Map<String,?> mark = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_MARKINGS, TvBrowser.this).getAll();
+    Map<String,?> mark = App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_MARKINGS).getAll();
 
     StringBuilder markValue = new StringBuilder();
 
@@ -4293,6 +4307,7 @@ public class TvBrowser extends AppCompatActivity {
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
+    final PrefUtils prefs = App.get().prefs();
     switch (item.getItemId()) {
       case R.id.action_username_password:
       {
@@ -4378,7 +4393,7 @@ public class TvBrowser extends AppCompatActivity {
       case R.id.action_send_reminder_log:sendLogMail(SettingConstants.LOG_FILE_NAME_REMINDER,getString(R.string.log_send_reminder));break;
       case R.id.action_send_plugin_log:sendLogMail(SettingConstants.LOG_FILE_NAME_PLUGINS,getString(R.string.log_send_plugin));break;
       case R.id.menu_tvbrowser_action_settings_basic:
-        mCurrentTabLayoutFavorites = PrefUtils.getStringValue(R.string.PREF_FAVORITE_TAB_LAYOUT, R.string.pref_favorite_tab_layout_default);
+        mCurrentTabLayoutFavorites = prefs.getStringValueWithDefaultKey(R.string.PREF_FAVORITE_TAB_LAYOUT, R.string.pref_favorite_tab_layout_default);
         Intent startPref = new Intent(this, TvbPreferencesActivity.class);
         startActivityForResult(startPref, SHOW_PREFERENCES);
         break;
@@ -4401,7 +4416,7 @@ public class TvBrowser extends AppCompatActivity {
       case R.id.action_sort_channels: sortChannels(false);break;
       case R.id.action_delete_all_data: getContentResolver().delete(TvBrowserContentProvider.CONTENT_URI_DATA, TvBrowserContentProvider.KEY_ID + " > 0", null);
                                         getContentResolver().delete(TvBrowserContentProvider.CONTENT_URI_DATA_VERSION, TvBrowserContentProvider.KEY_ID + " > 0", null);
-                                        PrefUtils.resetDataMetaData(getApplicationContext());
+        prefs.resetDataMetaData();
                                         break;
       case R.id.action_scroll_now:scrollToTime(0);break;
       case R.id.action_scroll_next:scrollToTime(Integer.MAX_VALUE);break;
@@ -4409,7 +4424,7 @@ public class TvBrowser extends AppCompatActivity {
       case R.id.action_activity_filter_list_edit_open:openFilterEdit();break;
      // case R.id.action_filter_channels:filterChannels();break;
       case R.id.action_reset: {
-        Editor edit = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+        Editor edit = prefs.edit();
         edit.putLong(getString(R.string.LAST_DATA_UPDATE), 0);
         edit.commit();
 
@@ -4436,11 +4451,13 @@ public class TvBrowser extends AppCompatActivity {
   }
 
   private void scrollToTimePick() {
-    final int lastExtraTime = PrefUtils.getIntValue(R.string.PREF_MISC_LAST_TIME_PICK_VALUE, PrefUtils.getIntValueWithDefaultKey(R.string.PREF_MISC_LAST_TIME_EXTRA_VALUE, R.integer.pref_misc_last_time_extra_value_default));
+    final PrefUtils prefs = App.get().prefs();
+    final int lastExtraTime = prefs.getValue(R.string.PREF_MISC_LAST_TIME_PICK_VALUE,
+            prefs.getIntValueWithDefaultKey(R.string.PREF_MISC_LAST_TIME_EXTRA_VALUE, R.integer.pref_misc_last_time_extra_value_default));
 
     final TimePickerDialog pick = new TimePickerDialog(TvBrowser.this, TimePickerDialog.THEME_HOLO_DARK, (view, hourOfDay, minute) -> {
       scrollToTime(hourOfDay*60+minute+1);
-      PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, TvBrowser.this).edit().putInt(getString(R.string.PREF_MISC_LAST_TIME_PICK_VALUE), hourOfDay*60+minute).commit();
+      prefs.edit().putInt(getString(R.string.PREF_MISC_LAST_TIME_PICK_VALUE), hourOfDay*60+minute).commit();
     }, lastExtraTime/60, lastExtraTime%60, DateFormat.is24HourFormat(TvBrowser.this));
 
     pick.show();
@@ -4488,6 +4505,7 @@ public class TvBrowser extends AppCompatActivity {
 
     //  Associate searchable configuration with the SearchView
     final SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+    final PrefUtils prefs = App.get().prefs();
     if (searchManager!=null) {
       final SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
       searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
@@ -4516,7 +4534,7 @@ public class TvBrowser extends AppCompatActivity {
           final View view = super.getView(position, convertView, parent);
 
           if (convertView == null) {
-            UiUtils.scaleTextViews(view, Float.valueOf(PrefUtils.getStringValue(R.string.PREF_PROGRAM_LISTS_TEXT_SCALE, R.string.pref_program_lists_text_scale_default)));
+            UiUtils.scaleTextViews(view, Float.parseFloat(prefs.getStringValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_TEXT_SCALE, R.string.pref_program_lists_text_scale_default)));
           }
 
           return view;
@@ -4538,7 +4556,7 @@ public class TvBrowser extends AppCompatActivity {
           boolean result = false;
 
           if ("channel_id".equals(cursor.getColumnName(columnIndex))) {
-            final String logoNamePref = PrefUtils.getStringValue(R.string.CHANNEL_LOGO_NAME_PROGRAM_LISTS, R.string.channel_logo_name_program_lists_default);
+            final String logoNamePref = prefs.getStringValueWithDefaultKey(R.string.CHANNEL_LOGO_NAME_PROGRAM_LISTS, R.string.channel_logo_name_program_lists_default);
 
             boolean showChannelLogo = logoNamePref.equals("0") || logoNamePref.equals("1");
             boolean showBigChannelLogo = logoNamePref.equals("3");
@@ -4558,13 +4576,13 @@ public class TvBrowser extends AppCompatActivity {
 
             result = true;
           } else if (TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER.equals(cursor.getColumnName(columnIndex))) {
-            if (PrefUtils.getBooleanValue(R.string.SHOW_SORT_NUMBER_IN_LISTS, R.bool.show_sort_number_in_lists_default)) {
+            if (prefs.getBooleanValueWithDefaultKey(R.string.SHOW_SORT_NUMBER_IN_LISTS, R.bool.show_sort_number_in_lists_default)) {
               ((TextView) view).setText(cursor.getInt(columnIndex) + ".");
             }
 
             result = true;
           } else if (TvBrowserContentProvider.CHANNEL_KEY_NAME.equals(cursor.getColumnName(columnIndex))) {
-            final String logoNamePref = PrefUtils.getStringValue(R.string.CHANNEL_LOGO_NAME_PROGRAM_LISTS, R.string.channel_logo_name_program_lists_default);
+            final String logoNamePref = prefs.getStringValueWithDefaultKey(R.string.CHANNEL_LOGO_NAME_PROGRAM_LISTS, R.string.channel_logo_name_program_lists_default);
 
             if (mShowChannelName || logoNamePref.equals("0") || logoNamePref.equals("2")) {
               if (!((TextView) view).getText().toString().trim().isEmpty()) {
@@ -4584,7 +4602,7 @@ public class TvBrowser extends AppCompatActivity {
 
             ((TextView) view).setText(UiUtils.formatDate(date, TvBrowser.this, false, true, true, java.text.DateFormat.LONG, false));
 
-            if (PrefUtils.getBooleanValue(R.string.PREF_PROGRAM_LISTS_SHOW_END_TIME, R.bool.pref_program_lists_show_end_time_default)) {
+            if (prefs.getBooleanValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_SHOW_END_TIME, R.bool.pref_program_lists_show_end_time_default)) {
               final long end = cursor.getLong(cursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_ENDTIME));
 
               ((TextView) view).append(getString(R.string.running_until));
@@ -4637,7 +4655,7 @@ public class TvBrowser extends AppCompatActivity {
     }
     mUpdateItem = menu.findItem(R.id.menu_tvbrowser_action_update_data);
 
-    if(!"0".equals(PrefUtils.getStringValue(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default))) {
+    if(!"0".equals(prefs.getStringValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default))) {
       mUpdateItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
     }
 
@@ -4685,9 +4703,9 @@ public class TvBrowser extends AppCompatActivity {
 
     mScrollTimeItem.setVisible(mViewPager.getCurrentItem() != 2 && !mSearchExpanded);
 
-    boolean dataUpdateLogEnabled = PrefUtils.getBooleanValue(R.string.WRITE_DATA_UPDATE_LOG, R.bool.write_data_update_log_default);
-    boolean reminderLogEnabled = PrefUtils.getBooleanValue(R.string.WRITE_REMINDER_LOG, R.bool.write_reminder_log_default);
-    boolean pluginLogEnabled = PrefUtils.getBooleanValue(R.string.LOG_WRITE_PLUGIN_LOG, R.bool.log_write_plugin_log_default);
+    boolean dataUpdateLogEnabled = prefs.getBooleanValueWithDefaultKey(R.string.WRITE_DATA_UPDATE_LOG, R.bool.write_data_update_log_default);
+    boolean reminderLogEnabled = prefs.getBooleanValueWithDefaultKey(R.string.WRITE_REMINDER_LOG, R.bool.write_reminder_log_default);
+    boolean pluginLogEnabled = prefs.getBooleanValueWithDefaultKey(R.string.LOG_WRITE_PLUGIN_LOG, R.bool.log_write_plugin_log_default);
 
     mDebugMenuItem.setVisible(dataUpdateLogEnabled || reminderLogEnabled || pluginLogEnabled);
 
@@ -4711,11 +4729,13 @@ public class TvBrowser extends AppCompatActivity {
   private void addOnActionExpandListener(MenuItem search) {
     if(search != null) {
       search.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+        private final PrefUtils prefs = App.get().prefs();
+
         @Override
         public boolean onMenuItemActionExpand(MenuItem item) {
           mSearchExpanded = true;
 
-          if("0".equals(PrefUtils.getStringValue(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default))) {
+          if("0".equals(App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default))) {
             mUpdateItem.setVisible(false);
           }
 
@@ -4733,7 +4753,7 @@ public class TvBrowser extends AppCompatActivity {
 
           Fragment fragment = mTvBrowserPagerAdapter.getItem(mViewPager.getCurrentItem());
 
-          if("0".equals(PrefUtils.getStringValue(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default))) {
+          if("0".equals(App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default))) {
             mUpdateItem.setVisible(true);
           }
           if(!(fragment instanceof FragmentFavorites)) {
@@ -4760,7 +4780,7 @@ public class TvBrowser extends AppCompatActivity {
     String bicycle = pref.getString(SettingConstants.USER_PASSWORD, null);
 
     boolean isAccount = (car != null && car.trim().length() > 0 && bicycle != null && bicycle.trim().length() > 0)
-        && PrefUtils.getBooleanValue(R.string.PREF_PRIVACY_TERMS_ACCEPTED_SYNC,R.bool.pref_privacy_terms_default);
+        && App.get().prefs().getBooleanValueWithDefaultKey(R.string.PREF_PRIVACY_TERMS_ACCEPTED_SYNC,R.bool.pref_privacy_terms_default);
 
     if(mOptionsMenu != null) {
       mOptionsMenu.findItem(R.id.action_synchronize_channels).setEnabled(isAccount);
@@ -4782,7 +4802,8 @@ public class TvBrowser extends AppCompatActivity {
         subMenu.removeItem(SCROLL_ID);
       }
 
-      SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(TvBrowser.this);
+      final PrefUtils prefs = App.get().prefs();
+      SharedPreferences pref = prefs.getDefault();
 
       ArrayList<Integer> values = new ArrayList<>();
 
@@ -4812,7 +4833,7 @@ public class TvBrowser extends AppCompatActivity {
           }
       }
 
-      if(PrefUtils.getBooleanValue(R.string.SORT_RUNNING_TIMES, R.bool.sort_running_times_default)) {
+      if(prefs.getBooleanValueWithDefaultKey(R.string.SORT_RUNNING_TIMES, R.bool.sort_running_times_default)) {
         Collections.sort(values);
       }
 
@@ -4840,7 +4861,7 @@ public class TvBrowser extends AppCompatActivity {
           mUpdateItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         }
         else {
-          if(!"0".equals(PrefUtils.getStringValue(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default))) {
+          if(!"0".equals(App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default))) {
             mUpdateItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
             invalidateOptionsMenu();
           }
@@ -4889,7 +4910,7 @@ public class TvBrowser extends AppCompatActivity {
       LocalBroadcastManager.getInstance(TvBrowser.this).sendBroadcastSync(showChannel);
     }
     else {
-      final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+      final SharedPreferences pref = App.get().prefs().getDefault();
 
       final boolean infoShown = pref.getBoolean(getString(R.string.PREF_RATING_DONATION_INFO_SHOWN), getResources().getBoolean(R.bool.pref_rating_donation_info_shown_default));
       final boolean timeToShow = (pref.getLong(getString(R.string.PREF_RUNNING_TIME), getResources().getInteger(R.integer.pref_running_time_default)) > 2 * 60 * 60000);

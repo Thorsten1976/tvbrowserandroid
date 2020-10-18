@@ -53,6 +53,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.tvbrowser.LoaderUpdater.CallbackObjects;
@@ -107,14 +108,14 @@ public class FragmentFavorites extends Fragment implements LoaderManager.LoaderC
                            Bundle savedInstanceState) {
     int layout = R.layout.fragment_favorite_layout;
     
-    if(PrefUtils.getStringValue(R.string.PREF_FAVORITE_TAB_LAYOUT, R.string.pref_favorite_tab_layout_default).equals("1")) {
+    if(App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_FAVORITE_TAB_LAYOUT, R.string.pref_favorite_tab_layout_default).equals("1")) {
       layout = R.layout.fragment_favorite_selection_list_layout;
     }
     
     return inflater.inflate(layout, container, false);
   }
   
-  public void updateSynchroButton(final Handler handler, View view) {
+  public void updateSynchroButton(final Handler handler) {
     removeMarkingSelections(handler);
     addMarkingSelections(handler);
   }
@@ -141,7 +142,7 @@ public class FragmentFavorites extends Fragment implements LoaderManager.LoaderC
     try {
       Activity activity = getActivity();
       if(activity != null) {
-        int selection = PrefUtils.getIntValue(R.string.PREF_MISC_LAST_FAVORITE_SELECTION, 0);
+        int selection = App.get().prefs().getValue(R.string.PREF_MISC_LAST_FAVORITE_SELECTION, 0);
         Log.d("info13", "selection " + selection + " " + mContainsListViewFavoriteSelection);
         if(mFavoriteSelection != null) {
           Log.d("info13", "count " + mFavoriteSelection.getCount());
@@ -219,8 +220,8 @@ public class FragmentFavorites extends Fragment implements LoaderManager.LoaderC
     mWhereClause = new WhereClause();
 
     mFavoriteList = new ArrayList<>();
-    
-    SharedPreferences prefs = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, getActivity());
+
+    final PrefUtils prefUtils = App.get().prefs();
     
     updateFavoriteList(handler, false);
     removeMarkingSelections(handler);
@@ -428,7 +429,7 @@ public class FragmentFavorites extends Fragment implements LoaderManager.LoaderC
           }
           
           if(position.get() == -1) {
-            int lastPosition = PrefUtils.getIntValue(R.string.PREF_MISC_LAST_FAVORITE_SELECTION, 0);
+            int lastPosition = prefUtils.getValue(R.string.PREF_MISC_LAST_FAVORITE_SELECTION, 0);
             
             if(lastPosition >= 0 && mFavoriteAdapter.getCount() > lastPosition) {
               position.set(lastPosition);
@@ -480,7 +481,7 @@ public class FragmentFavorites extends Fragment implements LoaderManager.LoaderC
       mFavoriteSelection.setOnItemClickListener((adapterView, v, position, id) -> selectFavorite(position));
     }
     
-    updateSynchroButton(handler,null);
+    updateSynchroButton(handler);
  
     mFavoriteProgramList = getView().findViewById(R.id.favorite_program_list);
     mFavoriteProgramList.setOnItemClickListener((adapterView, v, position, id) -> mViewAndClickHandler.onListItemClick(null, v, position, id));
@@ -512,10 +513,10 @@ public class FragmentFavorites extends Fragment implements LoaderManager.LoaderC
     SeparatorDrawable drawable = new SeparatorDrawable(getActivity());
     
     mFavoriteProgramList.setDivider(drawable);
+
+    prefUtils.getDefault().registerOnSharedPreferenceChangeListener(this);
     
-    prefs.registerOnSharedPreferenceChangeListener(this);
-    
-    setDividerSize(PrefUtils.getStringValue(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
+    setDividerSize(prefUtils.getStringValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
   }
   
   private WhereClause getWhereClause() {
@@ -552,9 +553,9 @@ public class FragmentFavorites extends Fragment implements LoaderManager.LoaderC
   private void saveCurrentSelection(final Context context, final int position) {
     Log.d("info13", "mIsStarted " + mIsStarted + " " + position);
     if(mIsStarted) {
-      boolean success = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, context).edit().putInt(context.getString(R.string.PREF_MISC_LAST_FAVORITE_SELECTION), position).commit();
-      
-      Log.d("info13", "success " + success + " " + PrefUtils.getIntValue(R.string.PREF_MISC_LAST_FAVORITE_SELECTION, 0));
+      final PrefUtils prefUtils = App.get().prefs();
+      boolean success = prefUtils.edit().putInt(context.getString(R.string.PREF_MISC_LAST_FAVORITE_SELECTION), position).commit();
+      Log.d("info13", "success " + success + " " + prefUtils.getValue(R.string.PREF_MISC_LAST_FAVORITE_SELECTION, 0));
     }
   }
   
@@ -747,7 +748,7 @@ public class FragmentFavorites extends Fragment implements LoaderManager.LoaderC
         final FavoriteSpinnerEntry reminder = new FavoriteSpinnerEntry(name, new WhereClause(whereClause,null));
         FavoriteSpinnerEntry syncTemp = null;
         
-        if(PrefUtils.getBooleanValue(R.string.PREF_SYNC_FAV_FROM_DESKTOP, R.bool.pref_sync_fav_from_desktop_default) && getActivity().getSharedPreferences("transportation", Context.MODE_PRIVATE).getString(SettingConstants.USER_NAME, "").trim().length() > 0) {
+        if(App.get().prefs().getBooleanValueWithDefaultKey(R.string.PREF_SYNC_FAV_FROM_DESKTOP, R.bool.pref_sync_fav_from_desktop_default) && App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_TRANSPORTATION).getString(SettingConstants.USER_NAME, "").trim().length() > 0) {
           syncTemp = new FavoriteSpinnerEntry(getString(R.string.marking_value_sync), new WhereClause(TvBrowserContentProvider.CONCAT_TABLE_PLACE_HOLDER + " " + TvBrowserContentProvider.DATA_KEY_MARKING_SYNC, null));
         }
         
@@ -811,9 +812,9 @@ public class FragmentFavorites extends Fragment implements LoaderManager.LoaderC
   @NonNull
   @Override
   public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-    String[] projection = null;
+    String[] projection;
     
-    if(PrefUtils.getBooleanValue(R.string.SHOW_PICTURE_IN_LISTS, R.bool.show_pictures_in_lists_default)) {
+    if(App.get().prefs().getBooleanValueWithDefaultKey(R.string.SHOW_PICTURE_IN_LISTS, R.bool.show_pictures_in_lists_default)) {
       projection = new String[14 + TvBrowserContentProvider.MARKING_COLUMNS.length];
       
       projection[projection.length-1] = TvBrowserContentProvider.DATA_KEY_PICTURE;
@@ -952,7 +953,7 @@ public class FragmentFavorites extends Fragment implements LoaderManager.LoaderC
   public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
     if(!isDetached() && getActivity() != null) {
       if(getString(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE).equals(key)) {
-        setDividerSize(PrefUtils.getStringValue(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
+        setDividerSize(App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
       }
       else if(mFavoriteProgramList != null && (getString(R.string.PREF_COLOR_SEPARATOR_LINE).equals(key) || getString(R.string.PREF_COLOR_SEPARATOR_SPACE).equals(key))) {
         final Drawable separator = mFavoriteProgramList.getDivider();

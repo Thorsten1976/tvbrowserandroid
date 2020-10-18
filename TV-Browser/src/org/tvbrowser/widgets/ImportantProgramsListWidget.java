@@ -16,6 +16,7 @@
  */
 package org.tvbrowser.widgets;
 
+import org.tvbrowser.App;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.tvbrowser.InfoActivity;
 import org.tvbrowser.tvbrowser.R;
@@ -89,10 +90,9 @@ public class ImportantProgramsListWidget extends AppWidgetProvider {
       intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
       
       RemoteViews views = null;
-      
-      PrefUtils.initialize(context);
-      
-      String divider = PrefUtils.getStringValue(R.string.PREF_WIDGET_LISTS_DIVIDER_SIZE, R.string.pref_widget_lists_divider_size_default);
+
+      final PrefUtils prefs = App.get().prefs();
+      String divider = prefs.getStringValueWithDefaultKey(R.string.PREF_WIDGET_LISTS_DIVIDER_SIZE, R.string.pref_widget_lists_divider_size_default);
       
       if(divider.equals(context.getString(R.string.divider_tiny))) {
         views = new RemoteViews(context.getPackageName(), R.layout.important_programs_widget_divider_tiny);
@@ -107,7 +107,7 @@ public class ImportantProgramsListWidget extends AppWidgetProvider {
         views = new RemoteViews(context.getPackageName(), R.layout.important_programs_widget_divider_small);
       }
       
-      if(PrefUtils.getBooleanValue(R.string.PREF_WIDGET_SIMPLE_ICON, R.bool.pref_widget_simple_icon_default)) {
+      if(prefs.getBooleanValueWithDefaultKey(R.string.PREF_WIDGET_SIMPLE_ICON, R.bool.pref_widget_simple_icon_default)) {
         views.setImageViewResource(R.id.important_widget_header_icon, R.drawable.ic_widget_simple);
       }
       else {
@@ -118,9 +118,9 @@ public class ImportantProgramsListWidget extends AppWidgetProvider {
       int headerDrawable = R.drawable.shape_button_background_corners_rounded_transparency_medium;
       int listDrawable = R.drawable.shape_widget_background_corners_rounded_transparency_medium;
       
-      boolean roundedCorners = PrefUtils.getBooleanValue(R.string.PREF_WIDGET_BACKGROUND_ROUNDED_CORNERS, R.bool.pref_widget_background_rounded_corners_default);
-      int headerTransparency = PrefUtils.getStringValueAsInt(R.string.PREF_WIDGET_BACKGROUND_TRANSPARENCY_HEADER, R.string.pref_widget_background_transparency_header_default);
-      int listTransparency = PrefUtils.getStringValueAsInt(R.string.PREF_WIDGET_BACKGROUND_TRANSPARENCY_LIST, R.string.pref_widget_background_transparency_list_default);
+      boolean roundedCorners = prefs.getBooleanValueWithDefaultKey(R.string.PREF_WIDGET_BACKGROUND_ROUNDED_CORNERS, R.bool.pref_widget_background_rounded_corners_default);
+      int headerTransparency = prefs.getStringValueAsInt(R.string.PREF_WIDGET_BACKGROUND_TRANSPARENCY_HEADER, R.string.pref_widget_background_transparency_header_default);
+      int listTransparency = prefs.getStringValueAsInt(R.string.PREF_WIDGET_BACKGROUND_TRANSPARENCY_LIST, R.string.pref_widget_background_transparency_list_default);
 
       if(roundedCorners) {
         switch (headerTransparency) {

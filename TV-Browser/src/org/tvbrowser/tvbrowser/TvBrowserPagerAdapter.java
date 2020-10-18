@@ -26,6 +26,7 @@ import androidx.fragment.app.FragmentStatePagerAdapter;
 import androidx.collection.SparseArrayCompat;
 import android.view.ViewGroup;
 
+import org.tvbrowser.App;
 import org.tvbrowser.utils.IOUtils;
 import org.tvbrowser.utils.PrefUtils;
 
@@ -90,7 +91,7 @@ final class TvBrowserPagerAdapter extends FragmentPagerAdapter {
   public int getCount() {
     final int count;
     if (IOUtils.isDatabaseAccessible(tvBrowser.getApplicationContext())) {
-      if(PrefUtils.getBooleanValue(R.string.PROG_TABLE_ACTIVATED, R.bool.prog_table_activated_default)) {
+      if(App.get().prefs().getBooleanValueWithDefaultKey(R.string.PROG_TABLE_ACTIVATED, R.bool.prog_table_activated_default)) {
         count = 4;
       } else {
         count = 3;

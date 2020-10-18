@@ -47,6 +47,7 @@ import java.util.zip.GZIPOutputStream;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.devplugin.Channel;
 import org.tvbrowser.job.JobDataUpdateAuto;
@@ -241,7 +242,7 @@ public final class IOUtils {
     for(int i = 0; i < SettingConstants.CATEGORY_COLOR_PREF_KEY_ARR.length; i++) {
       int colorKey = SettingConstants.CATEGORY_COLOR_PREF_KEY_ARR[i];
       
-      int[] colorCategory = getActivatedColorFor(PrefUtils.getStringValue(colorKey, getDefaultCategoryColorKeyForColorKey(colorKey)));
+      int[] colorCategory = getActivatedColorFor(App.get().prefs().getStringValueWithDefaultKey(colorKey, getDefaultCategoryColorKeyForColorKey(colorKey)));
       
       if(colorCategory[0] == 1) {
         categoryColorMap.put(names[i], colorCategory[1]);
@@ -290,7 +291,8 @@ public final class IOUtils {
     SpannableStringBuilder infoString = new SpannableStringBuilder();
     
     for(int i = 1; i <= 25; i++) {
-      if((value & (1 << i)) == (1 << i) && PrefUtils.getBooleanValue(prefKeyArr[i-1], R.bool.pref_info_show_default)) {
+      final PrefUtils prefs = App.get().prefs();
+      if((value & (1 << i)) == (1 << i) && prefs.getBooleanValueWithDefaultKey(prefKeyArr[i-1], R.bool.pref_info_show_default)) {
         if(infoString.length() > 0) {
           infoString.append(", ");
           
@@ -301,7 +303,7 @@ public final class IOUtils {
         infoString.append(valueArr[i]);
         
         if(colored) {
-          int[] colorCategory = getActivatedColorFor(PrefUtils.getStringValue(colorPrefKeyArr[i-1], getDefaultCategoryColorKeyForColorKey(colorPrefKeyArr[i-1])));
+          int[] colorCategory = getActivatedColorFor(prefs.getStringValueWithDefaultKey(colorPrefKeyArr[i-1], getDefaultCategoryColorKeyForColorKey(colorPrefKeyArr[i-1])));
           
           Integer color = defaultColor;
           
@@ -1262,7 +1264,7 @@ public final class IOUtils {
     boolean result = true;
     
     if(context != null) {
-      String path = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, context).getString(context.getString(R.string.PREF_DATABASE_PATH), context.getString(R.string.pref_database_path_default));
+      String path = App.get().prefs().getDefault().getString(context.getString(R.string.PREF_DATABASE_PATH), context.getString(R.string.pref_database_path_default));
       
       if(!path.equals(context.getString(R.string.pref_database_path_default))) {
         result = new File(path).canWrite();

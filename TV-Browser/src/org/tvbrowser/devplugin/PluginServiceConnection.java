@@ -19,9 +19,9 @@ package org.tvbrowser.devplugin;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.tvbrowser.App;
 import org.tvbrowser.tvbrowser.Logging;
 import org.tvbrowser.tvbrowser.R;
-import org.tvbrowser.utils.PrefUtils;
 import org.tvbrowser.utils.UiUtils;
 
 import android.content.ComponentName;
@@ -156,8 +156,8 @@ public class PluginServiceConnection implements ServiceConnection, Comparable<Pl
           
           if(!PluginHandler.firstAndLastProgramIdAlreadyHandled()) {
             try {
-              SharedPreferences pref = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, mContext);
-              long value = pref.getLong(mContext.getString(R.string.META_DATA_ID_FIRST_KNOWN), mContext.getResources().getInteger(R.integer.meta_data_id_default));
+              final long value = App.get().prefs().getDefault()
+                      .getLong(mContext.getString(R.string.META_DATA_ID_FIRST_KNOWN), mContext.getResources().getInteger(R.integer.meta_data_id_default));
               mPlugin.handleFirstKnownProgramId(value);
             }catch(Throwable ignored) {}
           }
@@ -190,7 +190,7 @@ public class PluginServiceConnection implements ServiceConnection, Comparable<Pl
           
           icon.setBounds(0, 0, (int)(iconBitmap.getWidth() * zoom), (int)(iconBitmap.getHeight() * zoom));
           
-          if(!PrefUtils.isDarkTheme()) {
+          if(!App.get().prefs().isDarkTheme()) {
             icon.setColorFilter(new PorterDuffColorFilter(Color.BLACK, PorterDuff.Mode.MULTIPLY));
           }
           

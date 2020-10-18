@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.TimeZone;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.utils.CompatUtils;
@@ -206,7 +207,7 @@ public class FragmentProgramTable extends Fragment {
 
           try {
             if(IOUtils.prepareAccessFirst(c)) {
-              long id = -1;
+              long id;
 
               do {
                 id = c.getLong(c.getColumnIndex(TvBrowserContentProvider.KEY_ID));
@@ -576,8 +577,9 @@ public class FragmentProgramTable extends Fragment {
 
     int[] infoPrefKeyArr = SettingConstants.CATEGORY_PREF_KEY_ARR;
 
+    final PrefUtils prefs = App.get().prefs();
     for(int infoKey : infoPrefKeyArr) {
-      if(PrefUtils.getBooleanValue(infoKey, R.bool.pref_info_show_default)) {
+      if(prefs.getBooleanValueWithDefaultKey(infoKey, R.bool.pref_info_show_default)) {
         mShowInfos.add(infoKey);
       }
     }
@@ -628,13 +630,13 @@ public class FragmentProgramTable extends Fragment {
 
       try {
         if(IOUtils.prepareAccess(channels)) {
-          String[] projection = null;
+          String[] projection;
 
-          mPictureShown = PrefUtils.getBooleanValue(R.string.SHOW_PICTURE_IN_PROGRAM_TABLE, R.bool.prog_table_show_pictures_default);
-          mShowGenre = PrefUtils.getBooleanValue(R.string.SHOW_GENRE_IN_PROGRAM_TABLE, R.bool.prog_table_show_genre_default);
-          mShowEpisode = PrefUtils.getBooleanValue(R.string.SHOW_EPISODE_IN_PROGRAM_TABLE, R.bool.prog_table_show_episode_default);
-          mShowInfo = PrefUtils.getBooleanValue(R.string.SHOW_INFO_IN_PROGRAM_TABLE, R.bool.prog_table_show_infos_default);
-          mShowDescriptionIfRoom = PrefUtils.getBooleanValue(R.string.SHOW_DESCRIPTION_IF_ROOM_IN_PROGRAM_TABLE, R.bool.prog_table_show_description_if_room_in_program_table_default);
+          mPictureShown = prefs.getBooleanValueWithDefaultKey(R.string.SHOW_PICTURE_IN_PROGRAM_TABLE, R.bool.prog_table_show_pictures_default);
+          mShowGenre = prefs.getBooleanValueWithDefaultKey(R.string.SHOW_GENRE_IN_PROGRAM_TABLE, R.bool.prog_table_show_genre_default);
+          mShowEpisode = prefs.getBooleanValueWithDefaultKey(R.string.SHOW_EPISODE_IN_PROGRAM_TABLE, R.bool.prog_table_show_episode_default);
+          mShowInfo = prefs.getBooleanValueWithDefaultKey(R.string.SHOW_INFO_IN_PROGRAM_TABLE, R.bool.prog_table_show_infos_default);
+          mShowDescriptionIfRoom = prefs.getBooleanValueWithDefaultKey(R.string.SHOW_DESCRIPTION_IF_ROOM_IN_PROGRAM_TABLE, R.bool.prog_table_show_description_if_room_in_program_table_default);
 
           int orderNumberColumn = channels.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER);
           mShowOrderNumbers = ProgramTableLayoutConstants.getShowOrderNumber();
@@ -661,7 +663,7 @@ public class FragmentProgramTable extends Fragment {
 
           Collections.addAll(projectionList, TvBrowserContentProvider.MARKING_COLUMNS);
 
-          mTimeBlockSize = Integer.parseInt(PrefUtils.getStringValue(R.string.PROG_PANEL_TIME_BLOCK_SIZE, R.string.prog_panel_time_block_size));
+          mTimeBlockSize = Integer.parseInt(prefs.getStringValueWithDefaultKey(R.string.PROG_PANEL_TIME_BLOCK_SIZE, R.string.prog_panel_time_block_size));
 
           projection = projectionList.toArray(new String[0]);
 
@@ -673,9 +675,9 @@ public class FragmentProgramTable extends Fragment {
           }
 
           if(channels.getCount() > 0) {
-            mGrowPanels = PrefUtils.getBooleanValue(R.string.PROG_PANEL_GROW, R.bool.prog_panel_grow_default);
+            mGrowPanels = prefs.getBooleanValueWithDefaultKey(R.string.PROG_PANEL_GROW, R.bool.prog_panel_grow_default);
 
-            if(PrefUtils.getStringValue(R.string.PROG_TABLE_LAYOUT, R.string.prog_table_layout_default).equals("0")) {
+            if(prefs.getStringValueWithDefaultKey(R.string.PROG_TABLE_LAYOUT, R.string.prog_table_layout_default).equals("0")) {
               mProgramPanelLayout = new TimeBlockProgramTableLayout(getActivity(), channelIDsOrdered, mTimeBlockSize, value, mGrowPanels);
             }
             else {
@@ -875,7 +877,8 @@ public class FragmentProgramTable extends Fragment {
       mDaySet = false;
     }
 
-    if(PrefUtils.isDarkTheme()) {
+    final PrefUtils prefs = App.get().prefs();
+    if(prefs.isDarkTheme()) {
       programTableLayout.findViewById(R.id.button_panel).setBackgroundColor(ContextCompat.getColor(getActivity(), R.color.background_material_dark));
     }
 
@@ -896,9 +899,9 @@ public class FragmentProgramTable extends Fragment {
     ViewGroup layout = programTableLayout.findViewById(R.id.program_table_base);
     layout.setTag("LAYOUT");
 
-    int startTab = Integer.parseInt(PrefUtils.getStringValue(R.string.TAB_TO_SHOW_AT_START, R.string.tab_to_show_at_start_default));
+    int startTab = Integer.parseInt(prefs.getStringValueWithDefaultKey(R.string.TAB_TO_SHOW_AT_START, R.string.tab_to_show_at_start_default));
 
-    if(!PrefUtils.getBooleanValue(R.string.PROG_TABLE_DELAYED, R.bool.prog_table_delayed_default) || startTab == 3) {
+    if(!prefs.getBooleanValueWithDefaultKey(R.string.PROG_TABLE_DELAYED, R.bool.prog_table_delayed_default) || startTab == 3) {
       updateView(inflater,layout);
     }
 
@@ -936,16 +939,17 @@ public class FragmentProgramTable extends Fragment {
     SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
     boolean toShow = pref.getBoolean(getResources().getString(R.string.SHOW_PICTURE_IN_PROGRAM_TABLE), false);
-    boolean toGrow = PrefUtils.getBooleanValue(R.string.PROG_PANEL_GROW, R.bool.prog_panel_grow_default);
-    boolean updateLayout = (PrefUtils.getStringValue(R.string.PROG_TABLE_LAYOUT, R.string.prog_table_layout_default).equals("0") && mProgramPanelLayout instanceof CompactProgramTableLayout) ||
-            (PrefUtils.getStringValue(R.string.PROG_TABLE_LAYOUT, R.string.prog_table_layout_default).equals("1") && mProgramPanelLayout instanceof TimeBlockProgramTableLayout);
-    boolean updateWidth = PrefUtils.getIntValueWithDefaultKey(R.string.PROG_TABLE_COLUMN_WIDTH, R.integer.prog_table_column_width_default) != ProgramTableLayoutConstants.getRawColumnWidth();
-    boolean updateTextScale = Float.valueOf(PrefUtils.getStringValue(R.string.PROG_TABLE_TEXT_SCALE, R.string.prog_table_text_scale_default)) != ProgramTableLayoutConstants.getTextScale();
-    boolean updateShownValues = PrefUtils.getBooleanValue(R.string.SHOW_EPISODE_IN_PROGRAM_TABLE, R.bool.prog_table_show_episode_default) != mShowEpisode ||
-            PrefUtils.getBooleanValue(R.string.SHOW_GENRE_IN_PROGRAM_TABLE, R.bool.prog_table_show_genre_default) != mShowGenre ||
-            PrefUtils.getBooleanValue(R.string.SHOW_INFO_IN_PROGRAM_TABLE, R.bool.prog_table_show_infos_default) != mShowInfo;
+    final PrefUtils prefs = App.get().prefs();
+    boolean toGrow = prefs.getBooleanValueWithDefaultKey(R.string.PROG_PANEL_GROW, R.bool.prog_panel_grow_default);
+    boolean updateLayout = (prefs.getStringValueWithDefaultKey(R.string.PROG_TABLE_LAYOUT, R.string.prog_table_layout_default).equals("0") && mProgramPanelLayout instanceof CompactProgramTableLayout) ||
+            (prefs.getStringValueWithDefaultKey(R.string.PROG_TABLE_LAYOUT, R.string.prog_table_layout_default).equals("1") && mProgramPanelLayout instanceof TimeBlockProgramTableLayout);
+    boolean updateWidth = prefs.getIntValueWithDefaultKey(R.string.PROG_TABLE_COLUMN_WIDTH, R.integer.prog_table_column_width_default) != ProgramTableLayoutConstants.getRawColumnWidth();
+    boolean updateTextScale = Float.parseFloat(prefs.getStringValueWithDefaultKey(R.string.PROG_TABLE_TEXT_SCALE, R.string.prog_table_text_scale_default)) != ProgramTableLayoutConstants.getTextScale();
+    boolean updateShownValues = prefs.getBooleanValueWithDefaultKey(R.string.SHOW_EPISODE_IN_PROGRAM_TABLE, R.bool.prog_table_show_episode_default) != mShowEpisode ||
+            prefs.getBooleanValueWithDefaultKey(R.string.SHOW_GENRE_IN_PROGRAM_TABLE, R.bool.prog_table_show_genre_default) != mShowGenre ||
+            prefs.getBooleanValueWithDefaultKey(R.string.SHOW_INFO_IN_PROGRAM_TABLE, R.bool.prog_table_show_infos_default) != mShowInfo;
 
-    boolean updateInfoValues = PrefUtils.getBooleanValue(R.string.SHOW_INFO_IN_PROGRAM_TABLE, R.bool.prog_table_show_infos_default);
+    boolean updateInfoValues = prefs.getBooleanValueWithDefaultKey(R.string.SHOW_INFO_IN_PROGRAM_TABLE, R.bool.prog_table_show_infos_default);
 
     if(updateInfoValues) {
       updateInfoValues = false;
@@ -953,7 +957,7 @@ public class FragmentProgramTable extends Fragment {
       int[] infoPrefKeyArr = SettingConstants.CATEGORY_PREF_KEY_ARR;
 
       for(int infoKey : infoPrefKeyArr) {
-        boolean isShownSetting = PrefUtils.getBooleanValue(infoKey, R.bool.pref_info_show_default);
+        boolean isShownSetting = prefs.getBooleanValueWithDefaultKey(infoKey, R.bool.pref_info_show_default);
         boolean isCurrentlyShown = mShowInfos.contains(infoKey);
 
         if((isShownSetting && !isCurrentlyShown) || (!isShownSetting && isCurrentlyShown)) {
@@ -988,7 +992,7 @@ public class FragmentProgramTable extends Fragment {
 
     ProgramTableLayoutConstants.updateChannelLogoName(getActivity());
 
-    int logoValue = Integer.parseInt(PrefUtils.getStringValue(R.string.CHANNEL_LOGO_NAME_PROGRAM_TABLE, R.string.channel_logo_name_program_table_default));
+    int logoValue = Integer.parseInt(App.get().prefs().getStringValueWithDefaultKey(R.string.CHANNEL_LOGO_NAME_PROGRAM_TABLE, R.string.channel_logo_name_program_table_default));
 
     if(channelBar != null && (logoValue != mCurrentLogoValue || ProgramTableLayoutConstants.getShowOrderNumber() != mShowOrderNumbers)) {
       mCurrentLogoValue = logoValue;
@@ -1071,7 +1075,6 @@ public class FragmentProgramTable extends Fragment {
     }
   }
 
-  @SuppressWarnings("deprecation")
   private void selectDate() {
     try {
       final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
@@ -1121,7 +1124,7 @@ public class FragmentProgramTable extends Fragment {
   }
 
   public boolean checkTimeBlockSize() {
-    if(mTimeBlockSize != Integer.parseInt(PrefUtils.getStringValue(R.string.PROG_PANEL_TIME_BLOCK_SIZE, R.string.prog_panel_time_block_size))) {
+    if(mTimeBlockSize != Integer.parseInt(App.get().prefs().getStringValueWithDefaultKey(R.string.PROG_PANEL_TIME_BLOCK_SIZE, R.string.prog_panel_time_block_size))) {
       ViewGroup layout = getView().findViewWithTag("LAYOUT");
 
       updateView(getActivity().getLayoutInflater(), layout);

@@ -16,10 +16,19 @@
  */
 package org.tvbrowser.utils;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import androidx.annotation.BoolRes;
+import androidx.annotation.IntDef;
+import androidx.annotation.IntegerRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.collection.SparseArrayCompat;
 import androidx.preference.PreferenceManager;
 
 import org.tvbrowser.content.TvBrowserContentProvider;
@@ -30,168 +39,14 @@ import org.tvbrowser.tvbrowser.R;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.util.Log;
 
-public class PrefUtils {
-  private static Context mContext;
-  private static SharedPreferences mPref;
-  
-  private PrefUtils() {}
-  
-  public static void initialize(Context context) {
-    if(context != null && mContext == null) {
-      mContext = context.getApplicationContext();
-      mPref = PreferenceManager.getDefaultSharedPreferences(mContext);
-    }
-  }
+import static android.content.Context.MODE_PRIVATE;
 
-  public static boolean setIntValue(int prefKey, int value) {
-    boolean result = false;
-    
-    if(mPref != null) {
-      Editor edit = mPref.edit();
-      edit.putInt(mContext.getString(prefKey), value);
-      result = edit.commit();
-    }
-    
-    return result;
-  }
+public final class PrefUtils {
 
-  public static Context getContext() {
-    return mContext;
-  }
-
-  public static int getIntValue(int prefKey, int defaultValue) {
-    if(mPref != null) {
-      return mPref.getInt(mContext.getString(prefKey), defaultValue);
-    }
-    
-    return defaultValue;
-  }
-  
-  public static int getIntValueWithDefaultKey(int prefKey, int defaultKey) {
-    if(mContext != null) {
-      return getIntValue(prefKey,mContext.getResources().getInteger(defaultKey));
-    }
-    
-    return -1;
-  }
-  
-  public static long getLongValue(int prefKey, long defaultValue) {
-    if(mPref != null) {
-      return mPref.getLong(mContext.getString(prefKey), defaultValue);
-    }
-    
-    return defaultValue;
-  }
-  
-  public static long getLongValueWithDefaultKey(int prefKey, int defaultKey) {
-    if(mContext != null) {
-      return getLongValue(prefKey,mContext.getResources().getInteger(defaultKey));
-    }
-    
-    return -1;
-  }
-  
-  public static boolean setBooleanValue(int prefKey, boolean value) {
-    boolean result = false;
-    
-    if(mPref != null) {
-      Editor edit = mPref.edit();
-      edit.putBoolean(mContext.getString(prefKey), value);
-      result = edit.commit();
-    }
-    
-    return result;
-  }
-  
-  public static boolean getBooleanValue(int prefKey, boolean defaultValue) {
-    if(mPref != null) {
-      return mPref.getBoolean(mContext.getString(prefKey), defaultValue);
-    }
-    
-    return defaultValue;
-  }
-  
-  public static boolean getBooleanValue(int prefKey, int defaultKey) {
-	  return mContext != null && getBooleanValue(prefKey, mContext.getResources().getBoolean(defaultKey));
-
-  }
-  
-  public static String getStringValue(int prefKey, String defaultValue) {
-    if(mPref != null) {
-      return mPref.getString(mContext.getString(prefKey), defaultValue);
-    }
-    
-    return defaultValue;
-  }
-  
-  public static String getStringValue(int prefKey, int defaultKey) {
-    if(mContext != null) {
-      return getStringValue(prefKey,mContext.getResources().getString(defaultKey));
-    }
-    
-    return null;
-  }
-
-  public static int getStringValueAsInt(int prefKey, String defaultValue) throws NumberFormatException {
-    if(mPref != null) {
-      String value = mPref.getString(mContext.getString(prefKey), defaultValue);
-      
-      if(value != null) {
-        return Integer.parseInt(value);
-      }
-    }
-    else if(defaultValue != null) {
-      return Integer.parseInt(defaultValue);
-    }
-    
-    return Integer.MIN_VALUE;
-  }
-  
-  public static int getStringValueAsInt(int prefKey, int defaultKey) throws NumberFormatException {
-    if(mContext != null) {
-      String value = getStringValue(prefKey,mContext.getResources().getString(defaultKey));
-      
-      if(value != null) {
-        return Integer.parseInt(value);
-      }
-    }
-    
-    return Integer.MIN_VALUE;
-  }
-
-  public static Set<String> getStringSetValue(int prefKey, Set<String> defaultValue) {
-    if(mPref != null) {
-      return mPref.getStringSet(mContext.getString(prefKey), defaultValue);
-    }
-    
-    return defaultValue;
-  }
-  
-  public static Set<String> getStringSetValue(int prefKey, int defaultKey) {
-    if(mContext != null) {
-      String[] tempValues = mContext.getResources().getStringArray(defaultKey);
-      
-      HashSet<String> defaultValues = new HashSet<>();
-      
-      
-      Collections.addAll(defaultValues, tempValues);
-      return getStringSetValue(prefKey,defaultValues);
-    }
-    
-    return null;
-  }
-  
-  public static final int TYPE_PREFERENCES_SHARED_GLOBAL = 0;
-  public static final int TYPE_PREFERENCES_FAVORITES = 1;
-  public static final int TYPE_PREFERENCES_FILTERS = 2;
-  public static final int TYPE_PREFERENCES_TRANSPORTATION = 3;
-  public static final int TYPE_PREFERENCES_MARKINGS = 4;
-  public static final int TYPE_PREFERENCES_MARKING_REMINDERS = 5;
-  public static final int TYPE_PREFERENCES_MARKING_SYNC = 6;
-  
   private static final String PREFERENCES_FAVORITE = "preferencesFavorite";
   private static final String PREFERENCES_FILTER = "filterPreferences";
   private static final String PREFERENCES_TRANSPORTATION = "transportation";
@@ -199,65 +54,213 @@ public class PrefUtils {
   private static final String PREFERENCES_MARKING_REMINDERS = "markingsReminders";
   private static final String PREFERENCES_MARKING_SYNC = "markingsSynchronization";
 
-  public static SharedPreferences getSharedPreferences(int type) {
-    return getSharedPreferences(type, mContext);
+  public static final int TYPE_PREFERENCES_SHARED_GLOBAL = 0;
+  public static final int TYPE_PREFERENCES_FAVORITES = 1;
+  public static final int TYPE_PREFERENCES_FILTERS = 2;
+  public static final int TYPE_PREFERENCES_TRANSPORTATION = 3;
+  public static final int TYPE_PREFERENCES_MARKINGS = 4;
+  public static final int TYPE_PREFERENCES_MARKING_REMINDERS = 5;
+  public static final int TYPE_PREFERENCES_MARKING_SYNC = 6;
+
+  @Retention(RetentionPolicy.SOURCE)
+  @IntDef({TYPE_PREFERENCES_SHARED_GLOBAL, TYPE_PREFERENCES_FAVORITES, TYPE_PREFERENCES_FILTERS,
+          TYPE_PREFERENCES_TRANSPORTATION, TYPE_PREFERENCES_MARKINGS,
+          TYPE_PREFERENCES_MARKING_REMINDERS, TYPE_PREFERENCES_MARKING_SYNC})
+  @interface PreferencesType {}
+
+  private final Resources mResources;
+  private final SparseArrayCompat<SharedPreferences> mSharedPreferences;
+
+  public PrefUtils(@NonNull final Context context) {
+    mResources = context.getResources();
+    mSharedPreferences = new SparseArrayCompat<>(7);
+    init(context);
   }
 
-  public static SharedPreferences getSharedPreferences(int type, Context context) {
-    SharedPreferences pref = null;
-    
-    if(context != null) {
-      switch(type) {
-        case TYPE_PREFERENCES_SHARED_GLOBAL: pref = PreferenceManager.getDefaultSharedPreferences(context);break;
-        case TYPE_PREFERENCES_FAVORITES: pref = context.getSharedPreferences(PREFERENCES_FAVORITE, Context.MODE_PRIVATE);break;
-        case TYPE_PREFERENCES_FILTERS: pref = context.getSharedPreferences(PREFERENCES_FILTER, Context.MODE_PRIVATE);break;
-        case TYPE_PREFERENCES_TRANSPORTATION: pref = context.getSharedPreferences(PREFERENCES_TRANSPORTATION, Context.MODE_PRIVATE);break;
-        case TYPE_PREFERENCES_MARKINGS: pref = context.getSharedPreferences(PREFERENCES_MARKINGS, Context.MODE_PRIVATE);break;
-        case TYPE_PREFERENCES_MARKING_REMINDERS: pref = context.getSharedPreferences(PREFERENCES_MARKING_REMINDERS, Context.MODE_PRIVATE);break;
-        case TYPE_PREFERENCES_MARKING_SYNC: pref = context.getSharedPreferences(PREFERENCES_MARKING_SYNC, Context.MODE_PRIVATE);break;
-      }
+  public void init(@NonNull final Context context) {
+    synchronized (mSharedPreferences) {
+      mSharedPreferences.put(TYPE_PREFERENCES_SHARED_GLOBAL,
+              PreferenceManager.getDefaultSharedPreferences(context));
+      mSharedPreferences.put(TYPE_PREFERENCES_FAVORITES,
+              context.getSharedPreferences(PREFERENCES_FAVORITE, MODE_PRIVATE));
+      mSharedPreferences.put(TYPE_PREFERENCES_FILTERS,
+              context.getSharedPreferences(PREFERENCES_FILTER, MODE_PRIVATE));
+      mSharedPreferences.put(TYPE_PREFERENCES_TRANSPORTATION,
+              context.getSharedPreferences(PREFERENCES_TRANSPORTATION, MODE_PRIVATE));
+      mSharedPreferences.put(TYPE_PREFERENCES_MARKINGS,
+              context.getSharedPreferences(PREFERENCES_MARKINGS, MODE_PRIVATE));
+      mSharedPreferences.put(TYPE_PREFERENCES_MARKING_REMINDERS,
+              context.getSharedPreferences(PREFERENCES_MARKING_REMINDERS, MODE_PRIVATE));
+      mSharedPreferences.put(TYPE_PREFERENCES_MARKING_SYNC,
+              context.getSharedPreferences(PREFERENCES_MARKING_SYNC, MODE_PRIVATE));
     }
-    
-    return pref;
+  }
+
+  public SharedPreferences getDefault() {
+    return getShared(TYPE_PREFERENCES_SHARED_GLOBAL);
+  }
+
+  public SharedPreferences getShared(@PreferencesType final int type) {
+    return mSharedPreferences.get(type);
+  }
+
+  public Editor edit() {
+    return edit(TYPE_PREFERENCES_SHARED_GLOBAL);
+  }
+
+  public Editor edit(@PreferencesType final int type) {
+    return getShared(type).edit();
+  }
+
+  /**
+   * Returns a preference value from the shared preferences identified by a given string resource id
+   * (preferences key).
+   * <p/>
+   * If the underlying shared preferences object is <code>null</code>, was not initialized properly,
+   * or if the preferences key could not be found, the given default value is returned.
+   * </p>
+   * The default value defines the return type of this generic operation and cannot be
+   * <code>null</code>.
+   *
+   * @param <T> the generic return type.
+   * @param defaultValue the fallback value which maps to the generic return type.
+   * @param prefKey the string resource identifier which maps to the preferences key.
+   * @return the preferences value from the shared preferences identified by a given string
+   *  resource, or the default value as fallback.
+   */
+  @Nullable
+  @SuppressWarnings("unchecked")
+  public <T> T getValue(@StringRes final int prefKey, @Nullable final T defaultValue) {
+    return getValue(TYPE_PREFERENCES_SHARED_GLOBAL, prefKey, defaultValue);
+  }
+
+  /**
+   * Returns a preference value from the shared preferences identified by a given string resource id
+   * (preferences key) and a given {@link PreferencesType}.
+   * <p/>
+   * If the underlying shared preferences object is <code>null</code>, was not initialized properly,
+   * or if the preferences key could not be found, the given default value is returned.
+   * </p>
+   * The default value defines the return type of this generic operation and cannot be
+   * <code>null</code>.
+   *
+   * @param <T> the generic return type.
+   * @param defaultValue the fallback value which maps to the generic return type.
+   * @param prefKey the string resource identifier which maps to the preferences key.
+   * @param type the shared preferences type (one of {@link PreferencesType}).
+   * @return the preferences value from the shared preferences identified by a given string
+   *  resource, or the default value as fallback.
+   */
+  @Nullable
+  @SuppressWarnings("unchecked")
+  public <T> T getValue(@PreferencesType final int type, @StringRes final int prefKey, @Nullable final T... defaultValue) {
+    T result = null;
+    final SharedPreferences sharedPreferences = getShared(type);
+    final String key = mResources.getString(prefKey);
+    if (sharedPreferences != null && sharedPreferences.contains(key)) {
+      result = (T) sharedPreferences.getAll().get(key);
+    }
+    return result==null ? (defaultValue!=null && defaultValue.length==1 ? defaultValue[0] : null) : result;
+  }
+
+  public <T> void setValue(@StringRes final int prefKey, @NonNull final T value, final boolean... apply) {
+    setValue(TYPE_PREFERENCES_SHARED_GLOBAL, prefKey, value, apply);
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T> void setValue(@PreferencesType final int type, @StringRes final int prefKey, @NonNull final T value, final boolean... apply) {
+      final String key = mResources.getString(prefKey);
+      final Editor edit = edit(type);
+      if (value instanceof Integer) {
+        edit.putInt(key, (Integer) value);
+      } else if (value instanceof String) {
+        edit.putString(key, value.toString());
+      } else if (value instanceof Boolean) {
+        edit.putBoolean(key, (Boolean) value);
+      } else if (value instanceof Float) {
+        edit.putFloat(key, (Float) value);
+      } else if (value instanceof Long) {
+        edit.putLong(key, (Long) value);
+      } else if (value instanceof Set<?>) {
+        if (((Set<?>) value).stream().allMatch(String.class::isInstance)) {
+          edit.putStringSet(key, (Set<String>) value);
+        }
+      }
+      if (apply!=null && apply.length==1 && apply[0]) {
+        edit.apply();
+      } else {
+        edit.commit();
+      }
+  }
+
+  public Integer getIntValueWithDefaultKey(int prefKey, @IntegerRes int defaultKey) {
+      return getValue(prefKey, mResources.getInteger(defaultKey));
+  }
+
+  public Long getLongValueWithDefaultKey(int prefKey, @IntegerRes int defaultKey) {
+      return getValue(prefKey, (long) mResources.getInteger(defaultKey));
   }
   
-  public static void resetDataMetaData(Context context) {
-    Editor edit = getSharedPreferences(TYPE_PREFERENCES_SHARED_GLOBAL, context).edit();
-    
-    edit.putLong(context.getString(R.string.META_DATA_DATE_FIRST_KNOWN), context.getResources().getInteger(R.integer.meta_data_date_known_default));
-    edit.putLong(context.getString(R.string.META_DATA_DATE_LAST_KNOWN), context.getResources().getInteger(R.integer.meta_data_date_known_default));
-    edit.putLong(context.getString(R.string.META_DATA_ID_FIRST_KNOWN), context.getResources().getInteger(R.integer.meta_data_id_default));
-    edit.putLong(context.getString(R.string.META_DATA_ID_LAST_KNOWN), context.getResources().getInteger(R.integer.meta_data_id_default));
-    edit.putLong(context.getString(R.string.LAST_DATA_UPDATE), 0);
-    
-    edit.commit();
+  public Boolean getBooleanValueWithDefaultKey(int prefKey, @BoolRes int defaultKey) {
+	  return getValue(prefKey, mResources.getBoolean(defaultKey));
   }
   
-  public static void updateDataMetaData(Context context) {
+  public String getStringValueWithDefaultKey(int prefKey, @StringRes int defaultKey) {
+      return getValue(prefKey, mResources.getString(defaultKey));
+  }
+
+  public int getStringValueAsInt(int prefKey, @StringRes int defaultKey) throws NumberFormatException {
+      final String value = getValue(prefKey, mResources.getString(defaultKey));
+      return value==null ? Integer.MIN_VALUE : Integer.parseInt(value);
+  }
+
+  public void resetDataMetaData() {
+    edit()
+      .putLong(mResources.getString(R.string.META_DATA_DATE_FIRST_KNOWN),
+              mResources.getInteger(R.integer.meta_data_date_known_default))
+      .putLong(mResources.getString(R.string.META_DATA_DATE_LAST_KNOWN),
+              mResources.getInteger(R.integer.meta_data_date_known_default))
+      .putLong(mResources.getString(R.string.META_DATA_ID_FIRST_KNOWN),
+              mResources.getInteger(R.integer.meta_data_id_default))
+      .putLong(mResources.getString(R.string.META_DATA_ID_LAST_KNOWN),
+              mResources.getInteger(R.integer.meta_data_id_default))
+      .putLong(mResources.getString(R.string.LAST_DATA_UPDATE), 0)
+      .commit();
+  }
+  
+  public void updateDataMetaData(@NonNull final Context context) {
     setMetaDataLongValue(context, R.string.META_DATA_DATE_FIRST_KNOWN);
     setMetaDataLongValue(context, R.string.META_DATA_DATE_LAST_KNOWN);
     setMetaDataLongValue(context, R.string.META_DATA_ID_FIRST_KNOWN);
     setMetaDataLongValue(context, R.string.META_DATA_ID_LAST_KNOWN);
   }
   
-  private static void setMetaDataLongValue(Context context, int value) {
-    if(IOUtils.isDatabaseAccessible(context)) {
+  private void setMetaDataLongValue(@Nullable final Context context, final int value) {
+    if(context!=null && IOUtils.isDatabaseAccessible(context)) {
       String sort = null;
       String column = null;
-      
-      switch (value) {
-        case R.string.META_DATA_DATE_FIRST_KNOWN: column = TvBrowserContentProvider.DATA_KEY_STARTTIME; sort =  column + " ASC LIMIT 1";break;
-        case R.string.META_DATA_DATE_LAST_KNOWN: column = TvBrowserContentProvider.DATA_KEY_STARTTIME; sort =  column + " DESC LIMIT 1";break;
-        case R.string.META_DATA_ID_FIRST_KNOWN: column = TvBrowserContentProvider.KEY_ID; sort =  column + " ASC LIMIT 1";break;
-        case R.string.META_DATA_ID_LAST_KNOWN: column = TvBrowserContentProvider.KEY_ID; sort =  column + " DESC LIMIT 1";break;
+
+      if (value == R.string.META_DATA_DATE_FIRST_KNOWN) {
+        column = TvBrowserContentProvider.DATA_KEY_STARTTIME;
+        sort = column + " ASC LIMIT 1";
+      } else if (value == R.string.META_DATA_DATE_LAST_KNOWN) {
+        column = TvBrowserContentProvider.DATA_KEY_STARTTIME;
+        sort = column + " DESC LIMIT 1";
+      } else if (value == R.string.META_DATA_ID_FIRST_KNOWN) {
+        column = TvBrowserContentProvider.KEY_ID;
+        sort = column + " ASC LIMIT 1";
+      } else if (value == R.string.META_DATA_ID_LAST_KNOWN) {
+        column = TvBrowserContentProvider.KEY_ID;
+        sort = column + " DESC LIMIT 1";
       }
       
-      final Cursor valueCursor = context.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA, new String[] {column}, null, null, sort);
-      
+      Cursor valueCursor = null;
       try {
-        if(IOUtils.prepareAccessFirst(valueCursor)) {
+        valueCursor = context.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA,
+                new String[] {column}, null, null, sort);
+        if(valueCursor!=null && IOUtils.prepareAccessFirst(valueCursor)) {
           long last = valueCursor.getLong(valueCursor.getColumnIndex(column));
-          PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, context).edit().putLong(context.getString(value), last).commit();
+          edit().putLong(mResources.getString(value), last).commit();
         }
       }finally {
         IOUtils.close(valueCursor);
@@ -265,52 +268,50 @@ public class PrefUtils {
     }
   }
   
-  public static void updateChannelSelectionState(Context context) {
-    if(IOUtils.isDatabaseAccessible(context)) {
-      boolean value = false;
-      final Cursor channels = context.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_CHANNELS, new String[] {TvBrowserContentProvider.KEY_ID}, TvBrowserContentProvider.CHANNEL_KEY_SELECTION + "=1", null, TvBrowserContentProvider.KEY_ID + " ASC LIMIT 1");
-      
+  public void updateChannelSelectionState(@Nullable final Context context) {
+    if(context!=null && IOUtils.isDatabaseAccessible(context)) {
+      boolean value;
+      Cursor channels = null;
       try {
+        channels = context.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_CHANNELS,
+                new String[] {TvBrowserContentProvider.KEY_ID},
+                TvBrowserContentProvider.CHANNEL_KEY_SELECTION + "=1", null,
+                TvBrowserContentProvider.KEY_ID + " ASC LIMIT 1");
         value = channels != null && channels.getCount() > 0;
       }finally {
         IOUtils.close(channels);
       }
       
-      getSharedPreferences(TYPE_PREFERENCES_SHARED_GLOBAL, context).edit().putBoolean(context.getString(R.string.CHANNELS_SELECTED), value).commit();
+      edit().putBoolean(mResources.getString(R.string.CHANNELS_SELECTED), value).commit();
     }
   }
   
-  public static boolean getChannelsSelected(Context context) {
-    return getSharedPreferences(TYPE_PREFERENCES_SHARED_GLOBAL, context).getBoolean(context.getString(R.string.CHANNELS_SELECTED), context.getResources().getBoolean(R.bool.channels_selected_default));
+  public boolean getChannelsSelected() {
+    return getDefault().getBoolean(mResources.getString(R.string.CHANNELS_SELECTED),
+            mResources.getBoolean(R.bool.channels_selected_default));
   }
   
-  private static String getFilterSelection(final Context context, final Set<String> filterIds) {
-    final HashSet<FilterValues> filterValues = new HashSet<>();
-    
+  private static String getFilterSelection(final Context context, @NonNull final Set<String> filterIds) {
+    final Set<FilterValues> filterValues = new HashSet<>();
       for (String filterId : filterIds) {
         final FilterValues filter = FilterValues.load(filterId, context);
-      
         if (filter != null) {
           filterValues.add(filter);
         }
       }
-    
     return getFilterSelection(context, false, filterValues);
   }
   
-  public static String getFilterSelection(final Context context, final boolean onlyChannelFilter, final HashSet<FilterValues> filterValues) {
+  public static String getFilterSelection(final Context context, final boolean onlyChannelFilter, @NonNull final Set<FilterValues> filterValues) {
     final StringBuilder channels =  new StringBuilder();
     final StringBuilder result = new StringBuilder();
-    
     for(FilterValues values : filterValues) {
       if(values instanceof FilterValuesChannels) {
         final int[] ids = ((FilterValuesChannels) values).getFilteredChannelIds();
-        
         for(final int id : ids) {
           if(channels.length() > 0) {
             channels.append(", ");
           }
-          
           channels.append(id);
         }
       }
@@ -328,41 +329,38 @@ public class PrefUtils {
     return result.toString();
   }
   
-  public static String getFilterSelection(Context context) {
-    final SharedPreferences pref = getSharedPreferences(TYPE_PREFERENCES_SHARED_GLOBAL, context);
-        
-    int oldVersion = pref.getInt(context.getString(R.string.OLD_VERSION), 379);
+  public String getFilterSelection(@NonNull final Context context) {
+    final SharedPreferences pref = getDefault();
+    final int oldVersion = pref.getInt(mResources.getString(R.string.OLD_VERSION), 379);
     
     Set<String> currentFilterIds = new HashSet<>();
-    
     if(oldVersion < 379) {
-      final String currentFilterId = pref.getString(context.getString(R.string.CURRENT_FILTER_ID), null);
-      
+      final String currentFilterId = pref.getString(mResources.getString(R.string.CURRENT_FILTER_ID), null);
       if(currentFilterId != null) {
         currentFilterIds.add(currentFilterId);
       }
     }
     else {
-      currentFilterIds = pref.getStringSet(context.getString(R.string.CURRENT_FILTER_ID), currentFilterIds);
+      currentFilterIds = pref.getStringSet(mResources.getString(R.string.CURRENT_FILTER_ID), currentFilterIds);
     }
     
     return getFilterSelection(context, currentFilterIds);
   }
   
-  public static boolean isNewDate(Context context) {
-    Log.d("info6", "LAST KNOWN START DATE " + getSharedPreferences(TYPE_PREFERENCES_SHARED_GLOBAL, context).getInt(context.getString(R.string.PREF_MISC_LAST_KNOWN_OPEN_DATE), -1) + " - CURRENT DATE " + Calendar.getInstance().get(Calendar.DAY_OF_YEAR));
-    return Calendar.getInstance().get(Calendar.DAY_OF_YEAR) != getSharedPreferences(TYPE_PREFERENCES_SHARED_GLOBAL, context).getInt(context.getString(R.string.PREF_MISC_LAST_KNOWN_OPEN_DATE), -1);
+  public boolean isNewDate() {
+    Log.d("info6", "LAST KNOWN START DATE " + getDefault().getInt(
+            mResources.getString(R.string.PREF_MISC_LAST_KNOWN_OPEN_DATE), -1) +
+            " - CURRENT DATE " + Calendar.getInstance().get(Calendar.DAY_OF_YEAR));
+    return Calendar.getInstance().get(Calendar.DAY_OF_YEAR) != getDefault().getInt(
+            mResources.getString(R.string.PREF_MISC_LAST_KNOWN_OPEN_DATE), -1);
   }
   
-  public static void updateKnownOpenDate(Context context) {
-    getSharedPreferences(TYPE_PREFERENCES_SHARED_GLOBAL, context).edit().putInt(context.getString(R.string.PREF_MISC_LAST_KNOWN_OPEN_DATE), Calendar.getInstance().get(Calendar.DAY_OF_YEAR)).commit();
+  public void updateKnownOpenDate() {
+    edit().putInt(mResources.getString(R.string.PREF_MISC_LAST_KNOWN_OPEN_DATE),
+            Calendar.getInstance().get(Calendar.DAY_OF_YEAR)).commit();
   }
 
-  public static void putLong(final Editor edit, final int prefKey, final long value) {
-    edit.putLong(mContext.getString(prefKey),value);
-  }
-
-  public static boolean isDarkTheme() {
-    return getBooleanValue(R.string.DARK_STYLE, R.bool.dark_style_default);
+  public boolean isDarkTheme() {
+    return getBooleanValueWithDefaultKey(R.string.DARK_STYLE, R.bool.dark_style_default);
   }
 }

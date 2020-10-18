@@ -19,6 +19,7 @@ package org.tvbrowser.view;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
+import org.tvbrowser.App;
 import org.tvbrowser.tvbrowser.R;
 import org.tvbrowser.utils.PrefUtils;
 import org.tvbrowser.utils.UiUtils;
@@ -120,7 +121,7 @@ public class ProgramTableLayoutConstants {
   }
   
   public static void updateColumnWidth(Context context) {
-    RAW_COLUMN_WIDTH = PrefUtils.getIntValueWithDefaultKey(R.string.PROG_TABLE_COLUMN_WIDTH, R.integer.prog_table_column_width_default);
+    RAW_COLUMN_WIDTH = App.get().prefs().getIntValueWithDefaultKey(R.string.PROG_TABLE_COLUMN_WIDTH, R.integer.prog_table_column_width_default);
     
     final float scale = context.getResources().getDisplayMetrics().density;
     // Convert the dps to pixels, based on density scale
@@ -132,12 +133,13 @@ public class ProgramTableLayoutConstants {
     
     SHOW_LOGO = !value.equals("2");
     SHOW_NAME = !value.equals("1");
-    SHOW_ORDER_NUMBER = PrefUtils.getBooleanValue(R.string.SHOW_SORT_NUMBER_IN_PROGRAM_TABLE, R.bool.show_sort_number_in_program_table_default);
+    SHOW_ORDER_NUMBER = App.get().prefs().getBooleanValueWithDefaultKey(R.string.SHOW_SORT_NUMBER_IN_PROGRAM_TABLE, R.bool.show_sort_number_in_program_table_default);
   }
   
   private static void update(Context context) {
     updateChannelLogoName(context);
-    RAW_COLUMN_WIDTH = PrefUtils.getIntValueWithDefaultKey(R.string.PROG_TABLE_COLUMN_WIDTH, R.integer.prog_table_column_width_default);
+    final PrefUtils prefs = App.get().prefs();
+    RAW_COLUMN_WIDTH = prefs.getIntValueWithDefaultKey(R.string.PROG_TABLE_COLUMN_WIDTH, R.integer.prog_table_column_width_default);
     
     // Get the screen's density scale 
     final float scale = context.getResources().getDisplayMetrics().density;
@@ -183,7 +185,7 @@ public class ProgramTableLayoutConstants {
     
     TIME_FORMAT = new SimpleDateFormat(value, Locale.getDefault());
     
-    TEXT_SCALE = Float.valueOf(PrefUtils.getStringValue(R.string.PROG_TABLE_TEXT_SCALE, R.string.prog_table_text_scale_default));
+    TEXT_SCALE = Float.parseFloat(prefs.getStringValueWithDefaultKey(R.string.PROG_TABLE_TEXT_SCALE, R.string.prog_table_text_scale_default));
     
     float textSize = new TextView(context).getTextSize() * TEXT_SCALE;
     float smallTextSize = (10 * scale + 0.5f) * TEXT_SCALE;

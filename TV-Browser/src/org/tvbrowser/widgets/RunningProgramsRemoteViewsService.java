@@ -19,7 +19,7 @@ package org.tvbrowser.widgets;
 import java.util.Calendar;
 import java.util.Date;
 
-import org.tvbrowser.content.TvBrowserContentProvider;
+import org.tvbrowser.App;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.tvbrowser.R;
 import org.tvbrowser.utils.CompatUtils;
@@ -44,26 +44,39 @@ import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
+import androidx.annotation.Nullable;
 import androidx.preference.PreferenceManager;
+
+import static org.tvbrowser.content.TvBrowserContentProvider.*;
 
 /**
  * Service for showing currently running programs as widget.
  * 
  * @author René Mach
  */
-public class RunningProgramsRemoteViewsService extends RemoteViewsService {
+public final class RunningProgramsRemoteViewsService extends RemoteViewsService {
 
   @Override
-  public RemoteViewsFactory onGetViewFactory(Intent intent) {
-    return new RunningProgramsRemoteViewsFactory(getApplicationContext(),intent.getExtras());
+  public RemoteViewsFactory onGetViewFactory(final Intent intent) {
+    return new RunningProgramsRemoteViewsFactory(getAppWidgetId(intent.getExtras()));
   }
-  
-  class RunningProgramsRemoteViewsFactory implements RemoteViewsFactory {
-    private final Context mContext;
+
+  private int getAppWidgetId(@Nullable final Bundle extras) {
+      final int result;
+      if (extras == null) {
+        result = AppWidgetManager.INVALID_APPWIDGET_ID;
+      } else {
+        result = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+      }
+      return result;
+  }
+
+  final class RunningProgramsRemoteViewsFactory implements RemoteViewsFactory {
+
     private Cursor mCursor;
-    
+
     private final int mAppWidgetId;
-    
+
     private int mIdIndex;
     private int mStartTimeIndex;
     private int mEndTimeIndex;
@@ -73,15 +86,15 @@ public class RunningProgramsRemoteViewsService extends RemoteViewsService {
     private int mLogoIndex;
     private int mEpisodeIndex;
     private int mCategoryIndex;
-    
+
     private int mMarkingPluginsIndex;
     private int mMarkingFavoriteIndex;
     private int mMarkingReminderIndex;
     private int mMarkingFavoriteReminderIndex;
     private int mMarkingSyncIndex;
-    
+
     private int mVerticalPadding;
-    
+
     private boolean mShowChannelName;
     private boolean mShowChannelLogo;
     private boolean mShowBigChannelLogo;
@@ -90,205 +103,188 @@ public class RunningProgramsRemoteViewsService extends RemoteViewsService {
     private boolean mShowMarkings;
     private boolean mShowOrderNumber;
     private boolean mChannelClickToProgramsList;
-    private float mTextScale;
-    
+    private float mTextScale = 1.0f;
+
     private int[] mUserDefinedColorChannel;
     private int[] mUserDefinedColorTime;
     private int[] mUserDefinedColorTitle;
     private int[] mUserDefinedColorCategoryDefault;
     private int[] mUserDefinedColorEpisode;
-    
-    private void executeQuery() {
+
+    RunningProgramsRemoteViewsFactory(final int appWidgetId) {
+      SettingConstants.initializeLogoMap(getApplicationContext(), false);
+      mAppWidgetId = appWidgetId;
+    }
+
+    private void startAlarm() {
+      final Intent update = new Intent(getApplicationContext(), RunningProgramsListWidget.class);
+      update.setAction(SettingConstants.UPDATE_RUNNING_APP_WIDGET);
+      update.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+
+      final PendingIntent pending = PendingIntent.getBroadcast(getApplicationContext(), mAppWidgetId, update, PendingIntent.FLAG_UPDATE_CURRENT);
+
+      final AlarmManager alarm = (AlarmManager)getSystemService(ALARM_SERVICE);
+
+      alarm.setRepeating(AlarmManager.RTC, ((System.currentTimeMillis()/60000) * 60000) + 60100, 60000, pending);
+    }
+
+    private void removeAlarm() {
+
+      final Intent update = new Intent(getApplicationContext(), RunningProgramsListWidget.class);
+      update.setAction(SettingConstants.UPDATE_RUNNING_APP_WIDGET);
+      update.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+
+      final PendingIntent pending = PendingIntent.getBroadcast(getApplicationContext(), mAppWidgetId, update, PendingIntent.FLAG_NO_CREATE);
+
+      if(pending != null) {
+        final AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+        alarmManager.cancel(pending);
+      }
+    }
+
+    @Override
+    public void onCreate() {
+    }
+
+    @Override
+    public void onDataSetChanged() {
+      final Context context = getApplicationContext();
+
       IOUtils.close(mCursor);
-      
+
       removeAlarm();
-      
-      if(IOUtils.isDatabaseAccessible(mContext)) {
-        int currentTime = PreferenceManager.getDefaultSharedPreferences(mContext).getInt(mAppWidgetId + "_" + mContext.getString(R.string.WIDGET_CONFIG_RUNNING_TIME), getResources().getInteger(R.integer.widget_config_running_time_default));
-        
-        String startTimeColumn = TvBrowserContentProvider.DATA_KEY_STARTTIME;
-        
+
+      if(IOUtils.isDatabaseAccessible(context)) {
+        int currentTime = PreferenceManager.getDefaultSharedPreferences(context).getInt(mAppWidgetId + "_" + getString(R.string.WIDGET_CONFIG_RUNNING_TIME), getResources().getInteger(R.integer.widget_config_running_time_default));
+
+        String startTimeColumn = DATA_KEY_STARTTIME;
+
         if(currentTime == -2) {
-          startTimeColumn = "MIN( "+TvBrowserContentProvider.DATA_KEY_STARTTIME+" ) AS " +TvBrowserContentProvider.DATA_KEY_STARTTIME;        
+          startTimeColumn = "MIN( "+ DATA_KEY_STARTTIME+" ) AS " + DATA_KEY_STARTTIME;
         }
-        
+
         final String[] projection = new String[] {
-          TvBrowserContentProvider.KEY_ID,
-          startTimeColumn,
-          TvBrowserContentProvider.DATA_KEY_ENDTIME,
-          TvBrowserContentProvider.DATA_KEY_TITLE,
-          TvBrowserContentProvider.DATA_KEY_EPISODE_TITLE,
-          TvBrowserContentProvider.DATA_KEY_CATEGORIES,
-          TvBrowserContentProvider.DATA_KEY_MARKING_MARKING,
-          TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE,
-          TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER,
-          TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER,
-          TvBrowserContentProvider.DATA_KEY_MARKING_SYNC,
-          TvBrowserContentProvider.CHANNEL_KEY_NAME,
-          TvBrowserContentProvider.CHANNEL_KEY_LOGO,
-          TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER,
-          TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID
+                KEY_ID,
+                startTimeColumn,
+                DATA_KEY_ENDTIME,
+                DATA_KEY_TITLE,
+                DATA_KEY_EPISODE_TITLE,
+                DATA_KEY_CATEGORIES,
+                DATA_KEY_MARKING_MARKING,
+                DATA_KEY_MARKING_FAVORITE,
+                DATA_KEY_MARKING_REMINDER,
+                DATA_KEY_MARKING_FAVORITE_REMINDER,
+                DATA_KEY_MARKING_SYNC,
+                CHANNEL_KEY_NAME,
+                CHANNEL_KEY_LOGO,
+                CHANNEL_KEY_ORDER_NUMBER,
+                CHANNEL_KEY_CHANNEL_ID
         };
-              
+
         long time = System.currentTimeMillis();
-        
+
+        final PrefUtils prefs = ((App)getApplication()).prefs();
         if(currentTime > -1) {
           Calendar now = Calendar.getInstance();
-          
-          if(PrefUtils.getBooleanValue(R.string.RUNNING_PROGRAMS_NEXT_DAY, R.bool.running_programs_next_day_default)) {
+
+          if(prefs.getBooleanValueWithDefaultKey(R.string.RUNNING_PROGRAMS_NEXT_DAY, R.bool.running_programs_next_day_default)) {
             int test1 = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
-          
+
             if((test1 - currentTime) > 180) {
               now.add(Calendar.DAY_OF_YEAR, 1);
             }
           }
-          
+
           now.set(Calendar.HOUR_OF_DAY, currentTime / 60);
           now.set(Calendar.MINUTE, currentTime % 60);
           now.set(Calendar.SECOND, 0);
           now.set(Calendar.MILLISECOND, 0);
-          
+
           time = now.getTimeInMillis();
         }
-        
-        String where = " ( " + TvBrowserContentProvider.DATA_KEY_STARTTIME + "<=" + time + " AND " +
-        TvBrowserContentProvider.DATA_KEY_ENDTIME + ">" + time + " ) AND NOT " + TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE + " {0} ";
-        
+
+        String where = " ( " + DATA_KEY_STARTTIME + "<=" + time + " AND " +
+                DATA_KEY_ENDTIME + ">" + time + " ) AND NOT " + DATA_KEY_DONT_WANT_TO_SEE + " {0} ";
+
         if(currentTime == -2) {
-          where = " ( " +TvBrowserContentProvider.DATA_KEY_STARTTIME+ ">=" + time + " ) AND NOT " + TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE + " {0} ) GROUP BY ( " + TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID + " ";
+          where = " ( " + DATA_KEY_STARTTIME+ ">=" + time + " ) AND NOT " + DATA_KEY_DONT_WANT_TO_SEE + " {0} ) GROUP BY ( " + CHANNEL_KEY_CHANNEL_ID + " ";
         }
-        
-        mUserDefinedColorChannel = IOUtils.getActivatedColorFor(PrefUtils.getStringValue(R.string.PREF_WIDGET_COLOR_CHANNEL, null));
-        mUserDefinedColorTime = IOUtils.getActivatedColorFor(PrefUtils.getStringValue(R.string.PREF_WIDGET_COLOR_TIME, R.string.pref_widget_color_time_default));
-        mUserDefinedColorTitle = IOUtils.getActivatedColorFor(PrefUtils.getStringValue(R.string.PREF_WIDGET_COLOR_TITLE, R.string.pref_widget_color_title_default));
-        mUserDefinedColorCategoryDefault = IOUtils.getActivatedColorFor(PrefUtils.getStringValue(R.string.PREF_WIDGET_COLOR_CATEGORY, null));
-        mUserDefinedColorEpisode = IOUtils.getActivatedColorFor(PrefUtils.getStringValue(R.string.PREF_WIDGET_COLOR_EPISODE, null));
-        
-        String values = PrefUtils.getFilterSelection(mContext);
-        
+
+        mUserDefinedColorChannel = IOUtils.getActivatedColorFor(prefs.getValue(R.string.PREF_WIDGET_COLOR_CHANNEL, null));
+        mUserDefinedColorTime = IOUtils.getActivatedColorFor(prefs.getStringValueWithDefaultKey(R.string.PREF_WIDGET_COLOR_TIME, R.string.pref_widget_color_time_default));
+        mUserDefinedColorTitle = IOUtils.getActivatedColorFor(prefs.getStringValueWithDefaultKey(R.string.PREF_WIDGET_COLOR_TITLE, R.string.pref_widget_color_title_default));
+        mUserDefinedColorCategoryDefault = IOUtils.getActivatedColorFor(prefs.getValue(R.string.PREF_WIDGET_COLOR_CATEGORY, null));
+        mUserDefinedColorEpisode = IOUtils.getActivatedColorFor(prefs.getValue(R.string.PREF_WIDGET_COLOR_EPISODE, null));
+
+        String values = prefs.getFilterSelection(context);
+
         if(values != null && values.trim().length() > 0) {
           where = where.replace("{0}", values);
         }
         else {
           where = where.replace("{0}", "");
         }
-        
+
         final long token = Binder.clearCallingIdentity();
         try {
           if(IOUtils.isDatabaseAccessible(getApplicationContext())) {
-            mCursor = getApplicationContext().getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA_WITH_CHANNEL, projection, where, null, TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER + ", " + TvBrowserContentProvider.DATA_KEY_STARTTIME);
-            
+            mCursor = getContentResolver().query(CONTENT_URI_DATA_WITH_CHANNEL, projection, where, null, CHANNEL_KEY_ORDER_NUMBER + ", " + DATA_KEY_STARTTIME);
+
             if(mCursor != null) {
-              mIdIndex = mCursor.getColumnIndex(TvBrowserContentProvider.KEY_ID);
-              mStartTimeIndex = mCursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_STARTTIME);
-              mEndTimeIndex = mCursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_ENDTIME);
-              mTitleIndex = mCursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_TITLE);
-              mChannelNameIndex = mCursor.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_NAME);
-              mOrderNumberIndex = mCursor.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER);
-              mLogoIndex = mCursor.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID);
-              mEpisodeIndex = mCursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_EPISODE_TITLE);
-              mCategoryIndex = mCursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_CATEGORIES);
-              
-              mMarkingPluginsIndex = mCursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_MARKING_MARKING);
-              mMarkingFavoriteIndex = mCursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE);
-              mMarkingReminderIndex = mCursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER);
-              mMarkingFavoriteReminderIndex = mCursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER);
-              mMarkingSyncIndex = mCursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_MARKING_SYNC);
-              
-              final String logoNamePref = PrefUtils.getStringValue(R.string.PREF_WIDGET_CHANNEL_LOGO_NAME, R.string.pref_widget_channel_logo_name_default);
-              
-              mShowEpisode = PrefUtils.getBooleanValue(R.string.PREF_WIDGET_SHOW_EPISODE, R.bool.pref_widget_show_episode_default);
-              mShowCategories = PrefUtils.getBooleanValue(R.string.PREF_WIDGET_SHOW_CATEGORIES, R.bool.pref_widget_show_categories_default);
-              mShowMarkings = PrefUtils.getBooleanValue(R.string.PREF_WIDGET_SHOW_MARKINGS, R.bool.pref_widget_show_markings_default);
+              mIdIndex = mCursor.getColumnIndex(KEY_ID);
+              mStartTimeIndex = mCursor.getColumnIndex(DATA_KEY_STARTTIME);
+              mEndTimeIndex = mCursor.getColumnIndex(DATA_KEY_ENDTIME);
+              mTitleIndex = mCursor.getColumnIndex(DATA_KEY_TITLE);
+              mChannelNameIndex = mCursor.getColumnIndex(CHANNEL_KEY_NAME);
+              mOrderNumberIndex = mCursor.getColumnIndex(CHANNEL_KEY_ORDER_NUMBER);
+              mLogoIndex = mCursor.getColumnIndex(CHANNEL_KEY_CHANNEL_ID);
+              mEpisodeIndex = mCursor.getColumnIndex(DATA_KEY_EPISODE_TITLE);
+              mCategoryIndex = mCursor.getColumnIndex(DATA_KEY_CATEGORIES);
+
+              mMarkingPluginsIndex = mCursor.getColumnIndex(DATA_KEY_MARKING_MARKING);
+              mMarkingFavoriteIndex = mCursor.getColumnIndex(DATA_KEY_MARKING_FAVORITE);
+              mMarkingReminderIndex = mCursor.getColumnIndex(DATA_KEY_MARKING_REMINDER);
+              mMarkingFavoriteReminderIndex = mCursor.getColumnIndex(DATA_KEY_MARKING_FAVORITE_REMINDER);
+              mMarkingSyncIndex = mCursor.getColumnIndex(DATA_KEY_MARKING_SYNC);
+
+              final String logoNamePref = prefs.getStringValueWithDefaultKey(R.string.PREF_WIDGET_CHANNEL_LOGO_NAME, R.string.pref_widget_channel_logo_name_default);
+
+              mShowEpisode = prefs.getBooleanValueWithDefaultKey(R.string.PREF_WIDGET_SHOW_EPISODE, R.bool.pref_widget_show_episode_default);
+              mShowCategories = prefs.getBooleanValueWithDefaultKey(R.string.PREF_WIDGET_SHOW_CATEGORIES, R.bool.pref_widget_show_categories_default);
+              mShowMarkings = prefs.getBooleanValueWithDefaultKey(R.string.PREF_WIDGET_SHOW_MARKINGS, R.bool.pref_widget_show_markings_default);
               mShowChannelName = (logoNamePref.equals("0") || logoNamePref.equals("2"));
               mShowChannelLogo = (logoNamePref.equals("0") || logoNamePref.equals("1") || logoNamePref.equals("3"));
               mShowBigChannelLogo = logoNamePref.equals("3");
-              mShowOrderNumber = PrefUtils.getBooleanValue(R.string.PREF_WIDGET_SHOW_SORT_NUMBER, R.bool.pref_widget_show_sort_number_default);
-              mChannelClickToProgramsList = PrefUtils.getBooleanValue(R.string.PREF_WIDGET_CLICK_TO_CHANNEL_TO_LIST, R.bool.pref_widget_click_to_channel_to_list_default);
-              mTextScale = Float.valueOf(PrefUtils.getStringValue(R.string.PREF_WIDGET_TEXT_SCALE, R.string.pref_widget_text_scale_default));
-              mVerticalPadding = UiUtils.convertDpToPixel((int)(Float.parseFloat(PrefUtils.getStringValue(R.string.PREF_WIDGET_VERTICAL_PADDING_SIZE, R.string.pref_widget_vertical_padding_size_default))/2),mContext.getResources());
+              mShowOrderNumber = prefs.getBooleanValueWithDefaultKey(R.string.PREF_WIDGET_SHOW_SORT_NUMBER, R.bool.pref_widget_show_sort_number_default);
+              mChannelClickToProgramsList = prefs.getBooleanValueWithDefaultKey(R.string.PREF_WIDGET_CLICK_TO_CHANNEL_TO_LIST, R.bool.pref_widget_click_to_channel_to_list_default);
+              mTextScale = Float.parseFloat(prefs.getStringValueWithDefaultKey(R.string.PREF_WIDGET_TEXT_SCALE, R.string.pref_widget_text_scale_default));
+              mVerticalPadding = UiUtils.convertDpToPixel((int)(Float.parseFloat(prefs.getStringValueWithDefaultKey(R.string.PREF_WIDGET_VERTICAL_PADDING_SIZE, R.string.pref_widget_vertical_padding_size_default))/2), getResources());
 
               startAlarm();
             }
           }
         } finally {
-            Binder.restoreCallingIdentity(token);
+          Binder.restoreCallingIdentity(token);
         }
       }
-    }
-    
-    private void startAlarm() {
-      final Intent update = new Intent(mContext,RunningProgramsListWidget.class);
-      update.setAction(SettingConstants.UPDATE_RUNNING_APP_WIDGET);
-      update.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-      
-      final PendingIntent pending = PendingIntent.getBroadcast(mContext, mAppWidgetId, update, PendingIntent.FLAG_UPDATE_CURRENT);
-      
-      AlarmManager alarm = (AlarmManager)getSystemService(ALARM_SERVICE);
-
-      alarm.setRepeating(AlarmManager.RTC, ((System.currentTimeMillis()/60000) * 60000) + 60100, 60000, pending);
-    }
-    
-    private void removeAlarm() {
-      AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-      
-      final Intent update = new Intent(mContext,RunningProgramsListWidget.class);
-      update.setAction(SettingConstants.UPDATE_RUNNING_APP_WIDGET);
-      update.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-      
-      PendingIntent pending = PendingIntent.getBroadcast(mContext, mAppWidgetId, update, PendingIntent.FLAG_NO_CREATE);
-      
-      if(pending != null) {
-        alarmManager.cancel(pending);
-      }
-    }
-    
-    RunningProgramsRemoteViewsFactory(Context context, Bundle extras) {
-      mContext = context;
-      PrefUtils.initialize(context);
-      SettingConstants.initializeLogoMap(context, false);
-      
-      if(extras != null) {
-        mAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-      }
-      else {
-        mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
-      }
-    }
-    
-    @Override
-    public void onCreate() {
-      mTextScale = 1.0f;
-        
-      executeQuery();
-    }
-
-    @Override
-    public void onDataSetChanged() {
-      executeQuery();
     }
 
     @Override
     public void onDestroy() {
       IOUtils.close(mCursor);
-      
       removeAlarm();
     }
     
     @Override
     public int getCount() {
-      if(mCursor != null && !mCursor.isClosed()) {
-        return mCursor.getCount();
-      }
-      
-      return 0;
+      return isCursorValid() ? mCursor.getCount() : 0;
     }
 
     @Override
     public RemoteViews getViewAt(int position) {
-      final RemoteViews rv = new RemoteViews(mContext.getPackageName(), R.layout.running_programs_widget_row);
+      final RemoteViews rv = new RemoteViews(getApplication().getPackageName(), R.layout.running_programs_widget_row);
       
-      if(mCursor != null && !mCursor.isClosed() && mCursor.getCount() > position) {
+      if (isCursorValid() && mCursor.getCount() > position) {
         mCursor.moveToPosition(position);
         
         final String id = mCursor.getString(mIdIndex);
@@ -301,7 +297,7 @@ public class RunningProgramsRemoteViewsService extends RemoteViewsService {
         String number = null;
         final CharSequence episodeTitle = (mShowEpisode && !mCursor.isNull(mEpisodeIndex)) ? WidgetUtils.getColoredString(mCursor.getString(mEpisodeIndex), mUserDefinedColorEpisode) : null;
         Spannable categorySpan = (mShowCategories && !mCursor.isNull(mCategoryIndex)) ? IOUtils.getInfoString(mCursor.getInt(mCategoryIndex), getResources(), true, mUserDefinedColorCategoryDefault[0] == 1 ? mUserDefinedColorCategoryDefault[1] : null) : null;
-        Spannable marking = WidgetUtils.getMarkings(mContext, mCursor, mShowMarkings, mMarkingPluginsIndex, mMarkingFavoriteIndex, mMarkingReminderIndex, mMarkingFavoriteReminderIndex, mMarkingSyncIndex);
+        Spannable marking = WidgetUtils.getMarkings(getApplicationContext(), mCursor, mShowMarkings, mMarkingPluginsIndex, mMarkingFavoriteIndex, mMarkingReminderIndex, mMarkingFavoriteReminderIndex, mMarkingSyncIndex);
         
         if(shortName != null) {
           name = shortName;
@@ -332,7 +328,8 @@ public class RunningProgramsRemoteViewsService extends RemoteViewsService {
           }
         }
         
-        final CharSequence time = WidgetUtils.getColoredString(DateFormat.getTimeFormat(mContext).format(new Date(startTime)), mUserDefinedColorTime);
+        final CharSequence time = WidgetUtils.getColoredString(
+                DateFormat.getTimeFormat(getApplicationContext()).format(new Date(startTime)), mUserDefinedColorTime);
         
         CompatUtils.setRemoteViewsPadding(rv, R.id.running_programs_widget_row, 0, mVerticalPadding, 0, mVerticalPadding);
         
@@ -389,7 +386,7 @@ public class RunningProgramsRemoteViewsService extends RemoteViewsService {
           rv.setViewVisibility(R.id.running_programs_widget_row_episode, View.GONE);
         }
         
-        if(!CompatUtils.isKeyguardWidget(mAppWidgetId, mContext)) {
+        if(!CompatUtils.isKeyguardWidget(mAppWidgetId, getApplicationContext())) {
           final Intent fillInIntent = new Intent();
           fillInIntent.putExtra(SettingConstants.REMINDER_PROGRAM_ID_EXTRA, Long.valueOf(id));
           
@@ -413,13 +410,15 @@ public class RunningProgramsRemoteViewsService extends RemoteViewsService {
         rv.setViewVisibility(R.id.running_programs_widget_row_channel, View.GONE);
       }
       
-      float titleFontSize = mTextScale * UiUtils.convertPixelsToSp(mContext.getResources().getDimension(R.dimen.title_font_size),mContext);
+      float titleFontSize = mTextScale * UiUtils.convertPixelsToSp(getResources().getDimension(R.dimen.title_font_size),getApplicationContext());
       
       rv.setFloat(R.id.running_programs_widget_row_channel_name, "setTextSize", titleFontSize);
       rv.setFloat(R.id.running_programs_widget_row_title, "setTextSize", titleFontSize);
       rv.setFloat(R.id.running_programs_widget_row_start_time, "setTextSize", titleFontSize);
-      rv.setFloat(R.id.running_programs_widget_row_categories, "setTextSize", mTextScale * UiUtils.convertPixelsToSp(mContext.getResources().getDimension(R.dimen.prog_list_categories_font_size),mContext));
-      rv.setFloat(R.id.running_programs_widget_row_episode, "setTextSize", mTextScale * UiUtils.convertPixelsToSp(mContext.getResources().getDimension(R.dimen.episode_font_size),mContext));
+      rv.setFloat(R.id.running_programs_widget_row_categories, "setTextSize",
+              mTextScale * UiUtils.convertPixelsToSp(getResources().getDimension(R.dimen.prog_list_categories_font_size), getApplicationContext()));
+      rv.setFloat(R.id.running_programs_widget_row_episode, "setTextSize",
+              mTextScale * UiUtils.convertPixelsToSp(getResources().getDimension(R.dimen.episode_font_size), getApplicationContext()));
       
       return rv;
     }
@@ -436,16 +435,19 @@ public class RunningProgramsRemoteViewsService extends RemoteViewsService {
 
     @Override
     public long getItemId(int position) {
-      if(mCursor != null && !mCursor.isClosed() && mCursor.moveToPosition(position)) {
+      if(isCursorValid() && mCursor.moveToPosition(position)) {
         return mCursor.getLong(mIdIndex);
       }
-      
       return position;
     }
 
     @Override
     public boolean hasStableIds() {
       return true;
+    }
+
+    private boolean isCursorValid() {
+      return mCursor!=null && !mCursor.isClosed();
     }
   }
 }

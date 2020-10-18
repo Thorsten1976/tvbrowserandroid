@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
+import org.tvbrowser.App;
 import org.tvbrowser.tvbrowser.R;
 import org.tvbrowser.utils.PrefUtils;
 import org.tvbrowser.utils.UiUtils;
@@ -50,7 +51,7 @@ public class ActivityFilterListEdit extends AppCompatActivity {
   
   @Override
   protected void onApplyThemeResource(Theme theme, int resid, boolean first) {
-    resid = UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_TOOLBAR, PrefUtils.isDarkTheme());
+    resid = UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_TOOLBAR, App.get().prefs().isDarkTheme());
     
     super.onApplyThemeResource(theme, resid, first);
   }
@@ -66,7 +67,7 @@ public class ActivityFilterListEdit extends AppCompatActivity {
     mFilterList = findViewById(R.id.activity_edit_filter_list_list);
     mFilterList.setAdapter(mFilterListAdapter);
     
-    SharedPreferences pref = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_FILTERS, ActivityFilterListEdit.this);
+    SharedPreferences pref = App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_FILTERS);
     
     Map<String,?> filterValues = pref.getAll();
     Set<String> keySet = filterValues.keySet();
@@ -164,7 +165,7 @@ public class ActivityFilterListEdit extends AppCompatActivity {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.dialog_warning_filter_title);
         builder.setMessage(getString(R.string.dialog_warning_filter_message).replace("{0}",mCurrentFilter.getName()));
-        builder.setPositiveButton(android.R.string.yes, (DialogInterface dialog, int which) -> {
+        builder.setPositiveButton(R.string.yes, (DialogInterface dialog, int which) -> {
           mFilterListAdapter.remove(mCurrentFilter);
           mFilterListAdapter.notifyDataSetChanged();
 

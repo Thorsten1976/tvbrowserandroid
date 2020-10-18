@@ -23,6 +23,7 @@ import android.content.Intent;
 import androidx.annotation.NonNull;
 import android.util.Log;
 
+import org.tvbrowser.App;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.tvbrowser.BroadcastReceiverUpdateAlarmValue;
 import org.tvbrowser.tvbrowser.Logging;
@@ -56,14 +57,16 @@ public class JobDataUpdateAuto extends Worker {
   @NonNull
   @Override
   public Worker.Result doWork() {
-    PrefUtils.initialize(getApplicationContext());
+    PrefUtils prefs = App.get().prefs();
     Log.d("info9","onRunJob");
     Result result = Result.retry();
 
-    final String updateType = PrefUtils.getStringValue(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default);
+    final String updateType = prefs.getStringValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default);
     final boolean autoUpdate = !updateType.equals("0");
     final boolean internetConnectionType = updateType.equals("1");
-    final boolean isConnected = IOUtils.isConnected(getApplicationContext(), null, PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, getApplicationContext()).getBoolean(getApplicationContext().getString(R.string.PREF_AUTO_UPDATE_ONLY_WIFI), getApplicationContext().getResources().getBoolean(R.bool.pref_auto_update_only_wifi_default)));
+    final boolean isConnected = IOUtils.isConnected(getApplicationContext(), null,
+            prefs.getDefault().getBoolean(getApplicationContext().getString(R.string.PREF_AUTO_UPDATE_ONLY_WIFI),
+                    getApplicationContext().getResources().getBoolean(R.bool.pref_auto_update_only_wifi_default)));
 
     final Context context = getApplicationContext();
 
@@ -74,7 +77,7 @@ public class JobDataUpdateAuto extends Worker {
       startDownload.putExtra(SettingConstants.EXTRA_DATA_UPDATE_TYPE, TvDataUpdateService.TYPE_UPDATE_AUTO);
       startDownload.putExtra(SettingConstants.EXTRA_DATA_UPDATE_TYPE_INTERNET_CONNECTION, internetConnectionType);
 
-      final int daysToDownload = Integer.parseInt(PrefUtils.getStringValue(R.string.PREF_AUTO_UPDATE_RANGE, R.string.pref_auto_update_range_default));
+      final int daysToDownload = Integer.parseInt(prefs.getStringValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_RANGE, R.string.pref_auto_update_range_default));
 
       startDownload.putExtra(context.getString(R.string.DAYS_TO_DOWNLOAD), daysToDownload);
 
@@ -100,12 +103,13 @@ public class JobDataUpdateAuto extends Worker {
   }
 
   public static void scheduleJob(Context context, boolean reschedule) {
+    PrefUtils prefs = App.get().prefs();
     Logging.openLogForDataUpdate(context);
 
     context = context.getApplicationContext();
 
-    final String updateType = PrefUtils.getStringValue(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default);
-    final boolean onlyWifi = PrefUtils.getBooleanValue(R.string.PREF_AUTO_UPDATE_ONLY_WIFI, R.bool.pref_auto_update_only_wifi_default);
+    final String updateType = prefs.getStringValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default);
+    final boolean onlyWifi = prefs.getBooleanValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_ONLY_WIFI, R.bool.pref_auto_update_only_wifi_default);
 
     boolean autoUpdate = !updateType.equals("0");
     boolean timeUpdateType = updateType.equals("2");
@@ -117,7 +121,7 @@ public class JobDataUpdateAuto extends Worker {
       if (manager != null) {
         manager.cancelAllWorkByTag(TAG);
 
-        long lastUpdate = PrefUtils.getLongValue(R.string.LAST_DATA_UPDATE, 0);
+        long lastUpdate = prefs.getValue(R.string.LAST_DATA_UPDATE, 0L);
 
         if (autoUpdate) {
           Constraints.Builder constraintsJob = new Constraints.Builder()
@@ -126,22 +130,22 @@ public class JobDataUpdateAuto extends Worker {
           OneTimeWorkRequest.Builder builder = new OneTimeWorkRequest.Builder(JobDataUpdateAuto.class);
           builder.setBackoffCriteria(BackoffPolicy.LINEAR, 10, TimeUnit.MINUTES);
 
-          long timeCurrent = PrefUtils.getLongValue(R.string.AUTO_UPDATE_CURRENT_START_TIME, 0);
-          final int days = Integer.parseInt(PrefUtils.getStringValue(R.string.PREF_AUTO_UPDATE_FREQUENCY, R.string.pref_auto_update_frequency_default));
+          long timeCurrent = prefs.getValue(R.string.AUTO_UPDATE_CURRENT_START_TIME, 0L);
+          final int days = Integer.parseInt(prefs.getStringValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_FREQUENCY, R.string.pref_auto_update_frequency_default));
 
           if (timeUpdateType) {
             final Calendar last = Calendar.getInstance();
             last.setTimeInMillis(lastUpdate);
 
-            int time = PrefUtils.getIntValue(R.string.PREF_AUTO_UPDATE_START_TIME, R.integer.pref_auto_update_start_time_default);
+            int time = prefs.getValue(R.string.PREF_AUTO_UPDATE_START_TIME, context.getResources().getInteger(R.integer.pref_auto_update_start_time_default));
 
             last.add(Calendar.DAY_OF_YEAR, days + 1);
 
             Logging.log("info9", "TIME: " + time + " " + days + " " + new Date(timeCurrent), Logging.TYPE_DATA_UPDATE, context);
             if (!reschedule && (timeCurrent == 0 || timeCurrent < System.currentTimeMillis() + 1000 || ((System.currentTimeMillis() - lastUpdate) < 12 * 60 * 60000L) && (timeCurrent < System.currentTimeMillis() + 60 * 60000L))) {
-              if (PrefUtils.getStringValue(R.string.PREF_EPGPAID_USER, "").trim().length() > 0 &&
-                PrefUtils.getStringValue(R.string.PREF_EPGPAID_PASSWORD, "").trim().length() > 0 &&
-                PrefUtils.getLongValue(R.string.PREF_EPGPAID_ACCESS_UNTIL, R.integer.pref_epgpaid_access_until_default) >
+              if (prefs.getValue(R.string.PREF_EPGPAID_USER, "").trim().length() > 0 &&
+                      prefs.getValue(R.string.PREF_EPGPAID_PASSWORD, "").trim().length() > 0 &&
+                      prefs.getValue(R.string.PREF_EPGPAID_ACCESS_UNTIL, (long) context.getResources().getInteger(R.integer.pref_epgpaid_access_until_default)) >
                   System.currentTimeMillis()) {
                 Calendar test = Calendar.getInstance(TimeZone.getTimeZone("CET"));
                 test.set(Calendar.SECOND, 0);
@@ -179,7 +183,7 @@ public class JobDataUpdateAuto extends Worker {
               long start = last.getTimeInMillis() + (long) (Math.random() * (60 * 60000L));
 
               // end = (time + 1) * 60000L;
-              PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, context).edit().putLong(context.getString(R.string.AUTO_UPDATE_CURRENT_START_TIME), start).commit();
+              prefs.getDefault().edit().putLong(context.getString(R.string.AUTO_UPDATE_CURRENT_START_TIME), start).commit();
               Logging.log("info9", "START " + new Date(start), Logging.TYPE_DATA_UPDATE, context);
 
               builder.setInitialDelay(start - currentTime, TimeUnit.MILLISECONDS);
@@ -202,7 +206,7 @@ public class JobDataUpdateAuto extends Worker {
             if (timeCurrent + 60 * 60000L < end && timeCurrent > System.currentTimeMillis() + 60000L) {
               end = timeCurrent - System.currentTimeMillis();
             } else {
-              PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, context).edit().putLong(context.getString(R.string.AUTO_UPDATE_CURRENT_START_TIME), System.currentTimeMillis() + start).commit();
+              prefs.getDefault().edit().putLong(context.getString(R.string.AUTO_UPDATE_CURRENT_START_TIME), System.currentTimeMillis() + start).commit();
             }
 
             Logging.log("info9", "NET START " + new Date(System.currentTimeMillis() + start), Logging.TYPE_DATA_UPDATE, context);

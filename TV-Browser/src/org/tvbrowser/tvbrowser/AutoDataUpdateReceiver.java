@@ -20,6 +20,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
+import org.tvbrowser.App;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.utils.CompatUtils;
 import org.tvbrowser.utils.IOUtils;
@@ -49,14 +50,12 @@ public class AutoDataUpdateReceiver extends BroadcastReceiver {
     wakeLock.acquire(7500);
     
     try {
-      PrefUtils.initialize(context);
-      
       Logging.openLogForDataUpdate(context);
       Logging.log(TAG, "AUTO DATA UPDATE onReceive Intent: " + intent + " Context: " + context, Logging.TYPE_DATA_UPDATE, context);
       
+      final PrefUtils prefUtils = App.get().prefs();
       final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
-      
-      String updateType = PrefUtils.getStringValue(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default);
+      final String updateType = prefUtils.getStringValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_TYPE, R.string.pref_auto_update_type_default);
       
       boolean autoUpdate = !updateType.equals("0");
       final boolean internetConnectionType = updateType.equals("1");
@@ -66,9 +65,9 @@ public class AutoDataUpdateReceiver extends BroadcastReceiver {
       
       if(autoUpdate) {
 	      if (internetConnectionType) {
-		      int days = Integer.parseInt(PrefUtils.getStringValue(R.string.PREF_AUTO_UPDATE_FREQUENCY, R.string.pref_auto_update_frequency_default)) + 1;
+		      int days = Integer.parseInt(prefUtils.getStringValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_FREQUENCY, R.string.pref_auto_update_frequency_default)) + 1;
 
-		      long lastDate = PrefUtils.getLongValue(R.string.LAST_DATA_UPDATE, R.integer.last_data_update_default);
+		      long lastDate = prefUtils.getValue(R.string.LAST_DATA_UPDATE, (long) context.getResources().getInteger(R.integer.last_data_update_default));
 
 		      Calendar last = Calendar.getInstance();
 		      last.setTimeInMillis(lastDate);
@@ -92,7 +91,7 @@ public class AutoDataUpdateReceiver extends BroadcastReceiver {
           NetworkInfo wifi = CompatUtils.getNetworkInfo(connMgr, ConnectivityManager.TYPE_WIFI);
           NetworkInfo mobile = CompatUtils.getNetworkInfo(connMgr, ConnectivityManager.TYPE_MOBILE);
           
-          final boolean onlyWifi = PrefUtils.getBooleanValue(R.string.PREF_AUTO_UPDATE_ONLY_WIFI, R.bool.pref_auto_update_only_wifi_default);
+          final boolean onlyWifi = prefUtils.getBooleanValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_ONLY_WIFI, R.bool.pref_auto_update_only_wifi_default);
           
           boolean isConnected = (wifi != null && wifi.isConnectedOrConnecting()) || (lan != null && lan.isConnectedOrConnecting());
           
@@ -104,8 +103,8 @@ public class AutoDataUpdateReceiver extends BroadcastReceiver {
           
           Logging.closeLogForDataUpdate();
           
-          if(isConnected && timeUpdateType && PrefUtils.getStringValue(R.string.PREF_EPGPAID_USER, "").trim().length() > 0 && 
-              PrefUtils.getStringValue(R.string.PREF_EPGPAID_PASSWORD, "").trim().length() > 0) {
+          if(isConnected && timeUpdateType && prefUtils.getValue(R.string.PREF_EPGPAID_USER, "").trim().length() > 0 &&
+                  prefUtils.getValue(R.string.PREF_EPGPAID_PASSWORD, "").trim().length() > 0) {
             Calendar test = Calendar.getInstance(TimeZone.getTimeZone("CET"));
             test.setTimeInMillis(System.currentTimeMillis());
             
@@ -123,7 +122,7 @@ public class AutoDataUpdateReceiver extends BroadcastReceiver {
               startDownload.putExtra(SettingConstants.EXTRA_DATA_UPDATE_TYPE, TvDataUpdateService.TYPE_UPDATE_AUTO);
               startDownload.putExtra(SettingConstants.EXTRA_DATA_UPDATE_TYPE_INTERNET_CONNECTION, internetConnectionType);
               
-              int daysToDownload = Integer.parseInt(PrefUtils.getStringValue(R.string.PREF_AUTO_UPDATE_RANGE, R.string.pref_auto_update_range_default));
+              int daysToDownload = Integer.parseInt(prefUtils.getStringValueWithDefaultKey(R.string.PREF_AUTO_UPDATE_RANGE, R.string.pref_auto_update_range_default));
               
               startDownload.putExtra(context.getString(R.string.DAYS_TO_DOWNLOAD), daysToDownload);
               

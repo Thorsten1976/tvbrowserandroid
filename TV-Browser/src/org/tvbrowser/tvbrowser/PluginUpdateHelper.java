@@ -14,6 +14,7 @@ import android.view.View;
 
 import androidx.preference.PreferenceManager;
 
+import org.tvbrowser.App;
 import org.tvbrowser.devplugin.PluginDefinition;
 import org.tvbrowser.devplugin.PluginHandler;
 import org.tvbrowser.devplugin.PluginServiceConnection;
@@ -190,7 +191,7 @@ abstract class PluginUpdateHelper {
 
 	void showPluginInfo() {
 		Log.d("info6", "showPluginInfo");
-		if (!PrefUtils.getBooleanValue(R.string.PLUGIN_INFO_SHOWN, false)) {
+		if (!App.get().prefs().getValue(R.string.PLUGIN_INFO_SHOWN, false)) {
 			final AlertDialog.Builder builder = new AlertDialog.Builder(tvBrowser);
 
 			builder.setTitle(R.string.plugin_info_title);

@@ -1,5 +1,6 @@
 package org.tvbrowser.widgets;
 
+import org.tvbrowser.App;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.tvbrowser.InfoActivity;
 import org.tvbrowser.tvbrowser.R;
@@ -40,10 +41,8 @@ public class ImportantProgramsWidgetConfigurationActivity extends Activity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    
-    PrefUtils.initialize(ImportantProgramsWidgetConfigurationActivity.this);
 
-    setTheme(UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_DEFAULT, PrefUtils.isDarkTheme()));
+    setTheme(UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_DEFAULT, App.get().prefs().isDarkTheme()));
 
     setContentView(R.layout.important_programs_widget_configuration);
         

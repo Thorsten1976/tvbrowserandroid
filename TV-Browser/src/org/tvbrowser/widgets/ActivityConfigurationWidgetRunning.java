@@ -24,7 +24,6 @@ import android.os.Bundle;
 import org.tvbrowser.tvbrowser.InfoActivity;
 import org.tvbrowser.tvbrowser.R;
 import org.tvbrowser.utils.CompatUtils;
-import org.tvbrowser.utils.PrefUtils;
 
 public class ActivityConfigurationWidgetRunning extends AppCompatActivity {
   private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
@@ -34,7 +33,6 @@ public class ActivityConfigurationWidgetRunning extends AppCompatActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_configuration_widget_running);
-    PrefUtils.initialize(ActivityConfigurationWidgetRunning.this);
 
     if(getIntent().hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
       mAppWidgetId = getIntent().getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);

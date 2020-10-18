@@ -31,6 +31,7 @@ import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.view.View;
 
+import org.tvbrowser.App;
 import org.tvbrowser.utils.IOUtils;
 import org.tvbrowser.utils.PrefUtils;
 
@@ -232,7 +233,7 @@ public class ProgramPanel extends View {
       }
       
       if(isExpired()) {
-        if(PrefUtils.isDarkTheme()) {
+        if(App.get().prefs().isDarkTheme()) {
           mPicture.setColorFilter(ContextCompat.getColor(getContext(), org.tvbrowser.tvbrowser.R.color.dark_gray), PorterDuff.Mode.DARKEN);
         }
         else {

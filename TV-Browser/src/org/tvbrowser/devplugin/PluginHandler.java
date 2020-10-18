@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.tvbrowser.Logging;
@@ -120,8 +121,11 @@ public final class PluginHandler {
           version = pInfo.versionName;
           versionCode = pInfo.versionCode;
         } catch (NameNotFoundException ignored) {}
-        
-        return new TvBrowserSettings(PrefUtils.isDarkTheme(), version, versionCode, PrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_ID_FIRST_KNOWN, R.integer.meta_data_id_default), PrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_ID_LAST_KNOWN, R.integer.meta_data_id_default), PrefUtils.getLongValue(R.string.PREF_LAST_KNOWN_DATA_DATE, SettingConstants.DATA_LAST_DATE_NO_DATA));
+        final PrefUtils prefUtils = App.get().prefs();
+        return new TvBrowserSettings(prefUtils.isDarkTheme(), version, versionCode,
+                prefUtils.getLongValueWithDefaultKey(R.string.META_DATA_ID_FIRST_KNOWN, R.integer.meta_data_id_default),
+                prefUtils.getLongValueWithDefaultKey(R.string.META_DATA_ID_LAST_KNOWN, R.integer.meta_data_id_default),
+                prefUtils.getValue(R.string.PREF_LAST_KNOWN_DATA_DATE, SettingConstants.DATA_LAST_DATE_NO_DATA));
       }
 
       @Override
@@ -158,7 +162,8 @@ public final class PluginHandler {
         final long token = Binder.clearCallingIdentity();
         
         if(IOUtils.isDatabaseAccessible(context)) {
-          Cursor programs = context.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA_WITH_CHANNEL, ProgramUtils.DATA_CHANNEL_PROJECTION, where.toString(), null, null);
+          Cursor programs = context.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA_WITH_CHANNEL,
+                  ProgramUtils.DATA_CHANNEL_PROJECTION, where.toString(), null, null);
           
           try {
             result = ProgramUtils.createProgramsFromDataCursor(context, programs);
@@ -194,7 +199,8 @@ public final class PluginHandler {
         final long token = Binder.clearCallingIdentity();
         
         if(IOUtils.isDatabaseAccessible(context)) {
-          Cursor programs = context.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA_WITH_CHANNEL, ProgramUtils.DATA_CHANNEL_PROJECTION, where.toString(), null, null);
+          Cursor programs = context.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA_WITH_CHANNEL,
+                  ProgramUtils.DATA_CHANNEL_PROJECTION, where.toString(), null, null);
           
           try {
             result = ProgramUtils.createProgramsFromDataCursor(context, programs);
@@ -240,8 +246,11 @@ public final class PluginHandler {
       
       if(RELOAD) {
         RELOAD = false;
-       // loadFirstAndLastProgramId(context);
-        ProgramUtils.handleFirstAndLastKnownProgramId(context, PrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_ID_FIRST_KNOWN, R.integer.meta_data_id_default), PrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_ID_LAST_KNOWN, R.integer.meta_data_id_default));
+        // loadFirstAndLastProgramId(context);
+        PrefUtils prefs = App.get().prefs();
+        ProgramUtils.handleFirstAndLastKnownProgramId(
+                prefs.getLongValueWithDefaultKey(R.string.META_DATA_ID_FIRST_KNOWN, R.integer.meta_data_id_default),
+                prefs.getLongValueWithDefaultKey(R.string.META_DATA_ID_LAST_KNOWN, R.integer.meta_data_id_default));
         
         PackageManager packageManager = context.getPackageManager();
         Intent baseIntent = new Intent( PluginHandler.PLUGIN_ACTION );
@@ -265,7 +274,7 @@ public final class PluginHandler {
         IOUtils.postDelayedInSeparateThread("LAST ID INFO DATE SAVE THREAD", () -> {
           if(PLUGIN_LIST != null) {
             Collections.sort(PLUGIN_LIST);
-            PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, context).edit().putInt(context.getString(R.string.PLUGIN_LAST_ID_INFO_DATE), Calendar.getInstance().get(Calendar.DAY_OF_YEAR)).commit();
+            prefs.edit().putInt(context.getString(R.string.PLUGIN_LAST_ID_INFO_DATE), Calendar.getInstance().get(Calendar.DAY_OF_YEAR)).commit();
           }
         }, 2000);
       }
@@ -361,7 +370,8 @@ public final class PluginHandler {
   }
   
   public static boolean firstAndLastProgramIdAlreadyHandled() {
-    return Calendar.getInstance().get(Calendar.DAY_OF_YEAR) == PrefUtils.getIntValue(R.string.PLUGIN_LAST_ID_INFO_DATE, 0);
+    return Calendar.getInstance().get(Calendar.DAY_OF_YEAR) ==
+            App.get().prefs().getValue(R.string.PLUGIN_LAST_ID_INFO_DATE, 0);
   }
   
   public static PluginServiceConnection getConnectionForId(String id) {

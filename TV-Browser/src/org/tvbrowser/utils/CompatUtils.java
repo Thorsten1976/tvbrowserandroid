@@ -24,6 +24,8 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 import android.view.ViewConfiguration;
+
+import org.tvbrowser.App;
 import org.tvbrowser.tvbrowser.R;
 
 import android.annotation.SuppressLint;
@@ -390,8 +392,8 @@ public final class CompatUtils {
     }
   }
 
-  @SuppressWarnings({"deprecation", "WeakerAccess"})
-  @Nullable
+  @SuppressWarnings({"WeakerAccess"})
+  @NonNull
   public static Locale getPrimaryUserLocale(@NonNull final Configuration configuration) {
     final Locale result;
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -399,7 +401,7 @@ public final class CompatUtils {
       if (locales.size() > 0) {
         result = locales.get(0);
       } else {
-        result = null;
+        result = Locale.getDefault();
       }
     } else {
       result = configuration.locale;
@@ -408,11 +410,12 @@ public final class CompatUtils {
   }
 
   public static boolean showWidgetRefreshInfo() {
-    boolean show = PrefUtils.getBooleanValue(R.string.PREF_WIDGET_REFRESH_WARNING, R.bool.pref_widget_refresh_warning_default);
+    final PrefUtils prefs = App.get().prefs();
+    boolean show = prefs.getBooleanValueWithDefaultKey(R.string.PREF_WIDGET_REFRESH_WARNING, R.bool.pref_widget_refresh_warning_default);
 
     if(show && !Build.MANUFACTURER.toLowerCase(Locale.GERMAN).contains("huawei")) {
       show = false;
-      PrefUtils.setBooleanValue(R.string.PREF_WIDGET_REFRESH_WARNING, false);
+      prefs.setValue(R.string.PREF_WIDGET_REFRESH_WARNING, false);
     }
 
     return show && isAtLeastAndroidO();

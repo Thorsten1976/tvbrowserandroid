@@ -37,6 +37,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.widget.ListView;
 import androidx.preference.PreferenceManager;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.devplugin.PluginHandler;
 import org.tvbrowser.settings.SettingConstants;
@@ -60,9 +61,7 @@ public class ActivityTvBrowserSearchResults extends AppCompatActivity implements
   
   @Override
   protected void onApplyThemeResource(Theme theme, int resid, boolean first) {
-    PrefUtils.initialize(ActivityTvBrowserSearchResults.this);
-
-    super.onApplyThemeResource(theme, UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_TOOLBAR, PrefUtils.isDarkTheme()), first);
+    super.onApplyThemeResource(theme, UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_TOOLBAR, App.get().prefs().isDarkTheme()), first);
   }
   
   private ListView getListView() {
@@ -72,11 +71,9 @@ public class ActivityTvBrowserSearchResults extends AppCompatActivity implements
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    
-    PrefUtils.initialize(ActivityTvBrowserSearchResults.this);
-    
-    SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(ActivityTvBrowserSearchResults.this);
-    pref.registerOnSharedPreferenceChangeListener(this);
+
+    final PrefUtils prefs = App.get().prefs();
+    prefs.getDefault().registerOnSharedPreferenceChangeListener(this);
     
     setContentView(R.layout.list_view);
     
@@ -102,7 +99,9 @@ public class ActivityTvBrowserSearchResults extends AppCompatActivity implements
 
     final ProgramListViewBinderAndClickHandler viewAndClickHandler = new ProgramListViewBinderAndClickHandler(this,this,mHandler);
     mProgramsListAdapter = new OrientationHandlingCursorAdapter(this,R.layout.program_lists_entries,null,
-        projection,new int[] {R.id.startDateLabelPL,R.id.startTimeLabelPL,R.id.endTimeLabelPL,R.id.channelLabelPL,R.id.titleLabelPL,R.id.episodeLabelPL,R.id.genre_label_pl,R.id.picture_copyright_pl,R.id.info_label_pl},0,true,mHandler);
+        projection,new int[] {R.id.startDateLabelPL,R.id.startTimeLabelPL,R.id.endTimeLabelPL,
+            R.id.channelLabelPL,R.id.titleLabelPL,R.id.episodeLabelPL,R.id.genre_label_pl,
+            R.id.picture_copyright_pl,R.id.info_label_pl},0,true,mHandler);
     mProgramsListAdapter.setViewBinder(viewAndClickHandler);
     
     getListView().setAdapter(mProgramsListAdapter);
@@ -119,24 +118,20 @@ public class ActivityTvBrowserSearchResults extends AppCompatActivity implements
     
     getListView().setDivider(drawable);
     
-    setDividerSize(PrefUtils.getStringValue(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
+    setDividerSize(prefs.getStringValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
   }
   
   @Override
   protected void onResume() {
     PluginHandler.incrementBlogCount();
-    
     ProgramUtils.registerMarkingsListener(getApplicationContext(), this);
-    
     super.onResume();
   }
   
   @Override
   protected void onPause() {
     PluginHandler.decrementBlogCount();
-    
     ProgramUtils.unregisterMarkingsListener(getApplicationContext(), this);
-    
     super.onPause();
   }
   
@@ -223,7 +218,7 @@ public class ActivityTvBrowserSearchResults extends AppCompatActivity implements
     // Construct the new query in form of a Cursor Loader
     String[] projection;
     
-    if(PrefUtils.getBooleanValue(R.string.SHOW_PICTURE_IN_LISTS, R.bool.show_pictures_in_lists_default)) {
+    if(App.get().prefs().getBooleanValueWithDefaultKey(R.string.SHOW_PICTURE_IN_LISTS, R.bool.show_pictures_in_lists_default)) {
       projection = new String[14 + TvBrowserContentProvider.MARKING_COLUMNS.length];
       
       projection[projection.length-1] = TvBrowserContentProvider.DATA_KEY_PICTURE;
@@ -299,7 +294,7 @@ public class ActivityTvBrowserSearchResults extends AppCompatActivity implements
   @Override
   public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
     if(getString(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE).equals(key)) {
-      setDividerSize(PrefUtils.getStringValue(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
+      setDividerSize(App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
     }
   }
   

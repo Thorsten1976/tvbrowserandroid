@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
+import org.tvbrowser.App;
 import org.tvbrowser.tvbrowser.R;
 import org.tvbrowser.utils.IOUtils;
-import org.tvbrowser.utils.PrefUtils;
 
 import android.app.SearchManager;
 import android.content.ContentProvider;
@@ -38,7 +38,6 @@ import android.content.Context;
 import android.content.OperationApplicationException;
 import android.content.SharedPreferences;
 import android.content.UriMatcher;
-import android.content.res.Resources.NotFoundException;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
@@ -49,12 +48,14 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import androidx.annotation.NonNull;
+import androidx.preference.PreferenceManager;
+
 import android.text.TextUtils;
 import android.util.Log;
 
 public class TvBrowserContentProvider extends ContentProvider {
   public static final String DATABASE_TVB_NAME = "tvbrowser.db";
-  
+
   public static final String AUTHORITY = "org.tvbrowser.tvbrowsercontentprovider";
   public static final Uri CONTENT_URI_GROUPS = Uri.parse("content://" + AUTHORITY + "/groups");
   public static final Uri CONTENT_URI_CHANNELS = Uri.parse("content://" + AUTHORITY + "/channels");
@@ -247,46 +248,46 @@ public class TvBrowserContentProvider extends ContentProvider {
   private static HashMap<String, String> createDataKeyTypeMap () {
     final HashMap<String, String> mapDataKeyType = new HashMap<>();
     
-    mapDataKeyType.put(DATA_KEY_STARTTIME ," INTEGER NOT NULL");
-    mapDataKeyType.put(DATA_KEY_ENDTIME ," INTEGER NOT NULL");
-    mapDataKeyType.put(DATA_KEY_TITLE ," TEXT NOT NULL");
-    mapDataKeyType.put(DATA_KEY_SHORT_DESCRIPTION ," TEXT");
-    mapDataKeyType.put(DATA_KEY_DESCRIPTION ," TEXT");
-    mapDataKeyType.put(DATA_KEY_TITLE_ORIGINAL ," TEXT");
-    mapDataKeyType.put(DATA_KEY_EPISODE_TITLE ," TEXT");
-    mapDataKeyType.put(DATA_KEY_EPISODE_TITLE_ORIGINAL ," TEXT");
-    mapDataKeyType.put(DATA_KEY_ACTORS ," TEXT");
-    mapDataKeyType.put(DATA_KEY_REGIE ," TEXT");
-    mapDataKeyType.put(DATA_KEY_CUSTOM_INFO ," TEXT");
-    mapDataKeyType.put(DATA_KEY_CATEGORIES ," INTEGER");
-    mapDataKeyType.put(DATA_KEY_AGE_LIMIT ," INTEGER");
+    mapDataKeyType.put(DATA_KEY_STARTTIME, " INTEGER NOT NULL");
+    mapDataKeyType.put(DATA_KEY_ENDTIME, " INTEGER NOT NULL");
+    mapDataKeyType.put(DATA_KEY_TITLE, " TEXT NOT NULL");
+    mapDataKeyType.put(DATA_KEY_SHORT_DESCRIPTION, " TEXT");
+    mapDataKeyType.put(DATA_KEY_DESCRIPTION, " TEXT");
+    mapDataKeyType.put(DATA_KEY_TITLE_ORIGINAL, " TEXT");
+    mapDataKeyType.put(DATA_KEY_EPISODE_TITLE, " TEXT");
+    mapDataKeyType.put(DATA_KEY_EPISODE_TITLE_ORIGINAL, " TEXT");
+    mapDataKeyType.put(DATA_KEY_ACTORS, " TEXT");
+    mapDataKeyType.put(DATA_KEY_REGIE, " TEXT");
+    mapDataKeyType.put(DATA_KEY_CUSTOM_INFO, " TEXT");
+    mapDataKeyType.put(DATA_KEY_CATEGORIES, " INTEGER");
+    mapDataKeyType.put(DATA_KEY_AGE_LIMIT, " INTEGER");
     mapDataKeyType.put(DATA_KEY_WEBSITE_LINK," TEXT");
-    mapDataKeyType.put(DATA_KEY_GENRE ," TEXT");
-    mapDataKeyType.put(DATA_KEY_ORIGIN ," TEXT");
-    mapDataKeyType.put(DATA_KEY_NETTO_PLAY_TIME ," INTEGER");
-    mapDataKeyType.put(DATA_KEY_VPS ," INTEGER");
-    mapDataKeyType.put(DATA_KEY_SCRIPT ," TEXT");
-    mapDataKeyType.put(DATA_KEY_REPETITION_FROM ," TEXT");
-    mapDataKeyType.put(DATA_KEY_REPETITION_ON ," TEXT");
-    mapDataKeyType.put(DATA_KEY_MUSIC ," TEXT");
-    mapDataKeyType.put(DATA_KEY_MODERATION ," TEXT");
-    mapDataKeyType.put(DATA_KEY_YEAR ," INTEGER");
-    mapDataKeyType.put(DATA_KEY_PICTURE ," BLOB");
-    mapDataKeyType.put(DATA_KEY_PICTURE_COPYRIGHT ," TEXT");
-    mapDataKeyType.put(DATA_KEY_PICTURE_DESCRIPTION ," TEXT");
-    mapDataKeyType.put(DATA_KEY_EPISODE_NUMBER ," INTEGER");
-    mapDataKeyType.put(DATA_KEY_EPISODE_COUNT ," INTEGER");
-    mapDataKeyType.put(DATA_KEY_SEASON_NUMBER ," INTEGER");
-    mapDataKeyType.put(DATA_KEY_PRODUCER ," TEXT");
-    mapDataKeyType.put(DATA_KEY_CAMERA ," TEXT");
-    mapDataKeyType.put(DATA_KEY_CUT ," TEXT");
-    mapDataKeyType.put(DATA_KEY_OTHER_PERSONS ," TEXT");
-    mapDataKeyType.put(DATA_KEY_RATING ," INTEGER");
-    mapDataKeyType.put(DATA_KEY_PRODUCTION_FIRM ," TEXT");
+    mapDataKeyType.put(DATA_KEY_GENRE, " TEXT");
+    mapDataKeyType.put(DATA_KEY_ORIGIN, " TEXT");
+    mapDataKeyType.put(DATA_KEY_NETTO_PLAY_TIME, " INTEGER");
+    mapDataKeyType.put(DATA_KEY_VPS, " INTEGER");
+    mapDataKeyType.put(DATA_KEY_SCRIPT, " TEXT");
+    mapDataKeyType.put(DATA_KEY_REPETITION_FROM, " TEXT");
+    mapDataKeyType.put(DATA_KEY_REPETITION_ON, " TEXT");
+    mapDataKeyType.put(DATA_KEY_MUSIC, " TEXT");
+    mapDataKeyType.put(DATA_KEY_MODERATION, " TEXT");
+    mapDataKeyType.put(DATA_KEY_YEAR, " INTEGER");
+    mapDataKeyType.put(DATA_KEY_PICTURE, " BLOB");
+    mapDataKeyType.put(DATA_KEY_PICTURE_COPYRIGHT, " TEXT");
+    mapDataKeyType.put(DATA_KEY_PICTURE_DESCRIPTION, " TEXT");
+    mapDataKeyType.put(DATA_KEY_EPISODE_NUMBER, " INTEGER");
+    mapDataKeyType.put(DATA_KEY_EPISODE_COUNT, " INTEGER");
+    mapDataKeyType.put(DATA_KEY_SEASON_NUMBER, " INTEGER");
+    mapDataKeyType.put(DATA_KEY_PRODUCER, " TEXT");
+    mapDataKeyType.put(DATA_KEY_CAMERA, " TEXT");
+    mapDataKeyType.put(DATA_KEY_CUT, " TEXT");
+    mapDataKeyType.put(DATA_KEY_OTHER_PERSONS, " TEXT");
+    mapDataKeyType.put(DATA_KEY_RATING, " INTEGER");
+    mapDataKeyType.put(DATA_KEY_PRODUCTION_FIRM, " TEXT");
     mapDataKeyType.put(DATA_KEY_AGE_LIMIT_STRING," TEXT");
-    mapDataKeyType.put(DATA_KEY_LAST_PRODUCTION_YEAR ," INTEGER");
-    mapDataKeyType.put(DATA_KEY_ADDITIONAL_INFO ," TEXT");
-    mapDataKeyType.put(DATA_KEY_SERIES ," TEXT");
+    mapDataKeyType.put(DATA_KEY_LAST_PRODUCTION_YEAR, " INTEGER");
+    mapDataKeyType.put(DATA_KEY_ADDITIONAL_INFO, " TEXT");
+    mapDataKeyType.put(DATA_KEY_SERIES, " TEXT");
 
     mapDataKeyType.put(DATA_KEY_PART_NUMBER," INTEGER");
     mapDataKeyType.put(DATA_KEY_PART_NUMBER_TOTAL," INTEGER");
@@ -298,45 +299,45 @@ public class TvBrowserContentProvider extends ContentProvider {
     mapDataKeyType.put(DATA_KEY_VOD_LINK," TEXT");
     mapDataKeyType.put(DATA_KEY_GENRE_SUB_LIST," TEXT");
 
-    mapDataKeyType.put(DATA_KEY_UNIX_DATE ," INTEGER");
-    mapDataKeyType.put(DATA_KEY_DATE_PROG_ID ," INTEGER");
-    mapDataKeyType.put(DATA_KEY_DATE_PROG_STRING_ID ," TEXT");
-    mapDataKeyType.put(DATA_KEY_DONT_WANT_TO_SEE ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_REMOVED_REMINDER ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_MARKING_MARKING ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_MARKING_FAVORITE ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_MARKING_FAVORITE_REMINDER ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_MARKING_REMINDER ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_MARKING_SYNC ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_REMOVED_SYNC ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_UTC_START_MINUTE_AFTER_MIDNIGHT ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_UTC_END_MINUTE_AFTER_MIDNIGHT ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_DURATION_IN_MINUTES ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_BLACK_AND_WHITE ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_4_TO_3 ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_16_TO_9 ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_MONO ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_STEREO ," INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_UNIX_DATE, " INTEGER");
+    mapDataKeyType.put(DATA_KEY_DATE_PROG_ID, " INTEGER");
+    mapDataKeyType.put(DATA_KEY_DATE_PROG_STRING_ID, " TEXT");
+    mapDataKeyType.put(DATA_KEY_DONT_WANT_TO_SEE, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_REMOVED_REMINDER, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_MARKING_MARKING, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_MARKING_FAVORITE, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_MARKING_FAVORITE_REMINDER, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_MARKING_REMINDER, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_MARKING_SYNC, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_REMOVED_SYNC, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_UTC_START_MINUTE_AFTER_MIDNIGHT, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_UTC_END_MINUTE_AFTER_MIDNIGHT, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_DURATION_IN_MINUTES, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_BLACK_AND_WHITE, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_4_TO_3, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_16_TO_9, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_MONO, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_STEREO, " INTEGER DEFAULT 0");
     mapDataKeyType.put(DATA_KEY_INFO_DOLBY_SURROUND," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_DOLBY_DIGITAL_5_1 ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_SECOND_AUDIO_PROGRAM ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_CLOSED_CAPTION ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_LIVE ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_OMU ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_FILM ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_SERIES ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_NEW ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_AUDIO_DESCRIPTION ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_NEWS ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_SHOW ," INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_DOLBY_DIGITAL_5_1, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_SECOND_AUDIO_PROGRAM, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_CLOSED_CAPTION, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_LIVE, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_OMU, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_FILM, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_SERIES, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_NEW, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_AUDIO_DESCRIPTION, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_NEWS, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_SHOW, " INTEGER DEFAULT 0");
     mapDataKeyType.put(DATA_KEY_INFO_MAGAZINE," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_HD ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_DOCUMENTATION ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_ART ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_SPORT ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_CHILDREN ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_OTHER ," INTEGER DEFAULT 0");
-    mapDataKeyType.put(DATA_KEY_INFO_SIGN_LANGUAGE ," INTEGER DEFAULT 0 ");
+    mapDataKeyType.put(DATA_KEY_INFO_HD, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_DOCUMENTATION, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_ART, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_SPORT, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_CHILDREN, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_OTHER, " INTEGER DEFAULT 0");
+    mapDataKeyType.put(DATA_KEY_INFO_SIGN_LANGUAGE, " INTEGER DEFAULT 0 ");
     
     return mapDataKeyType;
   }
@@ -430,11 +431,11 @@ public class TvBrowserContentProvider extends ContentProvider {
     SEARCH_PROJECTION_MAP.put(CHANNEL_KEY_NAME, CHANNEL_KEY_NAME);
     SEARCH_PROJECTION_MAP.put(CHANNEL_KEY_ORDER_NUMBER, CHANNEL_KEY_ORDER_NUMBER);
     SEARCH_PROJECTION_MAP.put(DATA_KEY_UNIX_DATE, DATA_KEY_UNIX_DATE);
-/*    SEARCH_PROJECTION_MAP.put(DATA_KEY_STARTTIME, TvBrowserDataBaseHelper.DATA_TABLE+"."+DATA_KEY_STARTTIME + " AS " + DATA_KEY_STARTTIME);
+/*  SEARCH_PROJECTION_MAP.put(DATA_KEY_STARTTIME, TvBrowserDataBaseHelper.DATA_TABLE+"."+DATA_KEY_STARTTIME + " AS " + DATA_KEY_STARTTIME);
     SEARCH_PROJECTION_MAP.put(CHANNEL_KEY_NAME, CHANNEL_TABLE+"."+CHANNEL_KEY_NAME + " AS " + CHANNEL_KEY_NAME);
     SEARCH_PROJECTION_MAP.put(CHANNEL_KEY_ORDER_NUMBER, CHANNEL_TABLE+"."+CHANNEL_KEY_ORDER_NUMBER + " AS " + CHANNEL_KEY_ORDER_NUMBER);*/
   }
-  
+
   private static final UriMatcher uriMatcher;
   
   // Allocate the UriMatcher object, where a URI ending in 'earthquakes' will correspond to a request
@@ -842,7 +843,7 @@ public class TvBrowserContentProvider extends ContentProvider {
 
   public void updateDatabasePath() {
     mDataBaseHelper.close();
-    createDataBaseHelper(PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, getContext()).getString(getContext().getString(R.string.PREF_DATABASE_PATH), getContext().getString(R.string.pref_database_path_default)));
+    createDataBaseHelper(App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_DATABASE_PATH, R.string.pref_database_path_default));
   }
   
   private void createDataBaseHelper(String path) {
@@ -859,20 +860,23 @@ public class TvBrowserContentProvider extends ContentProvider {
   
   @Override
   public boolean onCreate() {
-    final SharedPreferences pref = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, getContext());
-    
-    String databasePath = "internal";
-    
+    boolean result = false;
+    final Context context = getContext();
+    if (context!=null) {
       try {
-      databasePath = pref.getString(getContext().getString(R.string.PREF_DATABASE_PATH), getContext().getString(R.string.pref_database_path_default));
-    }catch(NotFoundException ignored) {}
-    
-    createDataBaseHelper(databasePath);
-    
-    return true;
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        final String databasePath = prefs.getString(context.getString(R.string.PREF_DATABASE_PATH),
+                context.getString(R.string.pref_database_path_default));
+        createDataBaseHelper(databasePath==null? "internal" : databasePath);
+        result = true;
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+    return result;
   }
 
-  private Cursor rawQueryData(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+  private Cursor rawQueryData(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
     Cursor result = null;
     SQLiteDatabase database = mDataBaseHelper.getWritableDatabase();
     
@@ -941,7 +945,7 @@ public class TvBrowserContentProvider extends ContentProvider {
       // Register the contexts ContentResolver to be notified if the cursor result set changes.
       
       if(INFORM_FOR_CHANGES) {
-        result.setNotificationUri(getContext().getContentResolver(), uri);
+        result.setNotificationUri(getContext().getContentResolver(), TvBrowserContentProvider.CONTENT_URI_DATA);
       }
     }
     
@@ -1051,7 +1055,7 @@ public class TvBrowserContentProvider extends ContentProvider {
                         }
                       } break;
           case RAW_DATA_ID: selection += " " + KEY_ID + "=" + uri.getPathSegments().get(1);
-          case RAW_DATA: return rawQueryData(CONTENT_URI_DATA, projection, selection, selectionArgs, sortOrder);
+          case RAW_DATA: return rawQueryData(projection, selection, selectionArgs, sortOrder);
           case DATA_CHANNEL_ID: qb.appendWhere(TvBrowserDataBaseHelper.DATA_TABLE + "." + KEY_ID + "=" + uri.getPathSegments().get(1) + " AND ");
           case DATA_CHANNELS: { qb.setTables(TvBrowserDataBaseHelper.DATA_TABLE + " , " + CHANNEL_TABLE);
                         orderBy = CHANNEL_KEY_ORDER_NUMBER + " , " + CHANNEL_KEY_CHANNEL_ID;
@@ -1615,27 +1619,21 @@ public class TvBrowserContentProvider extends ContentProvider {
     @Override
     public SQLiteDatabase getWritableDatabase() {
       SQLiteDatabase db = null;
-      
       if(IOUtils.isDatabaseAccessible(mContext)) {
         try {
           db = super.getWritableDatabase();
         }catch(SQLiteException ignored) {}
       }
-      
       return db;
     }
   }
-  
+
   private static boolean columnExists(SQLiteDatabase db, String columnName) {
-    return columnExists(db, CHANNEL_TABLE, columnName);
-  }
-  
-  private static boolean columnExists(SQLiteDatabase db, String table, String columnName) {
     boolean result = false;
-    
-    Cursor c = db.rawQuery("PRAGMA table_info(" + table + ")", null);
+    Cursor c = null;
     try {
-      if(IOUtils.prepareAccess(c)) {
+      c = db.rawQuery("PRAGMA table_info(" + CHANNEL_TABLE + ")", null);
+      if(c!=null && IOUtils.prepareAccess(c)) {
         while(c.moveToNext()) {
           if(c.getString(c.getColumnIndex("name")).equals(columnName)) {
             result = true;
@@ -1646,7 +1644,6 @@ public class TvBrowserContentProvider extends ContentProvider {
     }finally {
       IOUtils.close(c);
     }
-    
     return result;
   }
 }

@@ -18,6 +18,7 @@ package org.tvbrowser.tvbrowser;
 
 import java.util.Date;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.utils.IOUtils;
@@ -65,14 +66,15 @@ class ProgramListViewBinderAndClickHandler implements SimpleCursorAdapter.ViewBi
   @Override
   public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
     try {
-      boolean showPicture = PrefUtils.getBooleanValue(R.string.SHOW_PICTURE_IN_LISTS, R.bool.show_pictures_in_lists_default);
-      boolean showGenre = PrefUtils.getBooleanValue(R.string.SHOW_GENRE_IN_LISTS, R.bool.show_genre_in_lists_default);
-      boolean showEpisode = PrefUtils.getBooleanValue(R.string.SHOW_EPISODE_IN_LISTS, R.bool.show_episode_in_lists_default);
-      boolean showInfo = PrefUtils.getBooleanValue(R.string.SHOW_INFO_IN_LISTS, R.bool.show_info_in_lists_default);
-      boolean showOrderNumber = PrefUtils.getBooleanValue(R.string.SHOW_SORT_NUMBER_IN_LISTS, R.bool.show_sort_number_in_lists_default);
-      boolean showEndTime = PrefUtils.getBooleanValue(R.string.PREF_PROGRAM_LISTS_SHOW_END_TIME, R.bool.pref_program_lists_show_end_time_default);
+      final PrefUtils prefs = App.get().prefs();
+      boolean showPicture = prefs.getBooleanValueWithDefaultKey(R.string.SHOW_PICTURE_IN_LISTS, R.bool.show_pictures_in_lists_default);
+      boolean showGenre = prefs.getBooleanValueWithDefaultKey(R.string.SHOW_GENRE_IN_LISTS, R.bool.show_genre_in_lists_default);
+      boolean showEpisode = prefs.getBooleanValueWithDefaultKey(R.string.SHOW_EPISODE_IN_LISTS, R.bool.show_episode_in_lists_default);
+      boolean showInfo = prefs.getBooleanValueWithDefaultKey(R.string.SHOW_INFO_IN_LISTS, R.bool.show_info_in_lists_default);
+      boolean showOrderNumber = prefs.getBooleanValueWithDefaultKey(R.string.SHOW_SORT_NUMBER_IN_LISTS, R.bool.show_sort_number_in_lists_default);
+      boolean showEndTime = prefs.getBooleanValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_SHOW_END_TIME, R.bool.pref_program_lists_show_end_time_default);
       
-      String logoNamePref = PrefUtils.getStringValue(R.string.CHANNEL_LOGO_NAME_PROGRAM_LISTS, R.string.channel_logo_name_program_lists_default);
+      String logoNamePref = prefs.getStringValueWithDefaultKey(R.string.CHANNEL_LOGO_NAME_PROGRAM_LISTS, R.string.channel_logo_name_program_lists_default);
       
       boolean showChannelName = logoNamePref.equals("0") || logoNamePref.equals("2");
       boolean showChannelLogo = logoNamePref.equals("0") || logoNamePref.equals("1");

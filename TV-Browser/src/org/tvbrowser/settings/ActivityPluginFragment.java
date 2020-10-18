@@ -28,6 +28,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import org.tvbrowser.App;
 import org.tvbrowser.utils.PrefUtils;
 import org.tvbrowser.utils.UiUtils;
 
@@ -44,7 +45,7 @@ public class ActivityPluginFragment extends AppCompatActivity {
 
   @Override
   protected void onApplyThemeResource(Resources.Theme theme, int resid, boolean first) {
-    resid = UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_TOOLBAR, PrefUtils.isDarkTheme());
+    resid = UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_TOOLBAR, App.get().prefs().isDarkTheme());
 
     super.onApplyThemeResource(theme, resid, first);
   }

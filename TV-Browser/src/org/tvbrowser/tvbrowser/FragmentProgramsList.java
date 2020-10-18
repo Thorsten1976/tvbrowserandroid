@@ -21,6 +21,7 @@ import java.util.Calendar;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.tvbrowser.LoaderUpdater.UnsupportedFragmentException;
@@ -505,9 +506,10 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
           ((TextView)convertView).setCompoundDrawablePadding(10);
           ((TextView)convertView).setGravity(Gravity.CENTER_VERTICAL);
         }
-        
-        int logoValue = Integer.parseInt(PrefUtils.getStringValue(R.string.CHANNEL_LOGO_NAME_PROGRAMS_LIST, R.string.channel_logo_name_programs_list_default));
-        boolean showOrderNumber = PrefUtils.getBooleanValue(R.string.SHOW_SORT_NUMBER_IN_PROGRAMS_LIST, R.bool.show_sort_number_in_programs_list_default);
+
+        final PrefUtils prefUtils = App.get().prefs();
+        int logoValue = Integer.parseInt(prefUtils.getStringValueWithDefaultKey(R.string.CHANNEL_LOGO_NAME_PROGRAMS_LIST, R.string.channel_logo_name_programs_list_default));
+        boolean showOrderNumber = prefUtils.getBooleanValueWithDefaultKey(R.string.SHOW_SORT_NUMBER_IN_PROGRAMS_LIST, R.bool.show_sort_number_in_programs_list_default);
         
         ChannelSelection sel = getItem(position);
         
@@ -795,7 +797,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
       mDateAdapter.add(new DateSelection(DateSelection.VALUE_DATE_TODAY_TOMORROW, getActivity()));
       mDateAdapter.add(new DateSelection(DateSelection.VALUE_DATE_ALL, getActivity()));
       
-      long last = PrefUtils.getLongValueWithDefaultKey(R.string.META_DATA_DATE_LAST_KNOWN, R.integer.meta_data_date_known_default);
+      long last = App.get().prefs().getLongValueWithDefaultKey(R.string.META_DATA_DATE_LAST_KNOWN, R.integer.meta_data_date_known_default);
       
       Calendar lastDay = Calendar.getInstance();
       lastDay.setTimeInMillis(last);
@@ -860,14 +862,14 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
     
     mListView.setDivider(drawable);
     
-    setDividerSize(PrefUtils.getStringValue(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
+    setDividerSize(App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
   }
   
   private static String[] getProjection() {
     String[] projection;
     String[] infoCategories = TvBrowserContentProvider.INFO_CATEGORIES_COLUMNS_ARRAY;
     
-    if(PrefUtils.getBooleanValue(R.string.SHOW_PICTURE_IN_LISTS, R.bool.show_pictures_in_lists_default)) {
+    if(App.get().prefs().getBooleanValueWithDefaultKey(R.string.SHOW_PICTURE_IN_LISTS, R.bool.show_pictures_in_lists_default)) {
       projection = new String[15 + TvBrowserContentProvider.MARKING_COLUMNS.length + infoCategories.length];
       
       projection[projection.length-1] = TvBrowserContentProvider.DATA_KEY_PICTURE;
@@ -984,7 +986,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
   public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
     if(getActivity() != null && !isDetached() && key != null) {     
       if(getString(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE).equals(key)) {
-        setDividerSize(PrefUtils.getStringValue(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
+        setDividerSize(App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
       }
       else if(mListView != null && (getString(R.string.PREF_COLOR_SEPARATOR_LINE).equals(key) || getString(R.string.PREF_COLOR_SEPARATOR_SPACE).equals(key))) {
         final Drawable separator = mListView.getDivider();
@@ -1060,7 +1062,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
 
   @Override
   public boolean showDate() {
-    String value = PrefUtils.getStringValue(R.string.SHOW_DATE_FOR_PROGRAMS_LIST, R.string.show_date_for_programs_list_default);
+    String value = App.get().prefs().getStringValueWithDefaultKey(R.string.SHOW_DATE_FOR_PROGRAMS_LIST, R.string.show_date_for_programs_list_default);
     
     boolean returnValue = true;
     
@@ -1074,7 +1076,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
 
   @Override
   public boolean showChannel() {
-    String value = PrefUtils.getStringValue(R.string.SHOW_CHANNEL_FOR_PROGRAMS_LIST, R.string.show_channel_for_programs_list_default);
+    String value = App.get().prefs().getStringValueWithDefaultKey(R.string.SHOW_CHANNEL_FOR_PROGRAMS_LIST, R.string.show_channel_for_programs_list_default);
     
     boolean returnValue = true;
     

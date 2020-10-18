@@ -18,6 +18,7 @@ package org.tvbrowser.settings;
 
 import java.util.HashMap;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.tvbrowser.R;
 import org.tvbrowser.utils.IOUtils;
@@ -217,7 +218,6 @@ public final class SettingConstants {
   
   public static synchronized void initializeLogoMap(Context context, boolean reload) {
     if(SMALL_LOGO_MAP.size() == 0 || MEDIUM_LOGO_MAP.size() == 0 || reload) {
-      PrefUtils.initialize(context.getApplicationContext());
       
       if(IOUtils.isDatabaseAccessible(context)) {
         SMALL_LOGO_MAP.clear();
@@ -251,7 +251,8 @@ public final class SettingConstants {
   }
   
   public static LayerDrawable createLayerDrawable(int baseHeight, Context context, Bitmap logoBitmap) {
-    boolean withBorder = PrefUtils.getBooleanValue(R.string.PREF_LOGO_BORDER, R.bool.pref_logo_border_default);
+    final PrefUtils prefs = App.get().prefs();
+    boolean withBorder = prefs.getBooleanValueWithDefaultKey(R.string.PREF_LOGO_BORDER, R.bool.pref_logo_border_default);
     
     int padding = withBorder ? 4 : 3;
     
@@ -269,14 +270,14 @@ public final class SettingConstants {
     
     BitmapDrawable logo1 = new BitmapDrawable(context.getResources(), logoBitmap);
 
-    int backgroundColor = PrefUtils.getIntValue(R.string.PREF_LOGO_BACKGROUND_COLOR, ContextCompat.getColor(context, R.color.pref_logo_background_color_default));
+    int backgroundColor = prefs.getValue(R.string.PREF_LOGO_BACKGROUND_COLOR, ContextCompat.getColor(context, R.color.pref_logo_background_color_default));
 
     GradientDrawable background = new GradientDrawable(Orientation.BOTTOM_TOP, new int[] {backgroundColor,backgroundColor});
 
     LayerDrawable logo = new LayerDrawable(new Drawable[] {background,logo1});
     logo.setBounds(0, 0, maxWidth, maxHeight);
     
-    if(PrefUtils.getBooleanValue(R.string.PREF_LOGO_BACKGROUND_FILL, R.bool.pref_logo_background_fill_default)) {
+    if(prefs.getBooleanValueWithDefaultKey(R.string.PREF_LOGO_BACKGROUND_FILL, R.bool.pref_logo_background_fill_default)) {
       background.setBounds(0, 0, maxWidth, maxHeight);
     }
     else {
@@ -286,7 +287,7 @@ public final class SettingConstants {
     logo1.setBounds(maxWidth/2-width/2, maxHeight/2-height/2, maxWidth/2+width/2, maxHeight/2+height/2);
     
     if(withBorder) {
-      background.setStroke(1, PrefUtils.getIntValue(R.string.PREF_LOGO_BORDER_COLOR, ContextCompat.getColor(context, R.color.pref_logo_border_color_default)));
+      background.setStroke(1, prefs.getValue(R.string.PREF_LOGO_BORDER_COLOR, ContextCompat.getColor(context, R.color.pref_logo_border_color_default)));
     }
     
     return logo;

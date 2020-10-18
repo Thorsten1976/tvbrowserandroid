@@ -139,9 +139,10 @@ public class ServiceUpdateRemindersAndAutoUpdate extends Service {
     Logging.log(BroadcastReceiverReminder.tag, "addReminder called from: " + caller + " for programID: '" + programID + "' with start time: " + new Date(startTime), Logging.TYPE_REMINDER, context);
     
     AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-    
-    int reminderTime = PrefUtils.getStringValueAsInt(R.string.PREF_REMINDER_TIME, R.string.pref_reminder_time_default) * 60000;
-    int reminderTimeSecond = PrefUtils.getStringValueAsInt(R.string.PREF_REMINDER_TIME_SECOND, R.string.pref_reminder_time_default) * 60000;
+
+    final PrefUtils prefs = App.get().prefs();
+    int reminderTime = prefs.getStringValueAsInt(R.string.PREF_REMINDER_TIME, R.string.pref_reminder_time_default) * 60000;
+    int reminderTimeSecond = prefs.getStringValueAsInt(R.string.PREF_REMINDER_TIME_SECOND, R.string.pref_reminder_time_default) * 60000;
     
     boolean remindAgain = reminderTimeSecond >= 0 && reminderTime != reminderTimeSecond;
     

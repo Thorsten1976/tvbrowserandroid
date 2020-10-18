@@ -16,6 +16,7 @@
  */
 package org.tvbrowser.tvbrowser;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.utils.PrefUtils;
@@ -69,7 +70,7 @@ class OrientationHandlingCursorAdapter extends SimpleCursorAdapter {
       
       mChannelSwitchListener = v -> {
         ChannelProgInfo tag = (ChannelProgInfo)v.getTag();
-        boolean handle = PrefUtils.getBooleanValue(R.string.PREF_PROGRAM_LISTS_CLICK_TO_CHANNEL_TO_LIST, R.bool.pref_program_lists_click_to_channel_to_list_default);
+        boolean handle = App.get().prefs().getBooleanValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_CLICK_TO_CHANNEL_TO_LIST, R.bool.pref_program_lists_click_to_channel_to_list_default);
 
         if(handle && tag != null) {
           Intent showChannel = new Intent(SettingConstants.SHOW_ALL_PROGRAMS_FOR_CHANNEL_INTENT);
@@ -120,10 +121,11 @@ class OrientationHandlingCursorAdapter extends SimpleCursorAdapter {
   
   @Override
   public View getView(int position, View convertView, ViewGroup parent) {
-    float textScale = Float.valueOf(PrefUtils.getStringValue(R.string.PREF_PROGRAM_LISTS_TEXT_SCALE, R.string.pref_program_lists_text_scale_default));
+    final PrefUtils prefs = App.get().prefs();
+    float textScale = Float.parseFloat(prefs.getStringValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_TEXT_SCALE, R.string.pref_program_lists_text_scale_default));
 
     ProgTag tag = null;
-    int padding = UiUtils.convertDpToPixel((int)(Float.parseFloat(PrefUtils.getStringValue(R.string.PREF_PROGRAM_LISTS_VERTICAL_PADDING_SIZE, R.string.pref_program_lists_vertical_padding_size_default))/2),mContext.getResources());
+    int padding = UiUtils.convertDpToPixel((int)(Float.parseFloat(prefs.getStringValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_VERTICAL_PADDING_SIZE, R.string.pref_program_lists_vertical_padding_size_default))/2),mContext.getResources());
     
     if(convertView != null) {
       tag = (ProgTag)convertView.getTag();

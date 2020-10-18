@@ -16,6 +16,7 @@
  */
 package org.tvbrowser.tvbrowser;
 
+import org.tvbrowser.App;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.utils.CompatUtils;
 import org.tvbrowser.utils.PrefUtils;
@@ -30,10 +31,8 @@ public class BroadcastReceiverUpdateAlarmValue extends BroadcastReceiver {
   public void onReceive(final Context context, Intent intent) {
     boolean firstStart = false;
 
-    PrefUtils.initialize(context);
-    
     if(intent != null && intent.getAction() != null && (intent.getAction().equals("android.intent.action.BOOT_COMPLETED") || intent.getAction().equals("android.intent.action.QUICKBOOT_POWERON"))) {
-      if(!PrefUtils.getBooleanValue(R.string.PREF_REMINDER_STATE_KEEP, R.bool.pref_reminder_state_keep_default)) {
+      if(!App.get().prefs().getBooleanValueWithDefaultKey(R.string.PREF_REMINDER_STATE_KEEP, R.bool.pref_reminder_state_keep_default)) {
         SettingConstants.setReminderPaused(context, false);
       }
       

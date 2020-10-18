@@ -16,6 +16,7 @@
  */
 package org.tvbrowser.view;
 
+import org.tvbrowser.App;
 import org.tvbrowser.tvbrowser.R;
 import org.tvbrowser.utils.PrefUtils;
 
@@ -37,13 +38,12 @@ public class SeparatorDrawable extends Drawable {
   }
   
   public void updateColors(Context context) {
-    PrefUtils.initialize(context.getApplicationContext());
-    
     mLineColor.setStyle(Paint.Style.STROKE);
-    mLineColor.setColor(PrefUtils.getIntValue(R.string.PREF_COLOR_SEPARATOR_LINE, ContextCompat.getColor(context, R.color.pref_color_separator_line)));
+    final PrefUtils prefs = App.get().prefs();
+    mLineColor.setColor(prefs.getValue(R.string.PREF_COLOR_SEPARATOR_LINE, ContextCompat.getColor(context, R.color.pref_color_separator_line)));
     
     mDividerColor.setStyle(Paint.Style.FILL_AND_STROKE);
-    mDividerColor.setColor(PrefUtils.getIntValue(R.string.PREF_COLOR_SEPARATOR_SPACE, ContextCompat.getColor(context, R.color.pref_color_separator_space)));
+    mDividerColor.setColor(prefs.getValue(R.string.PREF_COLOR_SEPARATOR_SPACE, ContextCompat.getColor(context, R.color.pref_color_separator_space)));
   }
   
   @Override

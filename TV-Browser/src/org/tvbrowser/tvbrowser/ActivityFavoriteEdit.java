@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.filter.CategoryFilter;
 import org.tvbrowser.filter.ChannelFilter;
@@ -75,7 +76,7 @@ public class ActivityFavoriteEdit extends AppCompatActivity implements ChannelFi
   
   @Override
   protected void onApplyThemeResource(Theme theme, int resid, boolean first) {
-    resid = UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_TOOLBAR, PrefUtils.isDarkTheme());
+    resid = UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_TOOLBAR, App.get().prefs().isDarkTheme());
     
     super.onApplyThemeResource(theme, resid, first);
   }
@@ -101,7 +102,7 @@ public class ActivityFavoriteEdit extends AppCompatActivity implements ChannelFi
 
     int color = ContextCompat.getColor(this, R.color.abc_primary_text_material_light);
     
-    if(PrefUtils.isDarkTheme()) {
+    if(App.get().prefs().isDarkTheme()) {
       color = ContextCompat.getColor(this, R.color.abc_primary_text_material_dark);
     }
     

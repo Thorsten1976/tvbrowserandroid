@@ -35,7 +35,6 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import androidx.preference.PreferenceManager;
 
 import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
@@ -60,10 +59,11 @@ public final class VersionUtils {
 
       final Context applicationContext = tvBrowser.getApplicationContext();
       final PackageInfo pInfo = applicationContext.getPackageManager().getPackageInfo(applicationContext.getPackageName(), 0);
-      final SharedPreferences defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext);
+      final PrefUtils prefUtils = App.get().prefs();
+      final SharedPreferences defaultSharedPreferences = prefUtils.getDefault();
 
       final int currentVersion = pInfo.versionCode;
-      final int oldVersion = PrefUtils.getIntValueWithDefaultKey(R.string.OLD_VERSION, R.integer.old_version_default);
+      final int oldVersion = prefUtils.getIntValueWithDefaultKey(R.string.OLD_VERSION, R.integer.old_version_default);
 
       Log.i("VersionUtils", String.format(Locale.getDefault(), "applyUpdates [currentVersion=%d, oldVersion=%d]", currentVersion, oldVersion));
       //PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, getApplicationContext()).edit().remove(getString(R.string.CURRENT_FILTER_ID)).commit();
@@ -79,14 +79,14 @@ public final class VersionUtils {
           final String bicycle = pref.getString(SettingConstants.USER_PASSWORD, null);
 
           if (car != null && car.trim().length() > 0 && bicycle != null && bicycle.trim().length() > 0) {
-            PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, applicationContext).edit().putBoolean(tvBrowser.getString(R.string.PREF_PRIVACY_TERMS_ACCEPTED_SYNC), true).apply();
+            prefUtils.edit().putBoolean(tvBrowser.getString(R.string.PREF_PRIVACY_TERMS_ACCEPTED_SYNC), true).apply();
           }
 
-          final String userName = PrefUtils.getStringValue(R.string.PREF_EPGPAID_USER, null);
-          final String password = PrefUtils.getStringValue(R.string.PREF_EPGPAID_PASSWORD, null);
+          final String userName = prefUtils.getValue(R.string.PREF_EPGPAID_USER, null);
+          final String password = prefUtils.getValue(R.string.PREF_EPGPAID_PASSWORD, null);
 
           if (userName != null && password != null && userName.trim().length() > 0 && password.trim().length() > 0) {
-            PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, applicationContext).edit().putBoolean(tvBrowser.getString(R.string.PREF_PRIVACY_TERMS_ACCEPTED_EPGPAID), true).apply();
+            prefUtils.edit().putBoolean(tvBrowser.getString(R.string.PREF_PRIVACY_TERMS_ACCEPTED_EPGPAID), true).apply();
           }
         }
 
@@ -111,25 +111,25 @@ public final class VersionUtils {
         }
 
         if (oldVersion < 417) {
-          PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, applicationContext).edit().putString(tvBrowser.getString(R.string.DETAIL_PICTURE_ZOOM), tvBrowser.getString(R.string.detail_picture_zoom_default)).commit();
+          prefUtils.edit().putString(tvBrowser.getString(R.string.DETAIL_PICTURE_ZOOM), tvBrowser.getString(R.string.detail_picture_zoom_default)).commit();
         }
         if (oldVersion < 416) {
-          PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_FILTERS, applicationContext).edit().remove(tvBrowser.getString(R.string.DETAIL_PICTURE_DESCRIPTION_POSITION)).commit();
-          PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, applicationContext).edit().putString(tvBrowser.getString(R.string.DETAIL_PICTURE_DESCRIPTION_POSITION), "1").commit();
+          prefUtils.edit(PrefUtils.TYPE_PREFERENCES_FILTERS).remove(tvBrowser.getString(R.string.DETAIL_PICTURE_DESCRIPTION_POSITION)).commit();
+          prefUtils.edit().putString(tvBrowser.getString(R.string.DETAIL_PICTURE_DESCRIPTION_POSITION), "1").commit();
         }
         if (oldVersion == 402) {
-          PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_FILTERS, applicationContext).edit().remove(tvBrowser.getString(R.string.PREF_REMINDER_AS_ALARM_CLOCK)).commit();
+          prefUtils.edit(PrefUtils.TYPE_PREFERENCES_FILTERS).remove(tvBrowser.getString(R.string.PREF_REMINDER_AS_ALARM_CLOCK)).commit();
           ServiceUpdateRemindersAndAutoUpdate.startReminderUpdate(applicationContext);
         }
         if (oldVersion < 339) {
           applicationContext.startService(new Intent(applicationContext, ServiceChannelCleaner.class));
         }
         if (oldVersion < 332) {
-          PrefUtils.updateDataMetaData(applicationContext);
-          PrefUtils.updateChannelSelectionState(applicationContext);
+          prefUtils.updateDataMetaData(applicationContext);
+          prefUtils.updateChannelSelectionState(applicationContext);
         }
         if (oldVersion < 322) {
-          final SharedPreferences pref = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_FILTERS, applicationContext);
+          final SharedPreferences pref = prefUtils.getShared(PrefUtils.TYPE_PREFERENCES_FILTERS);
           final SharedPreferences.Editor edit = pref.edit();
           final Map<String, ?> filterMap = pref.getAll();
           for (String key : filterMap.keySet()) {
@@ -149,7 +149,8 @@ public final class VersionUtils {
               if (IOUtils.isDatabaseAccessible(applicationContext)) {
                 Cursor cursor = null;
                 try {
-                  cursor = applicationContext.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA, new String[]{TvBrowserContentProvider.KEY_ID}, TvBrowserContentProvider.DATA_KEY_MARKING_SYNC, null, TvBrowserContentProvider.KEY_ID);
+                  cursor = applicationContext.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA,
+                          new String[]{TvBrowserContentProvider.KEY_ID}, TvBrowserContentProvider.DATA_KEY_MARKING_SYNC, null, TvBrowserContentProvider.KEY_ID);
                   if (cursor != null && IOUtils.prepareAccess(cursor)) {
                     final int idColumn = cursor.getColumnIndex(TvBrowserContentProvider.KEY_ID);
                     final ArrayList<String> syncIdList = new ArrayList<>();
@@ -157,7 +158,7 @@ public final class VersionUtils {
                       syncIdList.add(String.valueOf(cursor.getLong(idColumn)));
                     }
 
-                    ProgramUtils.addSyncIds(applicationContext, syncIdList);
+                    ProgramUtils.addSyncIds(syncIdList);
                   }
                 } finally {
                   IOUtils.close(cursor);
@@ -173,7 +174,8 @@ public final class VersionUtils {
               if (IOUtils.isDatabaseAccessible(applicationContext)) {
                 Cursor cursor = null;
                 try {
-                  cursor = applicationContext.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA, new String[]{TvBrowserContentProvider.KEY_ID}, TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER + " OR " + TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER, null, TvBrowserContentProvider.KEY_ID);
+                  cursor = applicationContext.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA,
+                          new String[]{TvBrowserContentProvider.KEY_ID}, TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER + " OR " + TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER, null, TvBrowserContentProvider.KEY_ID);
                   if (cursor != null && IOUtils.prepareAccess(cursor)) {
                     final int idColumn = cursor.getColumnIndex(TvBrowserContentProvider.KEY_ID);
                     final ArrayList<String> reminderIdList = new ArrayList<>();
@@ -181,7 +183,7 @@ public final class VersionUtils {
                       reminderIdList.add(String.valueOf(cursor.getLong(idColumn)));
                     }
 
-                    ProgramUtils.addReminderIds(applicationContext, reminderIdList);
+                    ProgramUtils.addReminderIds(reminderIdList);
                   }
                 } finally {
                   IOUtils.close(cursor);
@@ -206,7 +208,7 @@ public final class VersionUtils {
           defaultSharedPreferences.edit().remove("FAVORITE_LIST").commit();
         }
         if (oldVersion < 204) {
-          final int firstTime = PrefUtils.getStringValueAsInt(R.string.PREF_REMINDER_TIME, R.string.pref_reminder_time_default);
+          final int firstTime = prefUtils.getStringValueAsInt(R.string.PREF_REMINDER_TIME, R.string.pref_reminder_time_default);
           final boolean remindAgain = defaultSharedPreferences.getBoolean("PREF_REMIND_AGAIN_AT_START", false);
           final SharedPreferences.Editor edit = defaultSharedPreferences.edit();
           edit.remove("PREF_REMIND_AGAIN_AT_START");
@@ -257,11 +259,11 @@ public final class VersionUtils {
 
           edit.commit();
         }
-        if (oldVersion < 284 && tvBrowser.getString(R.string.divider_small).equals(PrefUtils.getStringValue(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default))) {
+        if (oldVersion < 284 && tvBrowser.getString(R.string.divider_small).equals(prefUtils.getStringValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default))) {
 
           defaultSharedPreferences.edit().remove(tvBrowser.getString(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE)).commit();
         }
-        if (oldVersion < 287 && PrefUtils.getBooleanValue(R.string.PREF_WIDGET_BACKGROUND_ROUNDED_CORNERS, true)) {
+        if (oldVersion < 287 && prefUtils.getValue(R.string.PREF_WIDGET_BACKGROUND_ROUNDED_CORNERS, true)) {
           defaultSharedPreferences.edit().remove(tvBrowser.getString(R.string.PREF_WIDGET_BACKGROUND_ROUNDED_CORNERS)).commit();
 
           UiUtils.updateImportantProgramsWidget(applicationContext);
@@ -272,7 +274,7 @@ public final class VersionUtils {
         }
         if (oldVersion < 379) {
           final HashSet<String> values = new HashSet<>();
-          final String currentFilterId = PrefUtils.getStringValue(R.string.CURRENT_FILTER_ID, null);
+          final String currentFilterId = prefUtils.getValue(R.string.CURRENT_FILTER_ID, null);
 
           if (currentFilterId != null) {
             values.add(currentFilterId);
@@ -281,11 +283,11 @@ public final class VersionUtils {
           defaultSharedPreferences.edit().putStringSet(tvBrowser.getString(R.string.CURRENT_FILTER_ID), values).commit();
         }
 
-        if (oldVersion > tvBrowser.getResources().getInteger(R.integer.old_version_default) && oldVersion < currentVersion && PrefUtils.getBooleanValue(R.string.PREF_INFO_VERSION_UPDATE_SHOW, R.bool.pref_info_version_update_show_default)) {
+        if (oldVersion > tvBrowser.getResources().getInteger(R.integer.old_version_default) && oldVersion < currentVersion && prefUtils.getBooleanValueWithDefaultKey(R.string.PREF_INFO_VERSION_UPDATE_SHOW, R.bool.pref_info_version_update_show_default)) {
           tvBrowser.setInfoType(TvBrowser.INFO_TYPE_VERSION);
-        } else if (oldVersion != tvBrowser.getResources().getInteger(R.integer.old_version_default) && PrefUtils.getBooleanValue(R.string.PREF_NEWS_SHOW, R.bool.pref_news_show_default)) {
-          final long lastShown = PrefUtils.getLongValue(R.string.NEWS_DATE_LAST_SHOWN, 0);
-          final long lastKnown = PrefUtils.getLongValue(R.string.NEWS_DATE_LAST_KNOWN, 0);
+        } else if (oldVersion != tvBrowser.getResources().getInteger(R.integer.old_version_default) && prefUtils.getBooleanValueWithDefaultKey(R.string.PREF_NEWS_SHOW, R.bool.pref_news_show_default)) {
+          final long lastShown = prefUtils.getValue(R.string.NEWS_DATE_LAST_SHOWN, 0L);
+          final long lastKnown = prefUtils.getValue(R.string.NEWS_DATE_LAST_KNOWN, 0L);
           Log.d("info6", "lastShown " + new Date(lastShown) + " " + "lastKnown " + new Date(lastKnown));
           if (lastShown < lastKnown) {
             tvBrowser.setInfoType(TvBrowser.INFO_TYPE_NEWS);

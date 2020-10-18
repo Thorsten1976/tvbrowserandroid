@@ -1,5 +1,6 @@
 package org.tvbrowser.settings;
 
+import org.tvbrowser.App;
 import org.tvbrowser.utils.PrefUtils;
 import org.tvbrowser.utils.UiUtils;
 
@@ -18,7 +19,7 @@ public abstract class ToolbarPreferencesActivity extends PreferenceActivity {
   private AppCompatDelegate mDelegate;
   @Override
   protected void onCreate(final Bundle savedInstanceState) {
-    setTheme(UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_TOOLBAR, PrefUtils.isDarkTheme()));
+    setTheme(UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_TOOLBAR, App.get().prefs().isDarkTheme()));
     getDelegate().installViewFactory();
     getDelegate().onCreate(savedInstanceState);
     super.onCreate(savedInstanceState);

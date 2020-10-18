@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.tvbrowser.App;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.tvbrowser.R;
 import org.tvbrowser.tvbrowser.WhereClause;
@@ -85,7 +86,7 @@ public abstract class FilterValues {
   public static FilterValues load(String id, Context context) {
     FilterValues result = null;
 
-    SharedPreferences pref = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_FILTERS, context);
+    SharedPreferences pref = App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_FILTERS);
     
     String values = pref.getString(id, null);
     
@@ -101,20 +102,20 @@ public abstract class FilterValues {
   }
   
   public final void save(Context context) {
-    Editor edit = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_FILTERS, context).edit();
+    Editor edit = App.get().prefs().edit(PrefUtils.TYPE_PREFERENCES_FILTERS);
     edit.putString(getId(), mName + SEPARATOR + getSaveString());
     edit.commit();
   }
   
   public static void deleteFilter(Context context, FilterValues filter) {
     final String filterId = filter.getClass().getCanonicalName() + SEPARATOR_CLASS + filter.getId();
+
+    final PrefUtils prefs = App.get().prefs();
+    prefs.edit(PrefUtils.TYPE_PREFERENCES_FILTERS).remove(filterId).remove(filter.getId()).commit();
     
-    PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_FILTERS, context).edit().remove(filterId).remove(filter.getId()).commit();
-    
-    final SharedPreferences pref = PrefUtils.getSharedPreferences(PrefUtils.TYPE_PREFERENCES_SHARED_GLOBAL, context);
+    final SharedPreferences pref = prefs.getDefault();
     
     final Set<String> test = pref.getStringSet(context.getString(R.string.CURRENT_FILTER_ID), new HashSet<>());
-    
     final String[] idValues = test.toArray(new String[0]);
     boolean removed = false;
     
