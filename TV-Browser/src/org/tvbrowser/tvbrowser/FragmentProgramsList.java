@@ -762,12 +762,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
             }
           }
 
-          if(filterSelection >= 0) {
-            filter.setSelection(filterSelection);
-          }
-          else {
-            filter.setSelection(0);
-          }
+          filter.setSelection(Math.max(filterSelection, 0));
           
           if(daySelection >= 0) {
             if(daySelection < mDateSelection.getCount()) {
