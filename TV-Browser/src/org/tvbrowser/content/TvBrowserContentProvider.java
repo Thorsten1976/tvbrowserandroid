@@ -493,12 +493,10 @@ public class TvBrowserContentProvider extends ContentProvider {
         data_with_channel = true;
         count = database.delete(CHANNEL_TABLE, KEY_ID + "=" + segment + (!TextUtils.isEmpty(where) ? " AND (" + where + ")" : ""), whereArgs);
         }break;
-        case DATA: count = database.delete(TvBrowserDataBaseHelper.DATA_TABLE, where, whereArgs);break;
-        case DATA_ID: {String segment = uri.getPathSegments().get(1);
-        data_with_channel = true;
-        count = database.delete(TvBrowserDataBaseHelper.DATA_TABLE, KEY_ID + "=" + segment + (!TextUtils.isEmpty(where) ? " AND (" + where + ")" : ""), whereArgs);
-        }break;
-        case DATA_UPDATE: count = database.delete(TvBrowserDataBaseHelper.DATA_TABLE, where, whereArgs);break;
+        case DATA:
+        case DATA_UPDATE:
+          count = database.delete(TvBrowserDataBaseHelper.DATA_TABLE, where, whereArgs);break;
+        case DATA_ID:
         case DATA_UPDATE_ID: {String segment = uri.getPathSegments().get(1);
         data_with_channel = true;
         count = database.delete(TvBrowserDataBaseHelper.DATA_TABLE, KEY_ID + "=" + segment + (!TextUtils.isEmpty(where) ? " AND (" + where + ")" : ""), whereArgs);
@@ -549,8 +547,9 @@ public class TvBrowserContentProvider extends ContentProvider {
       switch(uriMatcher.match(uri)) {
         case GROUPS: return insertGroup(uri, values);
         case CHANNELS: return insertChannel(uri, values);
-        case DATA: return insertData(uri, values);
-        case DATA_UPDATE: return insertData(uri, values);
+        case DATA:
+        case DATA_UPDATE:
+          return insertData(uri, values);
         case DATA_VERSION: return insertVersion(uri, values);
       }
     }
@@ -562,8 +561,9 @@ public class TvBrowserContentProvider extends ContentProvider {
   public int bulkInsert(@NonNull Uri uri, @NonNull ContentValues[] values) {
     if(IOUtils.isDatabaseAccessible(getContext())) {
       switch(uriMatcher.match(uri)) {
-        case DATA: return bulkInsertData(uri, values);
-        case DATA_UPDATE: return bulkInsertData(uri, values);
+        case DATA:
+        case DATA_UPDATE:
+          return bulkInsertData(uri, values);
         case DATA_VERSION: return bulkInsertVersion(uri, values);
         case CHANNELS: return bulkInsertChannels(uri, values);
       }
@@ -592,10 +592,12 @@ public class TvBrowserContentProvider extends ContentProvider {
             String table = TvBrowserDataBaseHelper.DATA_TABLE;
             
             switch(uriMatcher.match(uri)) {
-              case DATA_VERSION: table = TvBrowserDataBaseHelper.VERSION_TABLE;break;
-              case DATA_VERSION_ID: table = TvBrowserDataBaseHelper.VERSION_TABLE;break;
-              case CHANNELS: table = CHANNEL_TABLE;break;
-              case CHANNEL_ID: table = CHANNEL_TABLE;break;
+              case DATA_VERSION:
+              case DATA_VERSION_ID:
+                table = TvBrowserDataBaseHelper.VERSION_TABLE;break;
+              case CHANNELS:
+              case CHANNEL_ID:
+                table = CHANNEL_TABLE;break;
             }
             
             ContentValues values = op.resolveValueBackReferences(null, 0);
@@ -986,13 +988,17 @@ public class TvBrowserContentProvider extends ContentProvider {
             Log.d("info22","\n\n"+b.toString()+"\n" +selection+"\n");
             orderBy = DATA_KEY_STARTTIME;
             break;
-          case GROUP_ID: qb.appendWhere(KEY_ID + "=" + uri.getPathSegments().get(1));
+          case GROUP_ID:
+          case DATA_ID:
+          case DATA_UPDATE_ID:
+          case DATA_VERSION_ID:
+          case CHANNEL_GROUPS_ID:
+          case CHANNEL_ID:
+            qb.appendWhere(KEY_ID + "=" + uri.getPathSegments().get(1));
           case GROUPS: qb.setTables(TvBrowserDataBaseHelper.GROUPS_TABLE);
                        orderBy = GROUP_KEY_GROUP_ID;break;
-          case CHANNEL_ID: qb.appendWhere(KEY_ID + "=" + uri.getPathSegments().get(1));
           case CHANNELS: qb.setTables(CHANNEL_TABLE);
                         orderBy = CHANNEL_KEY_NAME;break;
-          case CHANNEL_GROUPS_ID: qb.appendWhere(KEY_ID + "=" + uri.getPathSegments().get(1));
           case CHANNEL_GROUPS:
             {
               qb.setTables(TvBrowserDataBaseHelper.GROUPS_TABLE + ", " + CHANNEL_TABLE);
@@ -1027,13 +1033,10 @@ public class TvBrowserContentProvider extends ContentProvider {
                 }
               }
             }break;
-          case DATA_VERSION_ID: qb.appendWhere(KEY_ID + "=" + uri.getPathSegments().get(1));
           case DATA_VERSION: qb.setTables(TvBrowserDataBaseHelper.VERSION_TABLE);
                         orderBy = VERSION_KEY_DAYS_SINCE_1970;break;
-          case DATA_UPDATE_ID: qb.appendWhere(KEY_ID + "=" + uri.getPathSegments().get(1));
           case DATA_UPDATE: qb.setTables(TvBrowserDataBaseHelper.DATA_TABLE);
                         orderBy = CHANNEL_KEY_CHANNEL_ID;break;
-          case DATA_ID: qb.appendWhere(KEY_ID + "=" + uri.getPathSegments().get(1));
           case DATA: {qb.setTables(TvBrowserDataBaseHelper.DATA_TABLE);
                         orderBy = CHANNEL_KEY_CHANNEL_ID;
                         
@@ -1158,12 +1161,10 @@ public class TvBrowserContentProvider extends ContentProvider {
         data_with_channel = true;
         count = database.update(TvBrowserDataBaseHelper.VERSION_TABLE, values, KEY_ID + "=" + segment + (!TextUtils.isEmpty(where) ? " AND (" + where + ")" : ""), whereArgs);
         }break;
-        case DATA_UPDATE: count = database.update(TvBrowserDataBaseHelper.DATA_TABLE, values, where, whereArgs);break;
-        case DATA_UPDATE_ID: {String segment = uri.getPathSegments().get(1);
-        data_with_channel = true;
-        count = database.update(TvBrowserDataBaseHelper.DATA_TABLE, values, KEY_ID + "=" + segment + (!TextUtils.isEmpty(where) ? " AND (" + where + ")" : ""), whereArgs);
-        }break;
-        case DATA: count = database.update(TvBrowserDataBaseHelper.DATA_TABLE, values, where, whereArgs);break;
+        case DATA_UPDATE:
+        case DATA:
+          count = database.update(TvBrowserDataBaseHelper.DATA_TABLE, values, where, whereArgs);break;
+        case DATA_UPDATE_ID:
         case DATA_ID: {String segment = uri.getPathSegments().get(1);
         data_with_channel = true;
         count = database.update(TvBrowserDataBaseHelper.DATA_TABLE, values, KEY_ID + "=" + segment + (!TextUtils.isEmpty(where) ? " AND (" + where + ")" : ""), whereArgs);

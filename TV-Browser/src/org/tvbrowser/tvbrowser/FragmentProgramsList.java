@@ -620,12 +620,13 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
         text.setText(sel);
         
         switch(position) {
-          case 0: CompatUtils.setBackground(convertView,ContextCompat.getDrawable(getContext(), android.R.drawable.list_selector_background));break;
+          case 0:
+          case 5:
+            CompatUtils.setBackground(convertView,ContextCompat.getDrawable(getContext(), android.R.drawable.list_selector_background));break;
           case 1: convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_FAVORITE_COLOR_KEY, getContext()));break;
           case 2: convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_COLOR_KEY, getContext()));break;
           case 3: convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_REMINDER_COLOR_KEY, getContext()));break;
           case 4: convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_SYNC_COLOR_KEY, getContext()));break;
-          case 5: CompatUtils.setBackground(convertView,ContextCompat.getDrawable(getContext(), android.R.drawable.list_selector_background));break;
         }
         
         return convertView;
