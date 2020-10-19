@@ -1581,7 +1581,7 @@ public class TvDataUpdateService extends Service {
     return choosenMirror;
   }
   
-  private final class ChangeableFinalBoolean {
+  private static final class ChangeableFinalBoolean {
     private boolean mValue;
     
     ChangeableFinalBoolean(boolean value) {
@@ -2033,7 +2033,7 @@ public class TvDataUpdateService extends Service {
     return mirrorList.toArray(new String[0]);
   }
   
-  private class GroupInfo {
+  private static class GroupInfo {
     private final String[] mUrlArr;
     private final int mUniqueGroupID;
     private final String mFileName;
@@ -4130,7 +4130,7 @@ public class TvDataUpdateService extends Service {
     }
   }
   
-  private class DataInfo {
+  private static class DataInfo {
     private final byte mFileVersion;
     private final byte mDataVersion;
     private final short mFrameCount;
