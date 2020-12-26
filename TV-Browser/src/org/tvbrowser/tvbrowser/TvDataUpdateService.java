@@ -164,15 +164,15 @@ public class TvDataUpdateService extends Service {
   private boolean mOnlyWifi;
   private boolean mIsConnected;
   private boolean mConnectionLost;
-  private boolean mInstableConnectionAcceptable;
+  private boolean mUnstableConnectionAcceptable;
   private int mCountTimedOutConnections;
   
   private int mInternetConnectionTimeout;
 
   private void checkAndSetConnectionState(long downloadStart) {
-    doLog("UNSTABLE INTERNET CONNECTION ACCEPTABLE: " + mInstableConnectionAcceptable + " " + mInternetConnectionTimeout + " TIMED OUT: " + mCountTimedOutConnections + " IS CONNECTED: " + mIsConnected);
+    doLog("UNSTABLE INTERNET CONNECTION ACCEPTABLE: " + mUnstableConnectionAcceptable + " " + mInternetConnectionTimeout + " TIMED OUT: " + mCountTimedOutConnections + " IS CONNECTED: " + mIsConnected);
     
-    if(!mInstableConnectionAcceptable) {
+    if(!mUnstableConnectionAcceptable) {
       if(System.currentTimeMillis() - downloadStart > 28000) {
         mCountTimedOutConnections++;
       }
@@ -362,9 +362,9 @@ public class TvDataUpdateService extends Service {
           setPriority(NORM_PRIORITY);
           Logging.openLogForDataUpdate(TvDataUpdateService.this);
           
-          mInstableConnectionAcceptable = mPrefUtils.getBooleanValueWithDefaultKey(R.string.PREF_DATA_UPDATE_INSTABLE_CONNECTION_ACCEPTABLE, R.bool.pref_data_update_instable_conncetion_acceptable_default);
+          mUnstableConnectionAcceptable = mPrefUtils.getBooleanValueWithDefaultKey(R.string.PREF_DATA_UPDATE_INSTABLE_CONNECTION_ACCEPTABLE, R.bool.pref_data_update_unstable_conncetion_acceptable_default);
           
-          if(mInstableConnectionAcceptable) {
+          if(mUnstableConnectionAcceptable) {
             mInternetConnectionTimeout = 30000;
           }
           else {
