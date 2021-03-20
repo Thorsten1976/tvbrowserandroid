@@ -165,7 +165,7 @@ public class ActivityFilterListEdit extends AppCompatActivity {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.dialog_warning_filter_title);
         builder.setMessage(getString(R.string.dialog_warning_filter_message).replace("{0}",mCurrentFilter.getName()));
-        builder.setPositiveButton(R.string.yes, (DialogInterface dialog, int which) -> {
+        builder.setPositiveButton(android.R.string.yes, (DialogInterface dialog, int which) -> {
           mFilterListAdapter.remove(mCurrentFilter);
           mFilterListAdapter.notifyDataSetChanged();
 
