@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_news">Neues</string>
+    <string name="title_running_programs">Laufend</string>
+    <string name="title_programs_list">Pr.liste</string>
+    <string name="title_program_table">Pr.tabelle</string>
+    <string name="title_favorites">Favoriten</string>
+    <string name="title_database_not_available">Keine Datenbank</string>
+</resources>
