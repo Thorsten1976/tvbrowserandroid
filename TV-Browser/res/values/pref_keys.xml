@@ -28,8 +28,8 @@
 	    <string name="LOAD_PICTURE_DATA" translatable="false">LOAD_PICTURE_DATA</string>
 	    <item name="load_picture_data_default" type="bool" format="boolean">false</item>
 	    
-	    <string name="PREF_DATA_UPDATE_INSTABLE_CONNECTION_ACCEPTABLE" translatable="false">PREF_DATA_UPDATE_INSTABLE_CONNECTION_ACCEPTABLE</string>
-	    <item name="pref_data_update_instable_conncetion_acceptable_default" type="bool" format="boolean">false</item>
+	    <string name="PREF_DATA_UPDATE_UNSTABLE_CONNECTION_ACCEPTABLE" translatable="false">PREF_DATA_UPDATE_INSTABLE_CONNECTION_ACCEPTABLE</string>
+	    <item name="pref_data_update_unstable_conncetion_acceptable_default" type="bool" format="boolean">false</item>
 	    	    
 	    <string name="PREF_AUTO_UPDATE_TYPE" translatable="false">PREF_AUTO_UPDATE_TYPE</string>
 	    <item name="pref_auto_update_type_default" type="string" format="string" translatable="false">0</item>
