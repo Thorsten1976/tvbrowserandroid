@@ -67,11 +67,11 @@ android {
         }
     }
 
-    compileSdkVersion 28
+    compileSdkVersion 30
     defaultConfig {
         applicationId "org.tvbrowser.tvbrowser"
         minSdkVersion 14
-        targetSdkVersion 28
+        targetSdkVersion 30
         versionCode 4270
         versionName "0.7.0.8"
         vectorDrawables.useSupportLibrary = true
@@ -224,7 +224,7 @@ if (project.hasProperty("AndroidProject.signing")
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.0-alpha2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.0-beta01'
     implementation 'androidx.preference:preference:1.1.1'
     implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
     implementation 'androidx.work:work-runtime:2.5.0'
