@@ -232,7 +232,7 @@ public class TvBrowser extends AppCompatActivity {
   private boolean mProgramsListWasShow;
   private int mLastSelectedTab;
 
-  private static String ALL_VALUE;
+  public static String ALL_VALUE;
 
   private Stack<ProgramsListState> mProgamListStateStack;
   private BroadcastReceiver mUpdateDoneBroadcastReceiver;
@@ -1767,7 +1767,7 @@ public class TvBrowser extends AppCompatActivity {
     }
   }
 
-  private void startSynchronizeUp(boolean info, String value, String address, String receiveDone, final String userInfo) {
+  public void startSynchronizeUp(boolean info, String value, String address, String receiveDone, final String userInfo) {
     Intent synchronizeUp = new Intent(TvBrowser.this, TvDataUpdateService.class);
     synchronizeUp.putExtra(SettingConstants.EXTRA_DATA_UPDATE_TYPE, TvDataUpdateService.TYPE_UPDATE_MANUELL);
     synchronizeUp.putExtra(TvDataUpdateService.KEY_TYPE, TvDataUpdateService.TYPE_SYNCHRONIZE_UP);

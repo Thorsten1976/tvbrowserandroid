@@ -772,9 +772,9 @@
 	<string name="pref_database_copy_title">Datenbank kopieren</string>
 	<string name="pref_database_copy_wait">Bitte warten&#8230;</string>
 	<string name="pref_summary_data_download">Einstellungen für den Datendownload</string>
-	<string name="pref_data_update_connection_instable_accept_title">Instabile Internetverbindung</string>
-	<string name="pref_data_update_connection_instable_accept_summary_on">Die Internetverbindung ist sehr langsam bzw. instabil. TV-Browser wird die Daten trotzdem laden, auch wenn das Datenupdate dadurch sehr lange dauert.</string>
-	<string name="pref_data_update_connection_instable_accept_summary_off">Die Internetverbindung ist schnell und stabil. TV-Browser wird das Datenupdate abbrechen, wenn die Verbindung instabil zu sein scheint.</string>
+	<string name="pref_data_update_connection_unstable_accept_title">Instabile Internetverbindung</string>
+	<string name="pref_data_update_connection_unstable_accept_summary_on">Die Internetverbindung ist sehr langsam bzw. instabil. TV-Browser wird die Daten trotzdem laden, auch wenn das Datenupdate dadurch sehr lange dauert.</string>
+	<string name="pref_data_update_connection_unstable_accept_summary_off">Die Internetverbindung ist schnell und stabil. TV-Browser wird das Datenupdate abbrechen, wenn die Verbindung instabil zu sein scheint.</string>
 	<string name="pref_load_full_data">Vollständige Daten herunterladen</string>
     <string name="pref_load_picture_data">Bilder herunterladen</string>
 	<string name="pref_load_full_data_summary_on">Alle verfügbaren Informationen werden heruntergeladen</string>

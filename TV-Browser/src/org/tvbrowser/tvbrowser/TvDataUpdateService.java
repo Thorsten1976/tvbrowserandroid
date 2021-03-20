@@ -362,7 +362,7 @@ public class TvDataUpdateService extends Service {
           setPriority(NORM_PRIORITY);
           Logging.openLogForDataUpdate(TvDataUpdateService.this);
           
-          mUnstableConnectionAcceptable = mPrefUtils.getBooleanValueWithDefaultKey(R.string.PREF_DATA_UPDATE_INSTABLE_CONNECTION_ACCEPTABLE, R.bool.pref_data_update_unstable_conncetion_acceptable_default);
+          mUnstableConnectionAcceptable = mPrefUtils.getBooleanValueWithDefaultKey(R.string.PREF_DATA_UPDATE_UNSTABLE_CONNECTION_ACCEPTABLE, R.bool.pref_data_update_unstable_conncetion_acceptable_default);
           
           if(mUnstableConnectionAcceptable) {
             mInternetConnectionTimeout = 30000;
