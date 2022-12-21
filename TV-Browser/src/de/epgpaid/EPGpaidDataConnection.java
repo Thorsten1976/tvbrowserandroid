@@ -331,7 +331,7 @@ public class EPGpaidDataConnection {
   }
   
   /**
-   * Based upon http://www.mkyong.com/java/how-to-automate-login-a-website-java-example/
+   * Based upon <a href="http://www.mkyong.com/java/how-to-automate-login-a-website-java-example/">http://www.mkyong.com/java/how-to-automate-login-a-website-java-example/</a>
    * <p>
    * @param url The URL to open.
    * @param requestMethod The request method.

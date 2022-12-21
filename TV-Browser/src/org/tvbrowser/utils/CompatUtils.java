@@ -323,10 +323,9 @@ public final class CompatUtils {
 
   /**
    * Hack to force overflow menu button to be shown from:
-   * http://stackoverflow.com/questions/9286822/how-to-force-use-of-overflow-menu-on-devices-with-menu-button
-   *
+   * <a href="http://stackoverflow.com/questions/9286822/how-to-force-use-of-overflow-menu-on-devices-with-menu-button">http://stackoverflow.com/questions/9286822/how-to-force-use-of-overflow-menu-on-devices-with-menu-button</a>
    * Access to sHasPermanentMenuKey is restricted starting with Android 9.0 Pie (SDK28):
-   * https://developer.android.com/about/versions/pie/restrictions-non-sdk-interfaces
+   * <a href="https://developer.android.com/about/versions/pie/restrictions-non-sdk-interfaces">https://developer.android.com/about/versions/pie/restrictions-non-sdk-interfaces</a>
    */
   @SuppressWarnings("JavaReflectionMemberAccess")
   public static void forceOverflowMenu(@NonNull final Context context) {

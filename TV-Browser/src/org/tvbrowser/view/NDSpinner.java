@@ -9,12 +9,10 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.Spinner;
 
-/** Spinner extension that calls onItemSelected even when the selection is the same as its previous value 
- * 
- *  Taken from http://stackoverflow.com/questions/5335306/how-can-i-get-an-event-in-android-spinner-when-the-current-selected-item-is-sele
- *  
- * */
-
+/**
+ * Spinner extension that calls onItemSelected even when the selection is the same as its previous value
+ * Taken from <a href="http://stackoverflow.com/questions/5335306/how-can-i-get-an-event-in-android-spinner-when-the-current-selected-item-is-sele">http://stackoverflow.com/questions/5335306/how-can-i-get-an-event-in-android-spinner-when-the-current-selected-item-is-sele</a>
+ */
 @SuppressLint({"ClickableViewAccessibility", "AppCompatCustomView"})
 // Intentionally use of Spinner instead of AppCompatSpinner
 // because of broken scrolling in AppCompatSpinner on never API versions

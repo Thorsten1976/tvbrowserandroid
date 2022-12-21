@@ -26,11 +26,13 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.appcompat.app.ActionBar;
+
 public class TvbPreferencesActivity extends ToolbarPreferencesActivity {
 	/**
-	 * Vulnerability fix as mentioned here:
-	 * http://securityintelligence.com/wp-content/uploads/2013/12/android-collapses-into-fragments.pdf
-	 */
+     * Vulnerability fix as mentioned here:
+     * <a href="http://securityintelligence.com/wp-content/uploads/2013/12/android-collapses-into-fragments.pdf">http://securityintelligence.com/wp-content/uploads/2013/12/android-collapses-into-fragments.pdf</a>
+     */
 	@Override
 	@TargetApi(Build.VERSION_CODES.KITKAT)
 	protected boolean isValidFragment(final String fragmentName) {
@@ -41,9 +43,11 @@ public class TvbPreferencesActivity extends ToolbarPreferencesActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-
-    getDelegate().getSupportActionBar().setDisplayShowHomeEnabled(true);
-    getDelegate().getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    final ActionBar actionBar = getDelegate().getSupportActionBar();
+    if (actionBar!=null) {
+        actionBar.setDisplayShowHomeEnabled(true);
+        actionBar.setDisplayHomeAsUpEnabled(true);
+    }
   }
 
   @Override
