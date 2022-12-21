@@ -34,7 +34,7 @@ import java.util.Locale;
 /**
  * A {@link FragmentPagerAdapter} that returns a fragment corresponding to one
  * of the sections/tabs/pages.
- *
+ * <p>
  * TODO
  * Should probably use a {@link FragmentStatePagerAdapter} to reduce memory footprint, and
  * to avoid manual fragment state management via <code>registeredFragments</code> array.

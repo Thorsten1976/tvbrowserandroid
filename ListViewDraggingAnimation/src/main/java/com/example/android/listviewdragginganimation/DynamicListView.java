@@ -45,12 +45,12 @@ import java.util.List;
 /**
  * The dynamic listview is an extension of listview that supports cell dragging
  * and swapping.
- *
+ * <p>
  * This layout is in charge of positioning the hover cell in the correct location
  * on the screen in response to user touch events. It uses the position of the
  * hover cell to determine when two cells should be swapped. If two cells should
  * be swapped, all the corresponding data set and layout changes are handled here.
- *
+ * <p>
  * If no cell is selected, all the touch events are passed down to the listview
  * and behave normally. If one of the items in the listview experiences a
  * long press event, the contents of its current visible state are captured as
@@ -59,7 +59,7 @@ import java.util.List;
  * hover cell is translated some distance to signify an item swap, a data set change
  * accompanied by animation takes place. When the user releases the hover cell,
  * it animates into its corresponding position in the listview.
- *
+ * <p>
  * When the hover cell is either above or below the bounds of the listview, this
  * listview also scrolls on its own so as to reveal additional content.
  */

@@ -25,7 +25,7 @@ import android.widget.Spinner;
 
 /**
  * Stupid workaround class for AppCompatSpinner issues on APIs since 21
- *
+ * <p>
  * Prevents Spinner being replaced with AppCompatSpinner
  * in xml layout file, to use Spinner provided by API.
  */
