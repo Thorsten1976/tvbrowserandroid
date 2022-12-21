@@ -1565,7 +1565,7 @@ public class TvBrowser extends AppCompatActivity {
                   if(parts != null && parts.length > 1) {
                     switch (type) {
                       case "boolean":
-                        boolean boolValue = Boolean.valueOf(parts[1].trim());
+                        boolean boolValue = Boolean.parseBoolean(parts[1].trim());
 
                         if ((!getString(R.string.PREF_RATING_DONATION_INFO_SHOWN).equals(parts[0]) || boolValue)
                           && !getString(R.string.PREF_WIDGET_REFRESH_WARNING).equals(parts[0])) {
@@ -1574,14 +1574,14 @@ public class TvBrowser extends AppCompatActivity {
                         break;
                       case "int":
                         if (!getString(R.string.OLD_VERSION).equals(parts[0])) {
-                          edit.putInt(parts[0], Integer.valueOf(parts[1].trim()));
+                          edit.putInt(parts[0], Integer.parseInt(parts[1].trim()));
                         }
                         break;
                       case "float":
-                        edit.putFloat(parts[0], Float.valueOf(parts[1].trim()));
+                        edit.putFloat(parts[0], Float.parseFloat(parts[1].trim()));
                         break;
                       case "long":
-                        edit.putLong(parts[0], Long.valueOf(parts[1].trim()));
+                        edit.putLong(parts[0], Long.parseLong(parts[1].trim()));
                         break;
                       case "string":
                         if (getString(R.string.CURRENT_FILTER_ID).equals(parts[0])) {

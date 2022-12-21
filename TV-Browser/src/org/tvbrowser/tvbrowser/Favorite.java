@@ -123,7 +123,7 @@ public class Favorite implements Serializable, Cloneable, Comparable<Favorite> {
       try {
         mType = Integer.parseInt(values[2]);
       }catch(NumberFormatException e) {
-        boolean onlyTitle = Boolean.valueOf(values[2]);
+        boolean onlyTitle = Boolean.parseBoolean(values[2]);
         
         if(onlyTitle) {
           mType = KEYWORD_ONLY_TITLE_TYPE;
@@ -135,7 +135,7 @@ public class Favorite implements Serializable, Cloneable, Comparable<Favorite> {
     }
     
     if(values.length > 3) {
-      mRemind = Boolean.valueOf(values[3]);
+      mRemind = Boolean.parseBoolean(values[3]);
     }
     
     if(values.length > 4) {

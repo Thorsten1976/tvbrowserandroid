@@ -76,7 +76,7 @@ public class Mirror implements Comparable<Mirror> {
           }
           
           try {
-            mirrors.add(new Mirror(mirrorValues[0], Integer.valueOf(mirrorValues[1])));
+            mirrors.add(new Mirror(mirrorValues[0], Integer.parseInt(mirrorValues[1])));
           }catch(NumberFormatException ignored) {}
         }
       }
