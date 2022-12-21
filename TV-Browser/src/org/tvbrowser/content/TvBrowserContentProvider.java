@@ -968,6 +968,7 @@ public class TvBrowserContentProvider extends ContentProvider {
         String orderBy = null;
         
         // If this is a row query, limit the result set to the pased in row.
+        final boolean selectionContainsId = selection!=null && selection.contains(KEY_ID) && !selection.contains("." + KEY_ID);
         switch(uriMatcher.match(uri)) {
           case SEARCH:
             Log.d("info22", ""+uri);
@@ -1025,7 +1026,7 @@ public class TvBrowserContentProvider extends ContentProvider {
               }
               
               if(selection != null) {
-                if(selection.contains(KEY_ID) && !selection.contains("."+KEY_ID)) {
+                if(selectionContainsId) {
                   selection = selection.replace(KEY_ID, TvBrowserDataBaseHelper.GROUPS_TABLE + "."+KEY_ID);
                 }
                 if(selection.contains(GROUP_KEY_GROUP_ID) && !selection.contains("."+GROUP_KEY_GROUP_ID)) {
@@ -1089,7 +1090,7 @@ public class TvBrowserContentProvider extends ContentProvider {
                         }
                         
                         if(selection != null) {
-                          if(selection.contains(KEY_ID) && !selection.contains("."+KEY_ID)) {
+                          if(selectionContainsId) {
                             selection = selection.replace(KEY_ID, TvBrowserDataBaseHelper.DATA_TABLE + "."+KEY_ID);
                           }
                           if(selection.contains(CHANNEL_KEY_CHANNEL_ID) && !selection.contains("."+CHANNEL_KEY_CHANNEL_ID)) {
