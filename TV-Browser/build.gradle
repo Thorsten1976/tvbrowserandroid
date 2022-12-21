@@ -70,8 +70,8 @@ android {
     compileSdkVersion 30
     defaultConfig {
         applicationId "org.tvbrowser.tvbrowser"
-        minSdkVersion 14
         targetSdkVersion 30
+        minSdkVersion 16
         versionCode 4270
         versionName "0.7.0.8"
         vectorDrawables.useSupportLibrary = true
