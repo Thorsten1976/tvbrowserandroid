@@ -180,7 +180,7 @@ public class Mirror implements Comparable<Mirror> {
         message.append(el.getFileName()).append(" ").append(el.getLineNumber()).append(" ").append(el.getClassName()).append(" ").append(el.getMethodName()).append("\n");
       }
       
-      update.doLog("Exception for mirror check for '" + group + "' from URL: " + mirror.getUrl() + " ERROR: " + message.toString());
+      update.doLog("Exception for mirror check for '" + group + "' from URL: " + mirror.getUrl() + " ERROR: " + message);
         // Handle your exceptions
       success = false;
     } finally {

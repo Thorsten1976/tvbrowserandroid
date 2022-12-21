@@ -985,7 +985,7 @@ public class TvBrowserContentProvider extends ContentProvider {
             qb.setTables(TvBrowserDataBaseHelper.DATA_TABLE + " , " + CHANNEL_TABLE);
             qb.appendWhere(b.toString());
             qb.setProjectionMap(SEARCH_PROJECTION_MAP);
-            Log.d("info22","\n\n"+b.toString()+"\n" +selection+"\n");
+            Log.d("info22","\n\n"+ b +"\n" +selection+"\n");
             orderBy = DATA_KEY_STARTTIME;
             break;
           case GROUP_ID:

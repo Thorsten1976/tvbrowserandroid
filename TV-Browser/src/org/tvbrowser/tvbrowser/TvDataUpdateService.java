@@ -657,7 +657,7 @@ public class TvDataUpdateService extends Service {
         }
         
         if(!updateMap.isEmpty()) {
-          final UncaughtExceptionHandler handleExc = (thread, ex) -> doLog("UNCAUGHT EXCEPTION Thread: " + thread.getName() + " Throwable " + ex.toString());
+          final UncaughtExceptionHandler handleExc = (thread, ex) -> doLog("UNCAUGHT EXCEPTION Thread: " + thread.getName() + " Throwable " + ex);
           
           readCurrentVersionIDs();
           
@@ -1769,7 +1769,7 @@ public class TvDataUpdateService extends Service {
             builder.append(currentMirrors);
           }
           
-          doLog("Mirrors for group '" + parts[0] + "': " + builder.toString());
+          doLog("Mirrors for group '" + parts[0] + "': " + builder);
           values.put(TvBrowserContentProvider.GROUP_KEY_GROUP_MIRRORS, builder.toString());
           
           mThreadPool.execute(() -> {
@@ -2807,7 +2807,7 @@ public class TvDataUpdateService extends Service {
     if(t != null) {
       final StringBuilder message = new StringBuilder(value).append("\n");
       
-      message.append(t.toString()).append("\n");
+      message.append(t).append("\n");
       
       final StackTraceElement[] els = t.getStackTrace();
       
@@ -2890,7 +2890,7 @@ public class TvDataUpdateService extends Service {
   }
   
   private void updateTvData() {
-    final UncaughtExceptionHandler handleExc = (thread, ex) -> doLog("UNCAUGHT EXCEPTION Thread: " + thread.getName() + " Throwable " + ex.toString());
+    final UncaughtExceptionHandler handleExc = (thread, ex) -> doLog("UNCAUGHT EXCEPTION Thread: " + thread.getName() + " Throwable " + ex);
     
     acquireWakeLock();
     
@@ -3205,7 +3205,7 @@ public class TvDataUpdateService extends Service {
                           dateFile.append(SettingConstants.EPG_FREE_LEVEL_NAMES[level]);
                           dateFile.append("_full.prog.gz");
                           
-                          doLog("Download data for '" + channelID + "' from " + dateFile.toString() + " for level: " + level);
+                          doLog("Download data for '" + channelID + "' from " + dateFile + " for level: " + level);
                           
                           channelUpdate.addURL(dateFile.toString());
                         }
@@ -3666,7 +3666,7 @@ public class TvDataUpdateService extends Service {
                     newVersion = newVersion.substring(0, newVersion.indexOf(","));
                     doLog(keyString + " currentVersion " + currentVersion + " newVersion " + newVersion);
 
-                    final EPGpaidDownloadFile downloadFile = new EPGpaidDownloadFile(Integer.parseInt(newVersion), Integer.parseInt(currentVersion), key.toString() + "base.gz");
+                    final EPGpaidDownloadFile downloadFile = new EPGpaidDownloadFile(Integer.parseInt(newVersion), Integer.parseInt(currentVersion), key + "base.gz");
 
                     if (downloadFile.mVersion > downloadFile.mOldVersion) {
                       downloadFiles.add(downloadFile);
@@ -3975,7 +3975,7 @@ public class TvDataUpdateService extends Service {
           mirrors.deleteCharAt(mirrors.length()-1);
         }
         
-        doLog("Complete mirrors for database for file '" + mirrorFile.getName() + "' " + mirrors.toString());
+        doLog("Complete mirrors for database for file '" + mirrorFile.getName() + "' " + mirrors);
         
         if(mirrors.length() > 0) {
           ContentValues values = new ContentValues();
@@ -5319,7 +5319,7 @@ public class TvDataUpdateService extends Service {
                 message.append(el.getFileName()).append(" ").append(el.getLineNumber()).append(" ").append(el.getClassName()).append(" ").append(el.getMethodName()).append("\n");
               }
               
-              doLog("Error read data file: '" +dataFile.getAbsolutePath() + "': " + t.getMessage() + " " + message.toString());
+              doLog("Error read data file: '" +dataFile.getAbsolutePath() + "': " + t.getMessage() + " " + message);
             }
           }
           Log.d("info21", "VERSION " + dataFile.getName() + " " + dataInfo.getDataVersion());
@@ -5365,7 +5365,7 @@ public class TvDataUpdateService extends Service {
             message.append(el.getFileName()).append(" ").append(el.getLineNumber()).append(" ").append(el.getClassName()).append(" ").append(el.getMethodName()).append("\n");
           }
           
-          doLog("Error read data file: '" +dataFile.getAbsolutePath() + "': " + e.getMessage() + " " + message.toString());
+          doLog("Error read data file: '" +dataFile.getAbsolutePath() + "': " + e.getMessage() + " " + message);
           Log.d("info5", "error data update", e);
         } finally {
           IOUtils.close(in);

@@ -2343,7 +2343,7 @@ public class TvBrowser extends AppCompatActivity {
               deleteWhere.insert(0, TvBrowserContentProvider.KEY_ID + " IN ( ");
               deleteWhere.append(" ) ");
 
-              Log.d("info2", "DELETE WHERE FOR REMOVED CHANNELS " + deleteWhere.toString());
+              Log.d("info2", "DELETE WHERE FOR REMOVED CHANNELS " + deleteWhere);
 
               int count = getContentResolver().delete(TvBrowserContentProvider.CONTENT_URI_CHANNELS, deleteWhere.toString(), null);
 
@@ -3834,7 +3834,7 @@ public class TvBrowser extends AppCompatActivity {
 
       sendMail.putExtra(Intent.EXTRA_EMAIL, new String[]{"android@tvbrowser.org"});
       sendMail.putExtra(Intent.EXTRA_SUBJECT, subject);
-      sendMail.putExtra(Intent.EXTRA_TEXT,text + " " + new Date().toString());
+      sendMail.putExtra(Intent.EXTRA_TEXT,text + " " + new Date());
       sendMail.setType("text/rtf");
 
       if(CompatUtils.isAtLeastAndroidN()) {
@@ -4114,7 +4114,7 @@ public class TvBrowser extends AppCompatActivity {
             askToDelete.insert(0, TvBrowserContentProvider.CHANNEL_TABLE+"."+TvBrowserContentProvider.KEY_ID + " IN ( ");
             askToDelete.append(" ) ");
 
-            Log.d("info2", "ASK TO DELETE CHANNELS WHERE " + askToDelete.toString());
+            Log.d("info2", "ASK TO DELETE CHANNELS WHERE " + askToDelete);
 
             showChannelSelectionInternal(askToDelete.toString(), getString(R.string.dialog_select_channels_delete_title), getString(R.string.dialog_select_channels_delete_help), true);
           }
