@@ -1,7 +1,6 @@
 package org.tvbrowser.settings;
 
 import org.tvbrowser.App;
-import org.tvbrowser.utils.PrefUtils;
 import org.tvbrowser.utils.UiUtils;
 
 import android.content.res.Configuration;

@@ -5,7 +5,6 @@ import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.tvbrowser.InfoActivity;
 import org.tvbrowser.tvbrowser.R;
 import org.tvbrowser.utils.CompatUtils;
-import org.tvbrowser.utils.PrefUtils;
 import org.tvbrowser.utils.UiUtils;
 
 import android.app.Activity;

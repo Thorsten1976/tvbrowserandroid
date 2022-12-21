@@ -19,7 +19,6 @@ import org.tvbrowser.devplugin.PluginDefinition;
 import org.tvbrowser.devplugin.PluginHandler;
 import org.tvbrowser.devplugin.PluginServiceConnection;
 import org.tvbrowser.utils.CompatUtils;
-import org.tvbrowser.utils.PrefUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;

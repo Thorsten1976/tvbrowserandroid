@@ -19,7 +19,6 @@ package org.tvbrowser.tvbrowser;
 import org.tvbrowser.App;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.utils.CompatUtils;
-import org.tvbrowser.utils.PrefUtils;
 import org.tvbrowser.utils.UiUtils;
 
 import android.content.BroadcastReceiver;

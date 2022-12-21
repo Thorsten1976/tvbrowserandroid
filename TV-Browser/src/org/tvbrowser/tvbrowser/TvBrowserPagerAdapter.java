@@ -28,7 +28,6 @@ import android.view.ViewGroup;
 
 import org.tvbrowser.App;
 import org.tvbrowser.utils.IOUtils;
-import org.tvbrowser.utils.PrefUtils;
 
 import java.util.Locale;
 

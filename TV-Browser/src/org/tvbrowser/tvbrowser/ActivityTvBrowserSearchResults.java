@@ -35,7 +35,6 @@ import androidx.cursoradapter.widget.SimpleCursorAdapter;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import android.widget.ListView;
-import androidx.preference.PreferenceManager;
 
 import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
