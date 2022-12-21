@@ -33,16 +33,16 @@ public final class PluginMenu implements Parcelable {
   private int mId;
   private String mTitle;
   
-  public static final Parcelable.Creator<PluginMenu> CREATOR = new Parcelable.Creator<PluginMenu>() {
-    @Override
-    public PluginMenu createFromParcel(Parcel source) {
-      return new PluginMenu(source);
-    }
+  public static final Parcelable.Creator<PluginMenu> CREATOR = new Parcelable.Creator<>() {
+      @Override
+      public PluginMenu createFromParcel(Parcel source) {
+          return new PluginMenu(source);
+      }
 
-    @Override
-    public PluginMenu[] newArray(int size) {
-      return new PluginMenu[size];
-    }
+      @Override
+      public PluginMenu[] newArray(int size) {
+          return new PluginMenu[size];
+      }
   };
   
   /**

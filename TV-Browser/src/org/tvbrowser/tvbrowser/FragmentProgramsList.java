@@ -492,68 +492,68 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
             
     final ArrayList<ChannelSelection> channelEntries = new ArrayList<>();
     
-    final ArrayAdapter<ChannelSelection> channelAdapter = new ArrayAdapter<ChannelSelection>(getActivity(), android.R.layout.simple_spinner_item, channelEntries) {
-      @Override
-      public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
-        return getView(position, convertView, parent, android.R.layout.simple_spinner_dropdown_item);
-      }
-      
-      private View getView(int position, View convertView, ViewGroup parent, int id) {
-        if(convertView == null) {
-          LayoutInflater inflater = getActivity().getLayoutInflater();
-          
-          convertView = inflater.inflate(id, parent, false);
-          ((TextView)convertView).setCompoundDrawablePadding(10);
-          ((TextView)convertView).setGravity(Gravity.CENTER_VERTICAL);
+    final ArrayAdapter<ChannelSelection> channelAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_item, channelEntries) {
+        @Override
+        public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
+            return getView(position, convertView, parent, android.R.layout.simple_spinner_dropdown_item);
         }
 
-        final PrefUtils prefUtils = App.get().prefs();
-        int logoValue = Integer.parseInt(prefUtils.getStringValueWithDefaultKey(R.string.CHANNEL_LOGO_NAME_PROGRAMS_LIST, R.string.channel_logo_name_programs_list_default));
-        boolean showOrderNumber = prefUtils.getBooleanValueWithDefaultKey(R.string.SHOW_SORT_NUMBER_IN_PROGRAMS_LIST, R.bool.show_sort_number_in_programs_list_default);
-        
-        ChannelSelection sel = getItem(position);
-        
-        if(sel!=null){
-        TextView text = (TextView)convertView;
-        
-        if(sel.getID() == -1) {
-          text.setText(getResources().getString(R.string.all_channels));
-          text.setCompoundDrawables(null, null, null, null);
+        private View getView(int position, View convertView, ViewGroup parent, int id) {
+            if (convertView == null) {
+                LayoutInflater inflater = getActivity().getLayoutInflater();
+
+                convertView = inflater.inflate(id, parent, false);
+                ((TextView) convertView).setCompoundDrawablePadding(10);
+                ((TextView) convertView).setGravity(Gravity.CENTER_VERTICAL);
+            }
+
+            final PrefUtils prefUtils = App.get().prefs();
+            int logoValue = Integer.parseInt(prefUtils.getStringValueWithDefaultKey(R.string.CHANNEL_LOGO_NAME_PROGRAMS_LIST, R.string.channel_logo_name_programs_list_default));
+            boolean showOrderNumber = prefUtils.getBooleanValueWithDefaultKey(R.string.SHOW_SORT_NUMBER_IN_PROGRAMS_LIST, R.bool.show_sort_number_in_programs_list_default);
+
+            ChannelSelection sel = getItem(position);
+
+            if (sel != null) {
+                TextView text = (TextView) convertView;
+
+                if (sel.getID() == -1) {
+                    text.setText(getResources().getString(R.string.all_channels));
+                    text.setCompoundDrawables(null, null, null, null);
         }
         else {
-          if(logoValue == 0 || logoValue == 2 || sel.getLogo() == null) {
-            if(showOrderNumber) {
-              text.setText(String.format(Locale.getDefault(), "%s %s", sel.getOrderNumber(), sel.getName()));
+                    if (logoValue == 0 || logoValue == 2 || sel.getLogo() == null) {
+                        if (showOrderNumber) {
+                            text.setText(String.format(Locale.getDefault(), "%s %s", sel.getOrderNumber(), sel.getName()));
             }
             else {
-              text.setText(sel.getName());
-            }
+                            text.setText(sel.getName());
+                        }
           }
           else if(showOrderNumber) {
-            text.setText(sel.getOrderNumber());
+                        text.setText(sel.getOrderNumber());
           }
           else {
-            text.setText("");
-          }
-          
-          if((logoValue == 0 || logoValue == 1) && sel.getLogo() != null) {
-            Drawable l = sel.getLogo();
-                            
-            text.setCompoundDrawables(l, null, null, null);
+                        text.setText("");
+                    }
+
+                    if ((logoValue == 0 || logoValue == 1) && sel.getLogo() != null) {
+                        Drawable l = sel.getLogo();
+
+                        text.setCompoundDrawables(l, null, null, null);
           }
           else {
-            text.setCompoundDrawables(null, null, null, null);
-          }
-        
+                        text.setCompoundDrawables(null, null, null, null);
+                    }
+
         }}
-        return convertView;
-      }
-      
-      @NonNull
-      @Override
-      public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-        return getView(position, convertView, parent, android.R.layout.simple_spinner_item);
-      }
+            return convertView;
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+            return getView(position, convertView, parent, android.R.layout.simple_spinner_item);
+        }
     };
     channelAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
     mChannelSelection.setAdapter(channelAdapter);
@@ -600,43 +600,43 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
     
     ArrayList<String> filterEntries = new ArrayList<>();
     
-    final ArrayAdapter<String> filterAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_item, filterEntries) {
-      @Override
-      public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
-        return getView(position, convertView, parent, android.R.layout.simple_spinner_dropdown_item);
-      }
-      
-      private View getView(int position, View convertView, ViewGroup parent, int id) {
-        if(convertView == null) {
-          LayoutInflater inflater = getActivity().getLayoutInflater();
-          
-          convertView = inflater.inflate(id, parent, false);
-          ((TextView)convertView).setGravity(Gravity.CENTER_VERTICAL);
+    final ArrayAdapter<String> filterAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_item, filterEntries) {
+        @Override
+        public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
+            return getView(position, convertView, parent, android.R.layout.simple_spinner_dropdown_item);
         }
-        
-        String sel = getItem(position);
-        
-        TextView text = (TextView)convertView;
-        text.setText(sel);
-        
-        switch(position) {
-          case 0:
-          case 5:
+
+        private View getView(int position, View convertView, ViewGroup parent, int id) {
+            if (convertView == null) {
+                LayoutInflater inflater = getActivity().getLayoutInflater();
+
+                convertView = inflater.inflate(id, parent, false);
+                ((TextView) convertView).setGravity(Gravity.CENTER_VERTICAL);
+            }
+
+            String sel = getItem(position);
+
+            TextView text = (TextView) convertView;
+            text.setText(sel);
+
+            switch (position) {
+                case 0:
+                case 5:
             CompatUtils.setBackground(convertView,ContextCompat.getDrawable(getContext(), android.R.drawable.list_selector_background));break;
           case 1: convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_FAVORITE_COLOR_KEY, getContext()));break;
           case 2: convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_COLOR_KEY, getContext()));break;
           case 3: convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_REMINDER_COLOR_KEY, getContext()));break;
           case 4: convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_SYNC_COLOR_KEY, getContext()));break;
+            }
+
+            return convertView;
         }
-        
-        return convertView;
-      }
-      
-      @NonNull
-      @Override
-      public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-        return getView(position, convertView, parent, android.R.layout.simple_spinner_item);
-      }
+
+        @NonNull
+        @Override
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+            return getView(position, convertView, parent, android.R.layout.simple_spinner_item);
+        }
     };
     filterAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
     filter.setAdapter(filterAdapter);

@@ -938,19 +938,19 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     final java.text.DateFormat timeFormat = new SimpleDateFormat(value, Locale.getDefault());
     final int DEFAULT_TEXT_COLOR = new TextView(getActivity()).getTextColors().getDefaultColor();
         
-    mRunningProgramListAdapter = new ArrayAdapter<FragmentProgramsListRunning.ChannelProgramBlock>(getActivity(), R.layout.running_list_entries, mCurrentViewList) {
-      @NonNull
-      @Override
-      public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-        ChannelProgramBlock block = getItem(position);
-        
-       // if(mIsCompactLayout) {
-          return getCompactView(convertView, parent, timeFormat, block, DEFAULT_TEXT_COLOR);
+    mRunningProgramListAdapter = new ArrayAdapter<>(getActivity(), R.layout.running_list_entries, mCurrentViewList) {
+        @NonNull
+        @Override
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+            ChannelProgramBlock block = getItem(position);
+
+            // if(mIsCompactLayout) {
+            return getCompactView(convertView, parent, timeFormat, block, DEFAULT_TEXT_COLOR);
         /*}
         else {
           return getLongView(convertView, parent, timeFormat, block, DEFAULT_TEXT_COLOR);
         }*/
-      }
+        }
     };
     
     mListView.setAdapter(mRunningProgramListAdapter);

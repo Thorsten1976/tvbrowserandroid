@@ -88,58 +88,58 @@ class PluginUpdateHelperImpl extends PluginUpdateHelper {
 			final String downloadUrl = url;
 
 			tvBrowser.getHandler().post(() -> {
-        AsyncTask<String, Void, Boolean> async = new AsyncTask<String, Void, Boolean>() {
-          private ProgressDialog mProgress;
-          private File mPluginFile;
+        AsyncTask<String, Void, Boolean> async = new AsyncTask<>() {
+            private ProgressDialog mProgress;
+            private File mPluginFile;
 
-          protected void onPreExecute() {
-            mProgress = new ProgressDialog(tvBrowser);
-            mProgress.setMessage(tvBrowser.getString(R.string.plugin_info_donwload).replace("{0}", mCurrentDownloadPlugin.getName()));
-            mProgress.show();
-          }
-
-          @Override
-          protected Boolean doInBackground(String... params) {
-            mPluginFile = new File(params[0]);
-
-            return IOUtils.saveUrl(params[0], params[1], 15000);
-          }
-
-          protected void onPostExecute(Boolean result) {
-            mProgress.dismiss();
-            if (result) {
-              mInstallRunnable = () -> {
-	              final Uri apkUri = FileProvider.getUriForFile(tvBrowser, tvBrowser.getString(R.string.authority_file_provider), mPluginFile);
-
-	              Intent install = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-	              install.setData(apkUri);
-	              install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-	              tvBrowser.startActivityForResult(install, INSTALL_PLUGIN);
-              };
-
-              if (CompatUtils.isAtLeastAndroidN()) {
-                if(!canRequestPackageInstalls(tvBrowser)) {
-                  final AlertDialog.Builder builder = new AlertDialog.Builder(tvBrowser);
-                  builder.setTitle(R.string.dialog_permission_title);
-                  builder.setCancelable(false);
-                  builder.setMessage(R.string.dialog_permission_message);
-                  builder.setPositiveButton(R.string.dialog_permission_ok, (dialog, which) -> tvBrowser.startActivityForResult(new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).setData(Uri.parse(String.format("package:%s", tvBrowser.getPackageName()))), REQUEST_CODE_PERMISSION_GRANT));
-                  builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> cleanup());
-                  builder.show();
-                }
-                else {
-                  mInstallRunnable.run();
-                }
-              }
-              else {
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setDataAndType(Uri.fromFile(mPluginFile), "application/vnd.android.package-archive");
-                tvBrowser.startActivityForResult(intent, INSTALL_PLUGIN);
-              }
+            protected void onPreExecute() {
+                mProgress = new ProgressDialog(tvBrowser);
+                mProgress.setMessage(tvBrowser.getString(R.string.plugin_info_donwload).replace("{0}", mCurrentDownloadPlugin.getName()));
+                mProgress.show();
             }
 
-            mLoadingPlugin = false;
-          }
+            @Override
+            protected Boolean doInBackground(String... params) {
+                mPluginFile = new File(params[0]);
+
+                return IOUtils.saveUrl(params[0], params[1], 15000);
+            }
+
+            protected void onPostExecute(Boolean result) {
+                mProgress.dismiss();
+                if (result) {
+                    mInstallRunnable = () -> {
+                        final Uri apkUri = FileProvider.getUriForFile(tvBrowser, tvBrowser.getString(R.string.authority_file_provider), mPluginFile);
+
+                        Intent install = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+                        install.setData(apkUri);
+                        install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        tvBrowser.startActivityForResult(install, INSTALL_PLUGIN);
+                    };
+
+                    if (CompatUtils.isAtLeastAndroidN()) {
+                        if (!canRequestPackageInstalls(tvBrowser)) {
+                            final AlertDialog.Builder builder = new AlertDialog.Builder(tvBrowser);
+                            builder.setTitle(R.string.dialog_permission_title);
+                            builder.setCancelable(false);
+                            builder.setMessage(R.string.dialog_permission_message);
+                            builder.setPositiveButton(R.string.dialog_permission_ok, (dialog, which) -> tvBrowser.startActivityForResult(new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).setData(Uri.parse(String.format("package:%s", tvBrowser.getPackageName()))), REQUEST_CODE_PERMISSION_GRANT));
+                            builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> cleanup());
+                            builder.show();
+                }
+                else {
+                            mInstallRunnable.run();
+                        }
+              }
+              else {
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setDataAndType(Uri.fromFile(mPluginFile), "application/vnd.android.package-archive");
+                        tvBrowser.startActivityForResult(intent, INSTALL_PLUGIN);
+                    }
+                }
+
+                mLoadingPlugin = false;
+            }
         };
 
         async.execute(mCurrentDownloadPlugin.toString(), downloadUrl);

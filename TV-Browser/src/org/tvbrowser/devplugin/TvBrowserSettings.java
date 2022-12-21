@@ -37,16 +37,16 @@ public class TvBrowserSettings implements Parcelable {
   private long mLastKnownProgramId;
   private long mLastKnownDataDate;
   
-  public static final Parcelable.Creator<TvBrowserSettings> CREATOR = new Parcelable.Creator<TvBrowserSettings>() {
-    @Override
-    public TvBrowserSettings createFromParcel(Parcel source) {
-      return new TvBrowserSettings(source);
-    }
+  public static final Parcelable.Creator<TvBrowserSettings> CREATOR = new Parcelable.Creator<>() {
+      @Override
+      public TvBrowserSettings createFromParcel(Parcel source) {
+          return new TvBrowserSettings(source);
+      }
 
-    @Override
-    public TvBrowserSettings[] newArray(int size) {
-      return new TvBrowserSettings[size];
-    }
+      @Override
+      public TvBrowserSettings[] newArray(int size) {
+          return new TvBrowserSettings[size];
+      }
   };
   
   /**

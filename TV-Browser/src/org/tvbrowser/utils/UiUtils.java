@@ -156,14 +156,14 @@ public final class UiUtils {
    *
    * @see #getCollator()
    */
-  private static final ThreadLocal<Collator> collatorThreadLocal = new ThreadLocal<Collator>() {
-    @Override
-    protected Collator initialValue() {
-      final Collator collator = Collator.getInstance();
-      collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
-      collator.setStrength(Collator.SECONDARY);
-      return collator;
-    }
+  private static final ThreadLocal<Collator> collatorThreadLocal = new ThreadLocal<>() {
+      @Override
+      protected Collator initialValue() {
+          final Collator collator = Collator.getInstance();
+          collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
+          collator.setStrength(Collator.SECONDARY);
+          return collator;
+      }
   };
 
   private static final HashMap<String, Integer> VALUE_MAP;
@@ -1319,41 +1319,41 @@ Log.d("info22", pattern);
 
       final Bitmap defaultLogo = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_launcher);
 
-      final ArrayAdapter<AdapterChannel> channelAdapter = new ArrayAdapter<AdapterChannel>(context, android.R.layout.simple_list_item_1) {
-        @NonNull
-        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-          AdapterChannel value = getItem(position);
-          ChannelViewHolder holder = null;
+      final ArrayAdapter<AdapterChannel> channelAdapter = new ArrayAdapter<>(context, android.R.layout.simple_list_item_1) {
+          @NonNull
+          public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+              AdapterChannel value = getItem(position);
+              ChannelViewHolder holder = null;
 
-          if (convertView == null) {
-            holder = new ChannelViewHolder();
+              if (convertView == null) {
+                  holder = new ChannelViewHolder();
 
-            convertView = inflater.inflate(R.layout.channel_row, parent, false);
+                  convertView = inflater.inflate(R.layout.channel_row, parent, false);
 
-            holder.mTextView = convertView.findViewById(R.id.row_of_channel_text);
-            holder.mCheckBox = convertView.findViewById(R.id.row_of_channel_selection);
-            holder.mLogo = convertView.findViewById(R.id.row_of_channel_icon);
+                  holder.mTextView = convertView.findViewById(R.id.row_of_channel_text);
+                  holder.mCheckBox = convertView.findViewById(R.id.row_of_channel_selection);
+                  holder.mLogo = convertView.findViewById(R.id.row_of_channel_icon);
 
-            convertView.setTag(holder);
+                  convertView.setTag(holder);
 
-          } else {
-            holder = (ChannelViewHolder) convertView.getTag();
+              } else {
+                  holder = (ChannelViewHolder) convertView.getTag();
+              }
+
+              holder.mTextView.setText(value.mName);
+              holder.mCheckBox.setChecked(value.mSelected);
+              list.setItemChecked(position, value.mSelected);
+
+              Bitmap logo = value.mChannelLogo;
+
+              if (logo != null) {
+                  holder.mLogo.setImageBitmap(logo);
+              } else {
+                  holder.mLogo.setImageBitmap(defaultLogo);
+              }
+
+              return convertView;
           }
-
-          holder.mTextView.setText(value.mName);
-          holder.mCheckBox.setChecked(value.mSelected);
-          list.setItemChecked(position, value.mSelected);
-
-          Bitmap logo = value.mChannelLogo;
-
-          if (logo != null) {
-            holder.mLogo.setImageBitmap(logo);
-          } else {
-            holder.mLogo.setImageBitmap(defaultLogo);
-          }
-
-          return convertView;
-        }
       };
 
       Cursor channels = null;
@@ -1523,31 +1523,31 @@ Log.d("info22", pattern);
       nameInput.setText(categoryFilter.getName());
     }
 
-    final ArrayAdapter<AdapterCategory> categoryAdapter = new ArrayAdapter<AdapterCategory>(context, android.R.layout.simple_list_item_1) {
-      @NonNull
-      public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-        AdapterCategory value = getItem(position);
-        CategoryViewHolder holder = null;
+    final ArrayAdapter<AdapterCategory> categoryAdapter = new ArrayAdapter<>(context, android.R.layout.simple_list_item_1) {
+        @NonNull
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+            AdapterCategory value = getItem(position);
+            CategoryViewHolder holder = null;
 
-        if (convertView == null) {
-          holder = new CategoryViewHolder();
+            if (convertView == null) {
+                holder = new CategoryViewHolder();
 
-          convertView = inflater.inflate(R.layout.list_row_selection, parent, false);
+                convertView = inflater.inflate(R.layout.list_row_selection, parent, false);
 
-          holder.mTextView = convertView.findViewById(R.id.row_selection_text);
-          holder.mCheckBox = convertView.findViewById(R.id.row_selection_selection);
+                holder.mTextView = convertView.findViewById(R.id.row_selection_text);
+                holder.mCheckBox = convertView.findViewById(R.id.row_selection_selection);
 
-          convertView.setTag(holder);
-        } else {
-          holder = (CategoryViewHolder) convertView.getTag();
+                convertView.setTag(holder);
+            } else {
+                holder = (CategoryViewHolder) convertView.getTag();
+            }
+
+            holder.mTextView.setText(value.mName);
+            holder.mCheckBox.setChecked(value.mSelected);
+            listView.setItemChecked(position, value.mSelected);
+
+            return convertView;
         }
-
-        holder.mTextView.setText(value.mName);
-        holder.mCheckBox.setChecked(value.mSelected);
-        listView.setItemChecked(position, value.mSelected);
-
-        return convertView;
-      }
     };
 
     for (int i = 0; i < names.length; i++) {

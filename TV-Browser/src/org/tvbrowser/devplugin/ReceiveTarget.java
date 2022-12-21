@@ -35,16 +35,16 @@ public class ReceiveTarget implements Parcelable {
   private int mId;
   private String mTitle;
   
-  public static final Parcelable.Creator<ReceiveTarget> CREATOR = new Parcelable.Creator<ReceiveTarget>() {
-    @Override
-    public ReceiveTarget createFromParcel(Parcel source) {
-      return new ReceiveTarget(source);
-    }
+  public static final Parcelable.Creator<ReceiveTarget> CREATOR = new Parcelable.Creator<>() {
+      @Override
+      public ReceiveTarget createFromParcel(Parcel source) {
+          return new ReceiveTarget(source);
+      }
 
-    @Override
-    public ReceiveTarget[] newArray(int size) {
-      return new ReceiveTarget[size];
-    }
+      @Override
+      public ReceiveTarget[] newArray(int size) {
+          return new ReceiveTarget[size];
+      }
   };
   
   /**

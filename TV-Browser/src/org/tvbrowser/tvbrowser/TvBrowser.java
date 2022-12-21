@@ -1060,7 +1060,7 @@ public class TvBrowser extends AppCompatActivity {
 
   private void synchronizeChannels(final boolean replace) {
     if(IOUtils.isDatabaseAccessible(TvBrowser.this)) {
-      AsyncTask<Void, Void, Void> synchronize = new AsyncTask<Void, Void, Void>() {
+      AsyncTask<Void, Void, Void> synchronize = new AsyncTask<>() {
         private ProgressDialog mProgress;
 
         @Override
@@ -1074,15 +1074,15 @@ public class TvBrowser extends AppCompatActivity {
         protected Void doInBackground(Void... params) {
           boolean somethingSynchonized = false;
 
-          if(replace) {
+          if (replace) {
             ContentValues values = new ContentValues();
             values.put(TvBrowserContentProvider.CHANNEL_KEY_SELECTION, 0);
             values.put(TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER, 0);
 
-            getContentResolver().delete(TvBrowserContentProvider.CONTENT_URI_DATA, TvBrowserContentProvider.KEY_ID + " >= 0 " , null);
+            getContentResolver().delete(TvBrowserContentProvider.CONTENT_URI_DATA, TvBrowserContentProvider.KEY_ID + " >= 0 ", null);
             getContentResolver().delete(TvBrowserContentProvider.CONTENT_URI_DATA_VERSION, TvBrowserContentProvider.KEY_ID + " >= 0", null);
 
-            if(getContentResolver().update(TvBrowserContentProvider.CONTENT_URI_CHANNELS, values, TvBrowserContentProvider.CHANNEL_KEY_SELECTION + "=1", null) > 0) {
+            if (getContentResolver().update(TvBrowserContentProvider.CONTENT_URI_CHANNELS, values, TvBrowserContentProvider.CHANNEL_KEY_SELECTION + "=1", null) > 0) {
               somethingSynchonized = true;
             }
           }
@@ -1099,11 +1099,11 @@ public class TvBrowser extends AppCompatActivity {
             String car = pref.getString(SettingConstants.USER_NAME, null);
             String bicycle = pref.getString(SettingConstants.USER_PASSWORD, null);
 
-            if(car != null && bicycle != null) {
+            if (car != null && bicycle != null) {
               String userpass = car + ":" + bicycle;
               String basicAuth = "basic " + Base64.encodeToString(userpass.getBytes(), Base64.NO_WRAP);
 
-              connection.setRequestProperty ("Authorization", basicAuth);
+              connection.setRequestProperty("Authorization", basicAuth);
 
               BufferedReader read = new BufferedReader(new InputStreamReader(new GZIPInputStream(connection.getInputStream()), Charset.defaultCharset()));
 
@@ -1119,28 +1119,28 @@ public class TvBrowser extends AppCompatActivity {
               Cursor group = resolver.query(TvBrowserContentProvider.CONTENT_URI_GROUPS, null, null, null, null);
 
               try {
-                if(IOUtils.prepareAccess(group)) {
+                if (IOUtils.prepareAccess(group)) {
                   int keyIndex = group.getColumnIndex(TvBrowserContentProvider.KEY_ID);
                   int groupIdIndex = group.getColumnIndex(TvBrowserContentProvider.GROUP_KEY_GROUP_ID);
                   int dataServiceIdIndex = group.getColumnIndex(TvBrowserContentProvider.GROUP_KEY_DATA_SERVICE_ID);
 
-                  while(group.moveToNext()) {
+                  while (group.moveToNext()) {
                     String dataServiceId = group.getString(dataServiceIdIndex);
                     String groupId = group.getString(groupIdIndex);
                     int key = group.getInt(keyIndex);
 
-                    groupMap.put(dataServiceId+";"+groupId, key);
+                    groupMap.put(dataServiceId + ";" + groupId, key);
                   }
                 }
-              }finally {
+              } finally {
                 IOUtils.close(group);
               }
 
               ArrayList<ContentProviderOperation> updateList = new ArrayList<>();
 
-              while((line = read.readLine()) != null) {
-                if(line.trim().length() > 0) {
-                  if(line.contains(":")) {
+              while ((line = read.readLine()) != null) {
+                if (line.trim().length() > 0) {
+                  if (line.contains(":")) {
                     String[] parts = line.split(":");
 
                     String dataService = null;
@@ -1148,12 +1148,12 @@ public class TvBrowser extends AppCompatActivity {
                     String channelId = null;
                     String sortNumber = null;
 
-                    if(parts[0].equals(SettingConstants.getNumberForDataServiceKey(SettingConstants.EPG_FREE_KEY))) {
+                    if (parts[0].equals(SettingConstants.getNumberForDataServiceKey(SettingConstants.EPG_FREE_KEY))) {
                       dataService = SettingConstants.EPG_FREE_KEY;
                       groupKey = parts[1];
                       channelId = parts[2];
 
-                      if(parts.length > 3) {
+                      if (parts.length > 3) {
                         sortNumber = parts[3];
                       }
                     }
@@ -1162,20 +1162,20 @@ public class TvBrowser extends AppCompatActivity {
                       groupKey = SettingConstants.EPG_DONATE_GROUP_KEY;
                       channelId = parts[1];
 
-                      if(parts.length > 2) {
+                      if (parts.length > 2) {
                         sortNumber = parts[2];
                       }
                     }
 
-                    if(dataService != null) {
-                      Integer groupId = groupMap.get(dataService+";"+groupKey);
+                    if (dataService != null) {
+                      Integer groupId = groupMap.get(dataService + ";" + groupKey);
 
-                      if(groupId != null) {
+                      if (groupId != null) {
                         String where = " ( " + TvBrowserContentProvider.GROUP_KEY_GROUP_ID + "=" + groupId + " ) AND ( " + TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID + "='" + channelId + "' ) ";
 
                         ContentValues values = new ContentValues();
 
-                        if(sortNumber != null) {
+                        if (sortNumber != null) {
                           try {
                             sort = Integer.parseInt(sortNumber);
                           }catch(NumberFormatException ignored) {}
@@ -1187,12 +1187,12 @@ public class TvBrowser extends AppCompatActivity {
                         Cursor channelIdCursor = resolver.query(TvBrowserContentProvider.CONTENT_URI_CHANNELS, projection, where, null, TvBrowserContentProvider.KEY_ID + " ASC LIMIT 1");
 
                         try {
-                          if(IOUtils.prepareAccessFirst(channelIdCursor)) {
+                          if (IOUtils.prepareAccessFirst(channelIdCursor)) {
                             int id = channelIdCursor.getInt(channelIdCursor.getColumnIndex(TvBrowserContentProvider.KEY_ID));
 
-                            updateList.add(ContentProviderOperation.newUpdate(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_CHANNELS,id)).withValues(values).build());
+                            updateList.add(ContentProviderOperation.newUpdate(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_CHANNELS, id)).withValues(values).build());
                           }
-                        }finally {
+                        } finally {
                           IOUtils.close(channelIdCursor);
                         }
                       }
@@ -1203,13 +1203,13 @@ public class TvBrowser extends AppCompatActivity {
                 }
               }
 
-              if(!updateList.isEmpty()) {
+              if (!updateList.isEmpty()) {
                 ContentProviderResult[] result = getContentResolver().applyBatch(TvBrowserContentProvider.AUTHORITY, updateList);
 
                 somethingSynchonized = result.length > 0;
               }
 
-              if(somethingSynchonized) {
+              if (somethingSynchonized) {
                 handler.post(() -> {
                   SettingConstants.initializeLogoMap(TvBrowser.this, true);
                   updateProgramListChannelBar();
@@ -1231,7 +1231,7 @@ public class TvBrowser extends AppCompatActivity {
           } catch (Exception e) {
             handler.post(() -> showChannelSelectionInternal());
           } finally {
-        	  IOUtils.disconnect(connection);
+            IOUtils.disconnect(connection);
           }
 
           selectingChannels = false;
@@ -1240,7 +1240,7 @@ public class TvBrowser extends AppCompatActivity {
         }
 
         protected void onPostExecute(Void result) {
-          if(mProgress != null) {
+          if (mProgress != null) {
             mProgress.dismiss();
           }
         }
@@ -1956,13 +1956,13 @@ public class TvBrowser extends AppCompatActivity {
     @Override
     public Iterator<ChannelSelection> iterator() {
       if(mValueMap != null) {
-        return new Iterator<ChannelSelection>() {
+        return new Iterator<>() {
           private int mCurrentIndex = 0;
           private ChannelSelection mCurrent = null;
 
           @Override
           public boolean hasNext() {
-            return mCurrentIndex < mValueMap.length-1;
+            return mCurrentIndex < mValueMap.length - 1;
           }
 
           @Override
@@ -2141,7 +2141,7 @@ public class TvBrowser extends AppCompatActivity {
       final int keptDeletedColor = ContextCompat.getColor(this, R.color.pref_kept_deleted_channels);
 
       // Custom array adapter for channel selection
-      final ArrayAdapter<ChannelSelection> channelSelectionAdapter = new ArrayAdapter<ChannelSelection>(TvBrowser.this, R.layout.channel_row, channelSelectionList) {
+      final ArrayAdapter<ChannelSelection> channelSelectionAdapter = new ArrayAdapter<>(TvBrowser.this, R.layout.channel_row, channelSelectionList) {
         @NonNull
         public View getView(int position, View convertView, @NonNull ViewGroup parent) {
           ChannelSelection value = getItem(position);
@@ -2161,21 +2161,21 @@ public class TvBrowser extends AppCompatActivity {
             convertView.setTag(holder);
           }
           else {
-            holder = (ViewHolder)convertView.getTag();
+            holder = (ViewHolder) convertView.getTag();
           }
 
           SpannableStringBuilder nameBuilder = new SpannableStringBuilder(value.toString());
 
           String channelID = String.valueOf(value.getChannelID());
 
-          if(keptDeletedChannels.contains(channelID)) {
+          if (keptDeletedChannels.contains(channelID)) {
             nameBuilder.setSpan(new ForegroundColorSpan(keptDeletedColor), 0, value.toString().length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
           }
           else if(firstDeletedChannels.contains(channelID)) {
             nameBuilder.setSpan(new ForegroundColorSpan(firstDeletedColor), 0, value.toString().length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
           }
 
-          if(value.isEpgDonateChannel()) {
+          if (value.isEpgDonateChannel()) {
             nameBuilder.append("\n(EPGdonate)");
             nameBuilder.setSpan(new RelativeSizeSpan(0.65f), value.toString().length(), nameBuilder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
           }
@@ -2185,7 +2185,7 @@ public class TvBrowser extends AppCompatActivity {
 
           Bitmap logo = value.getLogo();
 
-          if(logo != null) {
+          if (logo != null) {
             holder.mLogo.setImageBitmap(logo);
           }
           else {
@@ -2594,10 +2594,10 @@ public class TvBrowser extends AppCompatActivity {
           // create default logo for channels without logo
           final Bitmap defaultLogo = BitmapFactory.decodeResource( getResources(), R.drawable.ic_launcher);
 
-          final StableArrayAdapter<SortInterface> aa = new StableArrayAdapter<SortInterface>(TvBrowser.this, R.layout.channel_sort_row, channelSource) {
+          final StableArrayAdapter<SortInterface> aa = new StableArrayAdapter<>(TvBrowser.this, R.layout.channel_sort_row, channelSource) {
             @NonNull
             public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-              final ChannelSort value = (ChannelSort)getItem(position);
+              final ChannelSort value = (ChannelSort) getItem(position);
               ViewHolder holder = null;
 
               if (convertView == null) {
@@ -2614,12 +2614,12 @@ public class TvBrowser extends AppCompatActivity {
                 convertView.setTag(holder);
               }
               else {
-                holder = (ViewHolder)convertView.getTag();
+                holder = (ViewHolder) convertView.getTag();
               }
 
               final SpannableStringBuilder nameBuilder = new SpannableStringBuilder(value.getName());
 
-              if(value.isEpgDonateChannel()) {
+              if (value.isEpgDonateChannel()) {
                 nameBuilder.append("\n(EPGdonate)");
                 nameBuilder.setSpan(new RelativeSizeSpan(0.65f), value.getName().length(), nameBuilder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
               }
@@ -2628,7 +2628,7 @@ public class TvBrowser extends AppCompatActivity {
 
               String sortNumber = String.valueOf(value.getSortNumber());
 
-              if(value.getSortNumber() == 0) {
+              if (value.getSortNumber() == 0) {
                 sortNumber = "-";
               }
 
@@ -2638,7 +2638,7 @@ public class TvBrowser extends AppCompatActivity {
 
               final Bitmap logo = value.getLogo();
 
-              if(logo != null) {
+              if (logo != null) {
                 holder.mLogo.setImageBitmap(logo);
               }
               else {
@@ -3601,7 +3601,7 @@ public class TvBrowser extends AppCompatActivity {
         final ContentProviderClient client = getContentResolver().acquireContentProviderClient(TvBrowserContentProvider.AUTHORITY);
 
         if(client != null) {
-          AsyncTask<File, Void, Boolean> copy = new AsyncTask<File, Void, Boolean>() {
+          AsyncTask<File, Void, Boolean> copy = new AsyncTask<>() {
             private ProgressDialog mProgress;
             private File mSource;
 
@@ -3619,26 +3619,26 @@ public class TvBrowser extends AppCompatActivity {
 
             @Override
             protected void onPostExecute(Boolean result) {
-              if(mProgress != null) {
+              if (mProgress != null) {
                 mProgress.dismiss();
               }
 
-              if(result) {
+              if (result) {
                 pref.edit().putString(getString(R.string.PREF_DATABASE_OLD_PATH), databasePath).commit();
 
-                TvBrowserContentProvider provider = (TvBrowserContentProvider)client.getLocalContentProvider();
+                TvBrowserContentProvider provider = (TvBrowserContentProvider) client.getLocalContentProvider();
                 provider.updateDatabasePath();
                 IOUtils.close(client);
 
-                if(mSource != null) {
+                if (mSource != null) {
 
-                  if(!mSource.delete()) {
+                  if (!mSource.delete()) {
                     mSource.deleteOnExit();
                   }
 
-                  File journal = new File(mSource.getAbsolutePath()+"-journal");
+                  File journal = new File(mSource.getAbsolutePath() + "-journal");
 
-                  if(journal.isFile() && !journal.delete()) {
+                  if (journal.isFile() && !journal.delete()) {
                     journal.deleteOnExit();
                   }
                 }
@@ -3650,7 +3650,7 @@ public class TvBrowser extends AppCompatActivity {
                 pref.edit().putString(getString(R.string.PREF_DATABASE_PATH), oldPath).commit();
               }
 
-              if(finish2) {
+              if (finish2) {
                 finish();
               }
             }

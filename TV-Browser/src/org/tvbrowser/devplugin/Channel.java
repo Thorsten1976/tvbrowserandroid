@@ -34,16 +34,16 @@ public final class Channel implements Parcelable {
   private String mChannelName;
   private byte[] mChannelIcon;
   
-  public static final Creator<Channel> CREATOR = new Creator<Channel>() {
-    @Override
-    public Channel createFromParcel(Parcel source) {
-      return new Channel(source);
-    }
+  public static final Creator<Channel> CREATOR = new Creator<>() {
+      @Override
+      public Channel createFromParcel(Parcel source) {
+          return new Channel(source);
+      }
 
-    @Override
-    public Channel[] newArray(int size) {
-      return new Channel[size];
-    }
+      @Override
+      public Channel[] newArray(int size) {
+          return new Channel[size];
+      }
   };
   
   /**

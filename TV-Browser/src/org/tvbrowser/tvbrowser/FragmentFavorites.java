@@ -240,33 +240,33 @@ public class FragmentFavorites extends Fragment implements LoaderManager.LoaderC
       mMarkingsList = getView().findViewById(R.id.favorite_fragment_selection_markings);
       
       if(mMarkingsList != null) {
-        mMarkingsAdapter = new ArrayAdapter<FavoriteSpinnerEntry>(getActivity(), android.R.layout.simple_list_item_1) {
-          @NonNull
-          public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-            if(convertView == null) {
-              convertView = getActivity().getLayoutInflater().inflate(android.R.layout.simple_list_item_1, parent, false);
-            }
-            
-            String name = getItem(position).toString();
-            
-            if(!getItem(position).containsFavorite()) {
-              
-              if(name.equals(getString(R.string.marking_value_marked))) {
-                convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_COLOR_KEY, getContext()));
+        mMarkingsAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1) {
+            @NonNull
+            public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+                if (convertView == null) {
+                    convertView = getActivity().getLayoutInflater().inflate(android.R.layout.simple_list_item_1, parent, false);
+                }
+
+                String name = getItem(position).toString();
+
+                if (!getItem(position).containsFavorite()) {
+
+                    if (name.equals(getString(R.string.marking_value_marked))) {
+                        convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_COLOR_KEY, getContext()));
               }
               else if(name.equals(getString(R.string.marking_value_sync))) {
-                convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_SYNC_COLOR_KEY, getContext()));
+                        convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_SYNC_COLOR_KEY, getContext()));
               }
               else {
-                convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_REMINDER_COLOR_KEY, getContext()));
-              }
+                        convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_REMINDER_COLOR_KEY, getContext()));
+                    }
+                }
+
+                ((TextView) convertView).setMaxLines(3);
+                ((TextView) convertView).setText(name);
+
+                return convertView;
             }
-            
-            ((TextView)convertView).setMaxLines(3);
-            ((TextView)convertView).setText(name);
-            
-            return convertView;
-          }
         };
         
         mMarkingsList.setAdapter(mMarkingsAdapter);

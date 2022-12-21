@@ -39,16 +39,16 @@ public final class Program implements Parcelable {
   private String mEpisodeTitle;
   private Channel mChannel;
   
-  public static final Parcelable.Creator<Program> CREATOR = new Parcelable.Creator<Program>() {
-    @Override
-    public Program createFromParcel(Parcel source) {
-      return new Program(source);
-    }
+  public static final Parcelable.Creator<Program> CREATOR = new Parcelable.Creator<>() {
+      @Override
+      public Program createFromParcel(Parcel source) {
+          return new Program(source);
+      }
 
-    @Override
-    public Program[] newArray(int size) {
-      return new Program[size];
-    }
+      @Override
+      public Program[] newArray(int size) {
+          return new Program[size];
+      }
   };
   
   /**
