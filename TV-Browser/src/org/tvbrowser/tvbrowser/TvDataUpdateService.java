@@ -3226,7 +3226,7 @@ public class TvDataUpdateService extends Service {
               Set<Object> keys = ((EPGdonateSummary)summary).keySet();
               
               boolean loadMoreData = levels.length >= 3;
-              boolean loadPictureData = levels.length >= 5;
+              boolean loadPictureData = levels.length == 5;
               
               Calendar utc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
               utc.set(2014, 12, 31, 0, 0, 0);

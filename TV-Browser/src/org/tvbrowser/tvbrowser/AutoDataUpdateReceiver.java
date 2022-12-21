@@ -108,7 +108,7 @@ public class AutoDataUpdateReceiver extends BroadcastReceiver {
             Calendar test = Calendar.getInstance(TimeZone.getTimeZone("CET"));
             test.setTimeInMillis(System.currentTimeMillis());
             
-            isConnected = !(test.get(Calendar.HOUR_OF_DAY) >= 23 || test.get(Calendar.HOUR_OF_DAY) < 4 ||
+            isConnected = !(test.get(Calendar.HOUR_OF_DAY) == 23 || test.get(Calendar.HOUR_OF_DAY) < 4 ||
                 (test.get(Calendar.HOUR_OF_DAY) >= 15 && test.get(Calendar.HOUR_OF_DAY) < 17));
           }
           

@@ -158,7 +158,7 @@ public class JobDataUpdateAuto extends Worker {
                   test.set(Calendar.HOUR_OF_DAY, timeTest / 60);
                   test.set(Calendar.MINUTE, timeTest % 60);
                 }
-                while (test.get(Calendar.HOUR_OF_DAY) >= 23 || test.get(Calendar.HOUR_OF_DAY) < 4 ||
+                while (test.get(Calendar.HOUR_OF_DAY) == 23 || test.get(Calendar.HOUR_OF_DAY) < 4 ||
                   (test.get(Calendar.HOUR_OF_DAY) >= 15 && test.get(Calendar.HOUR_OF_DAY) < 17));
 
                 time = timeTest;
