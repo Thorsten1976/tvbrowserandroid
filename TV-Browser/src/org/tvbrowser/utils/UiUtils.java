@@ -222,9 +222,7 @@ public final class UiUtils {
     if (!mShowingProgramInfo && IOUtils.isDatabaseAccessible(context)) {
       mShowingProgramInfo = true;
 
-      handler.post(() -> {
-        new AsyncInfo(context,id,finish,parent,handler).execute();
-      });
+      handler.post(() -> new AsyncInfo(context,id,finish,parent,handler).execute());
     }
   }
 
