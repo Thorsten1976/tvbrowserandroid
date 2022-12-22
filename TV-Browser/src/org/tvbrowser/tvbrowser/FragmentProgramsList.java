@@ -472,8 +472,9 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
       public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
         DateSelection selection = mDateAdapter.getItem(pos);
         
-        if (selection!=null)
-        setDay(selection.getTime());
+        if (selection!=null) {
+          setDay(selection.getTime());
+        }
       }
       
       @Override
@@ -564,8 +565,9 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
           int pos, long id) {
         ChannelSelection selection = channelAdapter.getItem(pos);
         
-        if(selection!=null)
-        setChannelID(selection.getID());
+        if (selection!=null) {
+          setChannelID(selection.getID());
+        }
       }
       
       @Override
