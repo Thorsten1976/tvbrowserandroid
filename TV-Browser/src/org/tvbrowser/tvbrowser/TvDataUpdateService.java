@@ -3037,12 +3037,8 @@ public class TvDataUpdateService extends Service {
                   doLog("Group info for '" + groupId + "'  groupKey: " + groupKey + " group name: " + group.getString(group.getColumnIndex(TvBrowserContentProvider.GROUP_KEY_GROUP_NAME)) + " group provider: " + group.getString(group.getColumnIndex(TvBrowserContentProvider.GROUP_KEY_GROUP_PROVIDER)) + " group description: " + group.getString(group.getColumnIndex(TvBrowserContentProvider.GROUP_KEY_GROUP_DESCRIPTION)));
                 }
                 
-                boolean checkOnlyConnection = false;
-                
-                if(groupId.equals(SettingConstants.EPG_DONATE_GROUP_KEY)) {
-                  checkOnlyConnection = true;
-                }
-                
+                boolean checkOnlyConnection = groupId.equals(SettingConstants.EPG_DONATE_GROUP_KEY);
+
                 String[] defaultMirrors = mirrorURLsDefault.split(";");
                 
                 for(String defaultMirror : defaultMirrors) {
@@ -5397,16 +5393,12 @@ public class TvDataUpdateService extends Service {
   }
   
   private static boolean isValidDataContent(ContentValues values) {
-    boolean result = true;
-    
-    if((!values.containsKey(TvBrowserContentProvider.DATA_KEY_STARTTIME) || values.getAsLong(TvBrowserContentProvider.DATA_KEY_STARTTIME) == null)
-      ||
-      (!values.containsKey(TvBrowserContentProvider.DATA_KEY_ENDTIME) || values.getAsLong(TvBrowserContentProvider.DATA_KEY_ENDTIME) == null)
-      ||
-      (!values.containsKey(TvBrowserContentProvider.DATA_KEY_TITLE) || values.getAsString(TvBrowserContentProvider.DATA_KEY_TITLE) == null)) {
-      result = false;
-    }
-    
+    boolean result = (values.containsKey(TvBrowserContentProvider.DATA_KEY_STARTTIME) && values.getAsLong(TvBrowserContentProvider.DATA_KEY_STARTTIME) != null)
+            &&
+            (values.containsKey(TvBrowserContentProvider.DATA_KEY_ENDTIME) && values.getAsLong(TvBrowserContentProvider.DATA_KEY_ENDTIME) != null)
+            &&
+            (values.containsKey(TvBrowserContentProvider.DATA_KEY_TITLE) && values.getAsString(TvBrowserContentProvider.DATA_KEY_TITLE) != null);
+
     return result;
   }
   

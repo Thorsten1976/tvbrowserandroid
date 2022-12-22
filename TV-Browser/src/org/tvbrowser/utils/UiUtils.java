@@ -2516,11 +2516,7 @@ Log.d("info22", pattern);
                 try {
                   String name = resources.getString((Integer) R.string.class.getField(key).get(null));
 
-                  boolean endWith = false;
-
-                  if (name.endsWith(":")) {
-                    endWith = true;
-                  }
+                  boolean endWith = name.endsWith(":");
 
                   if (key.equals(TvBrowserContentProvider.DATA_KEY_ACTORS)) {
                     String separator = null;

@@ -1222,11 +1222,7 @@ public final class IOUtils {
   }
 
   public static boolean isCursorAccessable(Cursor cursor) {
-    boolean result = false;
-
-    if(cursor != null && cursor.getCount() > 0 && !cursor.isClosed()) {
-      result = true;
-    }
+    boolean result = cursor != null && cursor.getCount() > 0 && !cursor.isClosed();
 
     return result;
   }
