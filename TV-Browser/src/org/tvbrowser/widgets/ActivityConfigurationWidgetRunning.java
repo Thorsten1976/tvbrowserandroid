@@ -55,16 +55,6 @@ public class ActivityConfigurationWidgetRunning extends AppCompatActivity {
   }
 
   @Override
-  protected void onResume() {
-    super.onResume();
-  }
-
-  @Override
-  protected void onStart() {
-    super.onStart();
-  }
-
-  @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
     finish();

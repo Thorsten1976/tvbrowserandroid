@@ -47,16 +47,6 @@ import androidx.preference.PreferenceManager;
 public class PluginPreferencesFragment extends PreferenceFragmentCompat {
 
   @Override
-  public void onDetach() {
-    super.onDetach();
-  }
-
-  @Override
-  public void onResume() {
-    super.onResume();
-  }
-
-  @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 

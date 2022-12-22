@@ -966,11 +966,6 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
   }
 
   @Override
-  public void onDestroy() {
-    super.onDestroy();
-  }
-
-  @Override
   public void onLoaderReset(@NonNull Loader<Cursor> loader) {
     mIsLoading = false;
     mProgramListAdapter.changeCursor(null);
