@@ -1107,7 +1107,7 @@ public class TvBrowser extends AppCompatActivity {
 
               BufferedReader read = new BufferedReader(new InputStreamReader(new GZIPInputStream(connection.getInputStream()), Charset.defaultCharset()));
 
-              String line = null;
+              String line;
 
               int sort = 1;
 
@@ -1295,7 +1295,7 @@ public class TvBrowser extends AppCompatActivity {
 
               BufferedReader read = new BufferedReader(new InputStreamReader(new GZIPInputStream(connection.getInputStream()), Charset.defaultCharset()));
 
-              String line = null;
+              String line;
 
               StringBuilder exclusionBuilder = new StringBuilder();
               HashSet<String> exclusions = new HashSet<>();
@@ -2145,7 +2145,7 @@ public class TvBrowser extends AppCompatActivity {
         @NonNull
         public View getView(int position, View convertView, @NonNull ViewGroup parent) {
           ChannelSelection value = getItem(position);
-          ViewHolder holder = null;
+          ViewHolder holder;
 
           if (convertView == null) {
             LayoutInflater mInflater = (LayoutInflater) getContext().getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
@@ -2598,7 +2598,7 @@ public class TvBrowser extends AppCompatActivity {
             @NonNull
             public View getView(int position, View convertView, @NonNull ViewGroup parent) {
               final ChannelSort value = (ChannelSort) getItem(position);
-              ViewHolder holder = null;
+              ViewHolder holder;
 
               if (convertView == null) {
                 final LayoutInflater mInflater = (LayoutInflater) getContext().getSystemService(Activity.LAYOUT_INFLATER_SERVICE);

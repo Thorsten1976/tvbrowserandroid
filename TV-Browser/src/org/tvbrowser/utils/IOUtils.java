@@ -965,7 +965,7 @@ public final class IOUtils {
       parent = context.getDir(Environment.DIRECTORY_DOWNLOADS, Context.MODE_PRIVATE);
     }
 
-    String subdirectory = null;
+    String subdirectory;
 
     switch (type) {
       case TYPE_DOWNLOAD_DIRECTORY_OTHER:

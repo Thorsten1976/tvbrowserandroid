@@ -350,7 +350,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
             }
           
             
-            Cursor c = null;
+            Cursor c;
             try {
               c = mProgramListAdapter.getCursor();
 

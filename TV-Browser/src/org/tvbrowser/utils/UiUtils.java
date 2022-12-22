@@ -512,7 +512,7 @@ public final class UiUtils {
                       notification.notify(notifyID, builder1.build());
 
                       ArrayList<ContentProviderOperation> updateValuesList = new ArrayList<>();
-                      String title1 = null;
+                      String title1;
 
                       Cursor c = null;
 
@@ -1321,7 +1321,7 @@ Log.d("info22", pattern);
           @NonNull
           public View getView(int position, View convertView, @NonNull ViewGroup parent) {
               AdapterChannel value = getItem(position);
-              ChannelViewHolder holder = null;
+              ChannelViewHolder holder;
 
               if (convertView == null) {
                   holder = new ChannelViewHolder();
@@ -1525,7 +1525,7 @@ Log.d("info22", pattern);
         @NonNull
         public View getView(int position, View convertView, @NonNull ViewGroup parent) {
             AdapterCategory value = getItem(position);
-            CategoryViewHolder holder = null;
+            CategoryViewHolder holder;
 
             if (convertView == null) {
                 holder = new CategoryViewHolder();

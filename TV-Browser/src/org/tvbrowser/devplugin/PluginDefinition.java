@@ -171,7 +171,7 @@ public class PluginDefinition implements Comparable<PluginDefinition> {
   public static PluginDefinition[] loadAvailablePluginDefinitions(String url) {
     ArrayList<PluginDefinition> pluginList = new ArrayList<>();
     
-    InputStreamReader in = null;
+    InputStreamReader in;
         
     try {
       XmlPullParserFactory factory = XmlPullParserFactory.newInstance();

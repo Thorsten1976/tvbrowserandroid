@@ -432,7 +432,7 @@ public class EPGpaidDataConnection {
       try {
         in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
         
-        String line = null;
+        String line;
         
         while((line = in.readLine()) != null) {
           result.append(line).append("\n");

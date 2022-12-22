@@ -88,7 +88,7 @@ public class RunningProgramsListWidget extends AppWidgetProvider {
       intent.setData(Uri.parse("org.tvbrowser://runningWidget/" + appWidgetId));
       intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
       
-      RemoteViews views = null;
+      RemoteViews views;
 
       final PrefUtils prefs = App.get().prefs();
       String divider = prefs.getStringValueWithDefaultKey(R.string.PREF_WIDGET_LISTS_DIVIDER_SIZE, R.string.pref_widget_lists_divider_size_default);

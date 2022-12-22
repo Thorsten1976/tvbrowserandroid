@@ -504,8 +504,8 @@ public class ActivityFavoriteEdit extends AppCompatActivity implements ChannelFi
   private void handleTimeView() {
     java.text.DateFormat timeFormat = DateFormat.getTimeFormat(ActivityFavoriteEdit.this);
     
-    Date fromFormat = null;
-    Date toFormat = null;
+    Date fromFormat;
+    Date toFormat;
     
     if(mFavorite.isTimeRestricted()) {
       Calendar utc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));

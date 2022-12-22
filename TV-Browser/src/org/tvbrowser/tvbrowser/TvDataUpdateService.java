@@ -1145,7 +1145,7 @@ public class TvDataUpdateService extends Service {
           
           read = new BufferedReader(new InputStreamReader(new GZIPInputStream(connection.getInputStream()), Charset.defaultCharset()));
           
-          String reminder = null;
+          String reminder;
 
           final ArrayList<String> dataSyncValues = new ArrayList<>();
           
@@ -1221,7 +1221,7 @@ public class TvDataUpdateService extends Service {
             setTimes.add(startTime);
 
             Object groupInfo = null;
-            String groupKey = null;
+            String groupKey;
             String channelIdKey = null;
 
             if (idParts[0].equals(SettingConstants.getNumberForDataServiceKey(SettingConstants.EPG_FREE_KEY))) {
@@ -1707,7 +1707,7 @@ public class TvDataUpdateService extends Service {
       try {
         in = new BufferedReader(new InputStreamReader(new FileInputStream(groups)));
           
-        String line = null;
+        String line;
         doLog("Read groups from: " + groups.getName());
         
         while((line = in.readLine()) != null) {
@@ -2002,7 +2002,7 @@ public class TvDataUpdateService extends Service {
   }
   
   private String[] loadAvailableMirrorsForGroup(String mirrorLine) { 
-    String[] mirrors = null;
+    String[] mirrors;
     
     if(mirrorLine.contains(";")) {
       mirrors = mirrorLine.split(";");
@@ -2509,7 +2509,7 @@ public class TvDataUpdateService extends Service {
         if(syncDate.getTime() > System.currentTimeMillis()) {
           mSyncFavorites = new ArrayList<>();
           
-          String line = null;
+          String line;
           
           while((line = read.readLine()) != null) {
             mSyncFavorites.add(line);
@@ -2592,7 +2592,7 @@ public class TvDataUpdateService extends Service {
           int lastChannelKey = -1;
           
           Calendar utc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-          Calendar cal = null;
+          Calendar cal;
           
           while(c.moveToNext()) {
             long progID = c.getLong(keyIDColumn);
@@ -2836,7 +2836,7 @@ public class TvDataUpdateService extends Service {
         if(groups.isFile()) {
           in = new BufferedReader(new InputStreamReader(new FileInputStream(groups)));
           
-          String line = null;
+          String line;
           
           while((line = in.readLine()) != null && mirrorLine.trim().length() == 0) {
             if(line.startsWith(groupID + ";")) {
@@ -2913,7 +2913,7 @@ public class TvDataUpdateService extends Service {
       }
     }
 
-    int[] levels = null;
+    int[] levels;
           
     Set<String> exclusions = mPrefUtils.getValue(R.string.I_DONT_WANT_TO_SEE_ENTRIES, null);
     
@@ -2992,7 +2992,7 @@ public class TvDataUpdateService extends Service {
     if(channelCursor!=null && channelCursor.moveToFirst()) {
       int lastGroup = -1;
       Mirror mirror = null;
-      String groupId = null;
+      String groupId;
       Summary summary = null;
       String channelName = null;
       
@@ -3439,12 +3439,12 @@ public class TvDataUpdateService extends Service {
   }
   
   private void readEpgPaidChannelIds(final File channels) {
-    BufferedReader channelsIn = null;
+    BufferedReader channelsIn;
     
     try {
       channelsIn = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(channels)), Charset.defaultCharset()));
       
-      String line = null;
+      String line;
       
       final String[] projection = {
           TvBrowserContentProvider.KEY_ID
@@ -3578,7 +3578,7 @@ public class TvDataUpdateService extends Service {
           try {
             channelsIn = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(channels)), Charset.defaultCharset()));
 
-            String line = null;
+            String line;
 
             final String[] projection = {
                 TvBrowserContentProvider.KEY_ID,
@@ -3951,7 +3951,7 @@ public class TvDataUpdateService extends Service {
         
         StringBuilder mirrors = new StringBuilder();
         
-        String line = null;
+        String line;
         
         doLog("Update mirrors from: " + mirrorFile.getName());
         

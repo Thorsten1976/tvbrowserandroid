@@ -533,7 +533,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
     long startTime = 0;
     long endTime = 0;
     long programID = -1;
-    String title = null;
+    String title;
     String episode = null;
     Spannable infos = null;
     
@@ -739,7 +739,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
   }
   
   private View getCompactView(View convertView, ViewGroup parent, java.text.DateFormat timeFormat, ChannelProgramBlock block, int DEFAULT_TEXT_COLOR) {
-    CompactLayoutViewHolder viewHolder = null;
+    CompactLayoutViewHolder viewHolder;
     
     float textScale = Float.parseFloat(App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_TEXT_SCALE, R.string.pref_program_lists_text_scale_default));
     

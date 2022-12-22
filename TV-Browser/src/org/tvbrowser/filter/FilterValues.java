@@ -84,7 +84,7 @@ public abstract class FilterValues {
   }
   
   public static FilterValues load(String id, Context context) {
-    FilterValues result = null;
+    FilterValues result;
 
     SharedPreferences pref = App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_FILTERS);
     

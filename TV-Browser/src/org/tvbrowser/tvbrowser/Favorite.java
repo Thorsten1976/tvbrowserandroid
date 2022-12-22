@@ -1443,7 +1443,7 @@ public class Favorite implements Serializable, Cloneable, Comparable<Favorite> {
   }
   
   public static ImageSpan getMarkIcon(Context context, int type) {
-    ImageSpan result = null;
+    ImageSpan result;
     
     if(type > 1) {
       if(MARK_ICON_MULTIPLE == null) {
