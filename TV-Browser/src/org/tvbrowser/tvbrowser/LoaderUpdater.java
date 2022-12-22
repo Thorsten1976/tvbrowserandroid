@@ -27,14 +27,14 @@ import java.util.HashSet;
 public class LoaderUpdater {
   private static final int TIME_UPDATE_DELAY = 400;
   
-  private Fragment mFragment;
+  private final Fragment mFragment;
   
   private boolean mIsRunning;
   private long mLastUpdateStart;
   
   private Thread mUpdateWaitingThread;
   
-  private Handler mHandler;
+  private final Handler mHandler;
   
   public LoaderUpdater(Fragment fragment, Handler handler) throws UnsupportedFragmentException, NullPointerException {
     if(fragment instanceof LoaderManager.LoaderCallbacks<?>) {
@@ -134,8 +134,8 @@ public class LoaderUpdater {
   }
   
   public static final class CallbackObject<T> {
-    private String mName;
-    private T mValue;
+    private final String mName;
+    private final T mValue;
     
     public CallbackObject(String name, T value) throws NullPointerException {
       if(name == null) {
