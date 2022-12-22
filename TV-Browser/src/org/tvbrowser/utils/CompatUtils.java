@@ -106,7 +106,6 @@ public final class CompatUtils {
     }
   }
 
-  @SuppressWarnings("deprecation")
   public static boolean isInteractive(PowerManager pm) {
     boolean result;
     
@@ -202,7 +201,6 @@ public final class CompatUtils {
     }
   }
 
-  @SuppressWarnings("deprecation")
   public static void setTimePickerHour(final TimePicker timePicker, final int hour) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ) {
       timePicker.setHour(hour);
@@ -212,7 +210,6 @@ public final class CompatUtils {
     }
   }
 
-  @SuppressWarnings("deprecation")
   public static int getTimePickerHour(final TimePicker timePicker) {
     int hour;
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -224,7 +221,6 @@ public final class CompatUtils {
     return hour;
   }
 
-  @SuppressWarnings("deprecation")
   public static void setTimePickerMinute(final TimePicker timePicker, final int minute) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ) {
       timePicker.setMinute(minute);
@@ -234,7 +230,6 @@ public final class CompatUtils {
     }
   }
 
-  @SuppressWarnings("deprecation")
   public static int getTimePickerMinute(final TimePicker timePicker) {
     int minute;
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -364,7 +359,6 @@ public final class CompatUtils {
     }
 
     private static class WrappedResources extends Resources {
-      @SuppressWarnings("deprecation")
       WrappedResources(final AssetManager assets, final DisplayMetrics displayMetrics,
                        final Configuration configuration) {
         super(assets, displayMetrics, configuration);

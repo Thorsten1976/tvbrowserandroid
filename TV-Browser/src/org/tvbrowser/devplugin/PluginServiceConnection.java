@@ -285,7 +285,7 @@ public class PluginServiceConnection implements ServiceConnection, Comparable<Pl
   }
 
   @Override
-  public int compareTo(@SuppressWarnings("NullableProblems") PluginServiceConnection another) {
+  public int compareTo(PluginServiceConnection another) {
     if(mPluginName != null && another.mPluginName != null) {
       return UiUtils.getCollator().compare(mPluginName, another.mPluginName);
     }

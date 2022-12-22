@@ -275,7 +275,7 @@ public class PluginDefinition implements Comparable<PluginDefinition> {
   }
 
   @Override
-  public int compareTo(@SuppressWarnings("NullableProblems") PluginDefinition o) {
+  public int compareTo(PluginDefinition o) {
     if (isGermanLocale()) {
       return UiUtils.getCollator().compare(mNameDe, o.mNameDe);
     }

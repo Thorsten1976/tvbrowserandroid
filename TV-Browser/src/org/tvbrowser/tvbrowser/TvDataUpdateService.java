@@ -1860,7 +1860,6 @@ public class TvDataUpdateService extends Service {
                 String[] urls = info.getUrls();
                 ArrayList<Integer> notWorkingIndicies = new ArrayList<>();
 
-                //noinspection ForLoopReplaceableByForEach
                 for(int i = 0; i < urls.length; i++) {
                   int index = (int)(Math.random()*urls.length);
                   int count = 0;

@@ -127,7 +127,6 @@ public class DynamicListView extends ListView {
         final int SMOOTH_SCROLL_AMOUNT_AT_EDGE = 15;
         mSmoothScrollAmountAtEdge = (int)(SMOOTH_SCROLL_AMOUNT_AT_EDGE / metrics.density);
         Looper looper = Looper.myLooper();
-        //noinspection ConstantConditions
         mHandler = new Handler(looper==null ? Looper.getMainLooper() : looper);
     }
     
