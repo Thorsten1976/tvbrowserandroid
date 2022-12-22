@@ -45,7 +45,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
 		android:focusable="true"
-        android:layout_toRightOf="@id/running_list_channel_info">
+        android:layout_toRightOf="@id/running_list_channel_info"
+		android:layout_toEndOf="@id/running_list_channel_info">
 		<TextView 
 		    android:id="@id/running_compact_previous_start"
 		    android:layout_width="wrap_content"
@@ -54,7 +55,10 @@
 		    android:layout_marginRight="5dp"
 		    android:layout_marginLeft="2dp"
 		    android:layout_alignParentLeft="true"
-		    android:layout_alignParentTop="true"/>
+		    android:layout_alignParentTop="true"
+			android:layout_marginEnd="5dp"
+			android:layout_marginStart="2dp"
+			android:layout_alignParentStart="true" />
 		<TextView 
 		    android:id="@id/running_compact_previous_title"
 		    android:layout_width="wrap_content"
@@ -62,7 +66,9 @@
 		    android:textSize="@dimen/title_font_size"
 		    android:layout_marginRight="2dp"
 		    android:layout_toRightOf="@id/running_compact_previous_start"
-		    android:layout_alignParentTop="true"/>
+		    android:layout_alignParentTop="true"
+			android:layout_marginEnd="2dp"
+			android:layout_toEndOf="@id/running_compact_previous_start" />
 		<TextView 
 		    android:id="@id/running_compact_previous_infos"
 		    android:layout_width="wrap_content"
@@ -72,7 +78,8 @@
 		    android:layout_marginRight="2dp"
 		    android:layout_toRightOf="@id/running_compact_previous_start"
 		    android:layout_below="@id/running_compact_previous_title"
-	        />
+			android:layout_marginEnd="2dp"
+			android:layout_toEndOf="@id/running_compact_previous_start" />
 		<TextView 
 		    android:id="@id/running_compact_previous_episode"
 		    android:layout_width="wrap_content"
@@ -82,7 +89,8 @@
 		    android:layout_marginRight="2dp"
 		    android:layout_toRightOf="@id/running_compact_previous_start"
 		    android:layout_below="@id/running_compact_previous_infos"
-	        />
+			android:layout_marginEnd="2dp"
+			android:layout_toEndOf="@id/running_compact_previous_start" />
 	</RelativeLayout>
 	<View android:id="@id/running_separator_1"
 	    android:layout_width="match_parent"
@@ -92,21 +100,21 @@
 	    android:background="@color/running_separator_color"
 	    android:layout_marginTop="1dp"
 	    android:layout_marginBottom="1dp"
-	    />
+		android:layout_toEndOf="@id/running_list_channel_info" />
 	<LinearLayout android:layout_width="match_parent"
 	    android:layout_height="wrap_content"
 	    android:layout_toRightOf="@id/running_list_channel_info"
 	    android:layout_below="@id/running_separator_1"
 	    android:orientation="horizontal"
 	    android:baselineAligned="false"
-	    >
+		android:layout_toEndOf="@id/running_list_channel_info">
 	    <RelativeLayout android:id="@id/running_compact_now"
 		    android:layout_width="match_parent"
 		    android:layout_height="wrap_content"
 		    android:layout_marginRight="3dp"
 		    android:layout_weight="0.5"
 			android:focusable="true"
-		    >
+			android:layout_marginEnd="3dp">
 			<TextView 
 			    android:id="@id/running_compact_now_start"
 			    android:layout_width="wrap_content"
@@ -117,7 +125,9 @@
 			    android:layout_marginLeft="2dp"
 			    android:layout_alignParentLeft="true"
 			    android:layout_alignParentTop="true"
-			    />
+				android:layout_marginEnd="5dp"
+				android:layout_marginStart="2dp"
+				android:layout_alignParentStart="true" />
 			<TextView 
 			    android:id="@id/running_compact_now_title"
 			    android:layout_width="wrap_content"
@@ -127,7 +137,8 @@
 			    android:layout_marginRight="2dp"
 			    android:layout_toRightOf="@id/running_compact_now_start"
 			    android:layout_alignParentTop="true"
-				/>
+				android:layout_marginEnd="2dp"
+				android:layout_toEndOf="@id/running_compact_now_start" />
 			<TextView 
 			    android:id="@id/running_compact_now_infos"
 			    android:layout_width="wrap_content"
@@ -137,7 +148,8 @@
 			    android:layout_marginRight="2dp"
 			    android:layout_toRightOf="@id/running_compact_now_start"
 			    android:layout_below="@id/running_compact_now_title"
-		        />
+				android:layout_marginEnd="2dp"
+				android:layout_toEndOf="@id/running_compact_now_start" />
 			<TextView 
 			    android:id="@id/running_compact_now_episode"
 			    android:layout_width="wrap_content"
@@ -147,7 +159,8 @@
 			    android:layout_marginRight="2dp"
 			    android:layout_toRightOf="@id/running_compact_now_start"
 			    android:layout_below="@id/running_compact_now_infos"
-			    />
+				android:layout_marginEnd="2dp"
+				android:layout_toEndOf="@id/running_compact_now_start" />
 		</RelativeLayout>
 		<View android:id="@id/running_separator_2"
 		    android:layout_width="1dp"
@@ -169,7 +182,9 @@
 			    android:layout_marginLeft="2dp"
 			    android:layout_alignParentLeft="true"
 			    android:layout_alignParentTop="true"
-			    />
+				android:layout_marginEnd="5dp"
+				android:layout_marginStart="2dp"
+				android:layout_alignParentStart="true" />
 			<TextView 
 			    android:id="@id/running_compact_next_title"
 			    android:layout_width="wrap_content"
@@ -178,7 +193,8 @@
 			    android:layout_marginRight="2dp"
 				android:layout_alignParentTop="true"
 				android:layout_toRightOf="@id/running_compact_next_start"
-				/>
+				android:layout_marginEnd="2dp"
+				android:layout_toEndOf="@id/running_compact_next_start" />
 			<TextView 
 			    android:id="@id/running_compact_next_infos"
 			    android:layout_width="wrap_content"
@@ -188,7 +204,8 @@
 			    android:layout_marginRight="2dp"
 			    android:layout_toRightOf="@id/running_compact_next_start"
 			    android:layout_below="@id/running_compact_next_title"
-		        />
+				android:layout_marginEnd="2dp"
+				android:layout_toEndOf="@id/running_compact_next_start" />
 			<TextView 
 			    android:id="@id/running_compact_next_episode"
 			    android:layout_width="wrap_content"
@@ -198,7 +215,8 @@
 			    android:layout_marginRight="2dp"
 			    android:layout_toRightOf="@id/running_compact_next_start"
 			    android:layout_below="@id/running_compact_next_infos"
-			    />
+				android:layout_marginEnd="2dp"
+				android:layout_toEndOf="@id/running_compact_next_start" />
 		</RelativeLayout>
 	</LinearLayout>
 </org.tvbrowser.view.GrowingRelativeLayout>

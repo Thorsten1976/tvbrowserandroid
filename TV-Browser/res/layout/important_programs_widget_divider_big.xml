@@ -15,7 +15,8 @@
 	         android:layout_centerVertical="true"
 	         android:src="@drawable/ic_action_settings"
 	         android:layout_alignParentRight="true"
-	         android:background="@drawable/shape_button_background_corners_straight_transparency_high"/>
+	         android:background="@drawable/shape_button_background_corners_straight_transparency_high"
+			 android:layout_alignParentEnd="true" />
          <LinearLayout
              android:id="@id/important_widget_header_info_wrapper"
              android:orientation="horizontal"
