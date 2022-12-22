@@ -813,7 +813,7 @@ public class TvBrowser extends AppCompatActivity {
 
           final DonationRatingHelper donationHelper = new DonationRatingHelperImpl(TvBrowser.this);
 
-          if(!donationHelper.isToShowWebDonation()) {
+          if(donationHelper.hideWebDonation()) {
             builder.setNegativeButton(R.string.donation, (dialog, which) -> {
               saveSetting.run();
               donationHelper.showDonationInfo();

@@ -27,7 +27,7 @@ abstract class DonationRatingHelper {
 	abstract void prepareInAppPayment();
 	abstract boolean showDonationMenuItem();
 	abstract void showRatingAndDonationInfo();
-	abstract boolean isToShowWebDonation();
+	abstract boolean hideWebDonation();
 
 	void showDonationInfo() {
 		AlertDialog.Builder alert = new AlertDialog.Builder(tvBrowser);
@@ -39,7 +39,7 @@ abstract class DonationRatingHelper {
 		TextView webInfo = view.findViewById(R.id.donation_show_ways);
 		Button openWeb = view.findViewById(R.id.donation_website_button);
 
-		if(!isToShowWebDonation()) {
+		if(hideWebDonation()) {
 			webInfo.setVisibility(View.GONE);
 			openWeb.setVisibility(View.GONE);
 		}

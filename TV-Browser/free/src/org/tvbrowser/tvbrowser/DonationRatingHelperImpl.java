@@ -94,8 +94,8 @@ class DonationRatingHelperImpl extends DonationRatingHelper {
 	}
 
 	@Override
-	boolean isToShowWebDonation() {
-		return true;
+	boolean hideWebDonation() {
+		return false;
 	}
 
 	void handleExpiredVersion(final Calendar calendar) {
