@@ -49,20 +49,17 @@ public class PluginPreferencesActivity extends ToolbarPreferencesActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    
-    Intent intent = getIntent();
-    
-    if(intent != null && intent.hasExtra(EXTRA_SHOW_FRAGMENT_ARGUMENTS)) {
-      //getDelegate().getSupportActionBar().setTitle(intent.getBundleExtra(EXTRA_SHOW_FRAGMENT_ARGUMENTS).getString("category"));
-    }
-
+    /*Intent intent = getIntent();
+    if (intent != null && intent.hasExtra(EXTRA_SHOW_FRAGMENT_ARGUMENTS)) {
+      getDelegate().getSupportActionBar()
+      .setTitle(intent.getBundleExtra(EXTRA_SHOW_FRAGMENT_ARGUMENTS).getString("category"));
+    }*/
     INSTANCE = this;
   }
 
   @Override
   protected void onDestroy() {
     INSTANCE = null;
-
     super.onDestroy();
   }
 
