@@ -154,11 +154,11 @@ public final class NamedFields {
   
   @NonNull
   @Override
-  public final String toString() {
+  public String toString() {
     return mName;
   }
   
-  public final String getColumn() {
+  public String getColumn() {
     return mColumn;
   }
 }
