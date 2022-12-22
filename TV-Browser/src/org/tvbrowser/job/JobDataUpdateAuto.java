@@ -151,7 +151,7 @@ public class JobDataUpdateAuto extends Worker {
                 test.set(Calendar.SECOND, 0);
                 test.set(Calendar.MILLISECOND, 0);
 
-                  int timeTest = time;
+                  int timeTest;
 
                 do {
                   timeTest = time + ((int) (Math.random() * 6 * 60));

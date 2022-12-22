@@ -289,7 +289,7 @@ public class ProgramUtils {
   }
   
   public static boolean isMarkedByPluginWithIcon(Context context, long programId, String pluginId) {
-    boolean marked = false;
+    boolean marked;
     SharedPreferences pref = App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_MARKINGS);
     marked = pref.contains(String.valueOf(programId));
     
@@ -315,7 +315,7 @@ public class ProgramUtils {
   }
   
   public static boolean isMarkedWithIcon(Context context, long programId) {
-    boolean marked = false;
+    boolean marked;
     
     marked = App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_MARKINGS).contains(String.valueOf(programId));
     
@@ -323,7 +323,7 @@ public class ProgramUtils {
   }
   
   private static synchronized boolean markProgram(Context context, long programId, String pluginId) {
-    boolean result = false;
+    boolean result;
     SharedPreferences pref = App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_MARKINGS);
     
     String value = pref.getString(String.valueOf(programId), "").trim();

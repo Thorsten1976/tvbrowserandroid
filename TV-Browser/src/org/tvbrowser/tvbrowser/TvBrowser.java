@@ -723,7 +723,7 @@ public class TvBrowser extends AppCompatActivity {
   }
 
   private void showEpgDonateInfo() {
-    int count = 0;
+    int count;
 
     if(!SHOWING_DONATION_INFO) {
       final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(TvBrowser.this);
@@ -1352,7 +1352,7 @@ public class TvBrowser extends AppCompatActivity {
                   Cursor c = getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA, new String[] {TvBrowserContentProvider.KEY_ID,TvBrowserContentProvider.DATA_KEY_TITLE}, where, null, TvBrowserContentProvider.KEY_ID);
 
                   try {
-                    int count = 0;
+                    int count;
 
                     if(IOUtils.prepareAccess(c)) {
                       count = c.getCount()/10;

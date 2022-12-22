@@ -23,7 +23,7 @@ import android.database.CursorWrapper;
 
 class FilterCursorWrapper extends CursorWrapper {
   private Integer[] filterMap;
-  private int mPos = -1;
+  private int mPos;
   private final Cursor mCursor;
 
   @Override

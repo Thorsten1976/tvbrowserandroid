@@ -520,7 +520,7 @@ public final class IOUtils {
           fout.getChannel().truncate(0);
           
           byte[] buffer = new byte[10240];
-          int len = 0;
+          int len;
           
           while((len = in.read(buffer)) >= 0) {
             fout.write(buffer, 0, len);

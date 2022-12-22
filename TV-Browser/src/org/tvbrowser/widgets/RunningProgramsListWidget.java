@@ -113,9 +113,9 @@ public class RunningProgramsListWidget extends AppWidgetProvider {
         views.setImageViewResource(R.id.running_widget_header_icon, R.drawable.ic_widget);
       }
       
-      int buttonDrawable = R.drawable.shape_button_background_corners_rounded_transparency_high;
-      int headerDrawable = R.drawable.shape_button_background_corners_rounded_transparency_high;
-      int listDrawable = R.drawable.shape_widget_background_corners_rounded_transparency_medium;
+      int buttonDrawable;
+      int headerDrawable;
+      int listDrawable;
       
       boolean roundedCorners = prefs.getBooleanValueWithDefaultKey(R.string.PREF_WIDGET_BACKGROUND_ROUNDED_CORNERS, R.bool.pref_widget_background_rounded_corners_default);
       int headerTransparency = prefs.getStringValueAsInt(R.string.PREF_WIDGET_BACKGROUND_TRANSPARENCY_HEADER, R.string.pref_widget_background_transparency_header_default);

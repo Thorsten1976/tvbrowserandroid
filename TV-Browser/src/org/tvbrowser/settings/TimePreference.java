@@ -67,7 +67,7 @@ public class TimePreference extends DialogPreference {
   
   @Override
   protected void onSetInitialValue(boolean restorePersistedValue, Object defaultValue) {
-    int minutes = 0;
+    int minutes;
     
     if(restorePersistedValue) {
       if(defaultValue == null) {

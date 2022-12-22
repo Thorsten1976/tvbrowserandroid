@@ -5196,7 +5196,7 @@ public class TvDataUpdateService extends Service {
             
             byte[] buffer = new byte[8192];
             
-            int count = 0;
+            int count;
             int readCount = 0;
             
             while((count = in.read(buffer)) > 0) {
