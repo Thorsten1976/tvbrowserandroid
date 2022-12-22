@@ -16,6 +16,7 @@
  */
 package org.tvbrowser.tvbrowser;
 
+import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
 
 import java.io.ByteArrayInputStream;
@@ -195,6 +196,7 @@ class NewsReader {
       return mDate == null || mDate.getTime() < (System.currentTimeMillis() - (NEWS_DAYOUT * 24 * 60 * 60000L));
     }
     
+    @NonNull
     @Override
     public String toString() {
       return mDate + " " + mAuthor + " " + mDeNewsTitle + " " + mEnNewsTitle + " " + mDeNewsText + " " + mEnNewsText;
