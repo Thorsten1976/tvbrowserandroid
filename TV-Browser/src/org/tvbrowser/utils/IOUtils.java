@@ -1221,19 +1221,15 @@ public final class IOUtils {
     return result;
   }
 
-  public static boolean isCursorAccessable(Cursor cursor) {
-    boolean result = cursor != null && cursor.getCount() > 0 && !cursor.isClosed();
-
-    return result;
+  public static boolean isCursorAccessible(final @Nullable Cursor cursor) {
+    return cursor != null && cursor.getCount() > 0 && !cursor.isClosed();
   }
 
-  public static boolean prepareAccess(Cursor cursor) {
-    boolean result = isCursorAccessable(cursor);
-    
-    if(result) {
+  public static boolean prepareAccess(final @Nullable Cursor cursor) {
+    final boolean result = isCursorAccessible(cursor);
+    if (result) {
       cursor.moveToPosition(-1);
     }
-    
     return result;
   }
   
@@ -1256,7 +1252,7 @@ public final class IOUtils {
     }
   }
   
-  public static boolean isDatabaseAccessible(Context context) {
+  public static boolean isDatabaseAccessible(final @Nullable Context context) {
     boolean result = true;
     
     if(context != null) {

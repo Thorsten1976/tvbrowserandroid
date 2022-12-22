@@ -16,6 +16,7 @@
  */
 package org.tvbrowser.tvbrowser;
 
+import androidx.annotation.Nullable;
 import androidx.preference.PreferenceManager;
 
 import java.io.BufferedInputStream;
@@ -5392,14 +5393,11 @@ public class TvDataUpdateService extends Service {
     return false;
   }
   
-  private static boolean isValidDataContent(ContentValues values) {
-    boolean result = (values.containsKey(TvBrowserContentProvider.DATA_KEY_STARTTIME) && values.getAsLong(TvBrowserContentProvider.DATA_KEY_STARTTIME) != null)
-            &&
-            (values.containsKey(TvBrowserContentProvider.DATA_KEY_ENDTIME) && values.getAsLong(TvBrowserContentProvider.DATA_KEY_ENDTIME) != null)
-            &&
+  private static boolean isValidDataContent(final @Nullable ContentValues values) {
+    return values!=null &&
+            (values.containsKey(TvBrowserContentProvider.DATA_KEY_STARTTIME) && values.getAsLong(TvBrowserContentProvider.DATA_KEY_STARTTIME) != null) &&
+            (values.containsKey(TvBrowserContentProvider.DATA_KEY_ENDTIME) && values.getAsLong(TvBrowserContentProvider.DATA_KEY_ENDTIME) != null) &&
             (values.containsKey(TvBrowserContentProvider.DATA_KEY_TITLE) && values.getAsString(TvBrowserContentProvider.DATA_KEY_TITLE) != null);
-
-    return result;
   }
   
   /**
