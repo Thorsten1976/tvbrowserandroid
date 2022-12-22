@@ -86,6 +86,7 @@ import android.util.Log;
  */
 public final class IOUtils {
 
+  @SuppressWarnings("CharsetObjectCanBeUsed")
   public static final Charset ISO_8859_1 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT ? StandardCharsets.ISO_8859_1 : Charset.forName("ISO-8859-1");
   public static final String ISO_8859_15 = "ISO-8859-15";
   public static final String UTF_8 = Charset.defaultCharset().name(); // always UTF-8 on Android
