@@ -5067,7 +5067,7 @@ public class TvDataUpdateService extends Service {
               handleData();
             }
           });
-        }catch(RejectedExecutionException rje) {}
+        }catch(RejectedExecutionException ignore) {}
       }
     }
     

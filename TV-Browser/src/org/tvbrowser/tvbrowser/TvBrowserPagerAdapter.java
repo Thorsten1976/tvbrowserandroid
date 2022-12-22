@@ -137,10 +137,10 @@ final class TvBrowserPagerAdapter extends FragmentPagerAdapter {
   public void destroyItem(@NonNull final ViewGroup container, final int position, @NonNull final Object object) {
       registeredFragments.remove(position);
 
-      if(object != null) {
+      if (object != null) {
         try {
           super.destroyItem(container, position, object);
-        } catch (NullPointerException npe) {
+        } catch (NullPointerException ignore) {
         }
       }
   }

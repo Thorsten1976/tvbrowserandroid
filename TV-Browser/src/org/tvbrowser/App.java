@@ -135,7 +135,7 @@ public final class App extends Application {
 					service.createNotificationChannel(createReminderNotificationChannel(TYPE_NOTIFICATION_REMINDER_NIGHT, vibrationPattern, null, attributes, colorLED));
 				}
 			}
-		}catch(RuntimeException re) {}
+		}catch(RuntimeException ignore) {}
 	}
 
 	@RequiresApi(api = Build.VERSION_CODES.O)
