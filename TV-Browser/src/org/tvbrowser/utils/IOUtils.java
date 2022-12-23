@@ -422,13 +422,13 @@ public final class IOUtils {
   /**
    * Save given URL to filename with a default timeout of 30 seconds.
    * <p>
-   * @param filename The file to save to.
+   *
+   * @param filename  The file to save to.
    * @param urlString The URL to load from.
-   * <p> 
-   * @return <code>true</code> if the file was downloaded successfully, <code>false</code> otherwise.
+   *                  <p>
    */
-  public static boolean saveUrl(final String filename, final String urlString) {
-    return saveUrl(filename, urlString, 30000);
+  public static void saveUrl(final String filename, final String urlString) {
+    saveUrl(filename, urlString, 30000);
   }
   
   /**
