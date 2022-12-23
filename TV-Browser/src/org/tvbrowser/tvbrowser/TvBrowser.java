@@ -834,9 +834,9 @@ public class TvBrowser extends AppCompatActivity {
         showEpgPaidInfo();
       }
     }
-    else if(!SHOWING_DONATION_INFO) {
+    /*else if(!SHOWING_DONATION_INFO) {
       showEpgPaidInfo();
-    }
+    }*/
   }
 
   private boolean hasChannels() {
