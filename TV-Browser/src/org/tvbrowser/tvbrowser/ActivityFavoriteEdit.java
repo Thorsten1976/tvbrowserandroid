@@ -410,12 +410,11 @@ public class ActivityFavoriteEdit extends AppCompatActivity implements ChannelFi
       for(int day : mFavorite.getDayRestriction()) {
         if(day == Calendar.SUNDAY) {
           checked[6] = true;
-          mCheckedCount++;
         }
         else {
           checked[day-2] = true;
-          mCheckedCount++;
         }
+        mCheckedCount++;
       }
     }
     
