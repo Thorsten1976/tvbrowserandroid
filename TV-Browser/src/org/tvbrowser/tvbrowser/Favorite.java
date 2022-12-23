@@ -111,118 +111,11 @@ public class Favorite implements Serializable, Cloneable, Comparable<Favorite> {
     this(null, "", KEYWORD_ONLY_TITLE_TYPE, true, VALUE_RESTRICTION_TIME_DEFAULT, VALUE_RESTRICTION_TIME_DEFAULT, null, null, null, VALUE_RESTRICTION_TIME_DEFAULT, VALUE_RESTRICTION_TIME_DEFAULT, null, null);
   }
   
-  public Favorite(long id, String saveLine) {
+  public Favorite(final long id, @NonNull final String saveLine) {
     mFavoriteId = id;
-    
-    String[] values = saveLine.split(";;");
-    
-    if(values.length > 2) {
-      mName = values[0];
-      mSearch = values[1];
-      
-      try {
-        mType = Integer.parseInt(values[2]);
-      }catch(NumberFormatException e) {
-        boolean onlyTitle = Boolean.parseBoolean(values[2]);
-        
-        if(onlyTitle) {
-          mType = KEYWORD_ONLY_TITLE_TYPE;
-        }
-        else {
-          mType = KEYWORD_TYPE;
-        }
-      }
-    }
-    
-    if(values.length > 3) {
-      mRemind = Boolean.parseBoolean(values[3]);
-    }
-    
-    if(values.length > 4) {
-      if(values[4].equals("null")) {
-        mTimeRestrictionStart = VALUE_RESTRICTION_TIME_DEFAULT;
-        mTimeRestrictionEnd = VALUE_RESTRICTION_TIME_DEFAULT;
-      }
-      else {
-        String[] parts = values[4].split(",");
-        
-        try {
-          mTimeRestrictionStart = Integer.parseInt(parts[0]);
-          mTimeRestrictionEnd = Integer.parseInt(parts[1]);
-        }catch(NumberFormatException nfe) {
-          mTimeRestrictionStart = VALUE_RESTRICTION_TIME_DEFAULT;
-          mTimeRestrictionEnd = VALUE_RESTRICTION_TIME_DEFAULT;
-        }
-      }
-      
-      parseArray(DAY_RESTRICTION_TYPE, values[5]);
-      parseArray(CHANNEL_RESTRICTION_TYPE, values[6]);
-    }
-    else {
-      mTimeRestrictionStart = VALUE_RESTRICTION_TIME_DEFAULT;
-      mTimeRestrictionEnd = VALUE_RESTRICTION_TIME_DEFAULT;
-      mDayRestriction = null;
-      mChannelRestrictionIDs = null;
-    }
-    
-    if(values.length > 7) {
-      if(values[7].equals("null")) {
-        mExclusions = null;
-      }
-      else if(values[7].contains(",")) {
-        mExclusions = values[7].split(",");
-      }
-      else {
-        mExclusions = new String[1];
-        mExclusions[0] = values[7];
-      }
-    }
-    else {
-      mExclusions = null;
-    }
-    
-    if(values.length > 8) {
-      if(values[8].equals("null")) {
-        mDurationRestrictionMinimum = VALUE_RESTRICTION_TIME_DEFAULT;
-        mDurationRestrictionMaximum = VALUE_RESTRICTION_TIME_DEFAULT;
-      }
-      else {
-        String[] parts = values[8].split(",");
-        
-        try {
-          mDurationRestrictionMinimum = Integer.parseInt(parts[0]);
-          mDurationRestrictionMaximum = Integer.parseInt(parts[1]);
-        }catch(NumberFormatException nfe) {
-          mDurationRestrictionMinimum = VALUE_RESTRICTION_TIME_DEFAULT;
-          mDurationRestrictionMaximum = VALUE_RESTRICTION_TIME_DEFAULT;
-        }
-      }
-    }
-    else {
-      mDurationRestrictionMinimum = VALUE_RESTRICTION_TIME_DEFAULT;
-      mDurationRestrictionMaximum = VALUE_RESTRICTION_TIME_DEFAULT;
-    }
-    
-    if(values.length > 9) {
-      parseArray(ATTRIBUTE_RESTRICTION_TYPE, values[9]);
-    }
-    
-    if(values.length > 10) {
-      if(values[10].equals("null")) {
-        mUniqueProgramIds = null;
-      }
-      else {
-        String[] parts = values[10].split(",");
-        
-        mUniqueProgramIds = new long[parts.length];
-        
-        for(int i = 0; i < parts.length; i++) {
-          mUniqueProgramIds[i] = Long.parseLong(parts[i]);
-        }
-      }
-    }
+    initBySavedString(saveLine);
   }
-  
+
   private String mUniqueChannelIds;
   
   private static final int DAY_RESTRICTION_TYPE = 0;
@@ -1482,5 +1375,123 @@ public class Favorite implements Serializable, Cloneable, Comparable<Favorite> {
         mUniqueProgramIds = null;
       }
     }
+  }
+
+  /**
+   * Initializes this instance by the given saved configuration data.
+   */
+  private void initBySavedString(@NonNull final String saveString) {
+    final String[] values = saveString.split(";;");
+
+    if(values.length > 2) {
+      mName = values[0];
+      mSearch = values[1];
+
+      try {
+        mType = Integer.parseInt(values[2]);
+      }catch(NumberFormatException e) {
+        boolean onlyTitle = Boolean.parseBoolean(values[2]);
+
+        if(onlyTitle) {
+          mType = KEYWORD_ONLY_TITLE_TYPE;
+        }
+        else {
+          mType = KEYWORD_TYPE;
+        }
+      }
+    }
+
+    if(values.length > 3) {
+      mRemind = Boolean.parseBoolean(values[3]);
+    }
+
+    if(values.length > 4) {
+      if(values[4].equals("null")) {
+        mTimeRestrictionStart = VALUE_RESTRICTION_TIME_DEFAULT;
+        mTimeRestrictionEnd = VALUE_RESTRICTION_TIME_DEFAULT;
+      }
+      else {
+        String[] parts = values[4].split(",");
+
+        try {
+          mTimeRestrictionStart = Integer.parseInt(parts[0]);
+          mTimeRestrictionEnd = Integer.parseInt(parts[1]);
+        }catch(NumberFormatException nfe) {
+          mTimeRestrictionStart = VALUE_RESTRICTION_TIME_DEFAULT;
+          mTimeRestrictionEnd = VALUE_RESTRICTION_TIME_DEFAULT;
+        }
+      }
+
+      parseArray(DAY_RESTRICTION_TYPE, values[5]);
+      parseArray(CHANNEL_RESTRICTION_TYPE, values[6]);
+    }
+    else {
+      mTimeRestrictionStart = VALUE_RESTRICTION_TIME_DEFAULT;
+      mTimeRestrictionEnd = VALUE_RESTRICTION_TIME_DEFAULT;
+      mDayRestriction = null;
+      mChannelRestrictionIDs = null;
+    }
+
+    if(values.length > 7) {
+      if(values[7].equals("null")) {
+        mExclusions = null;
+      }
+      else if(values[7].contains(",")) {
+        mExclusions = values[7].split(",");
+      }
+      else {
+        mExclusions = new String[1];
+        mExclusions[0] = values[7];
+      }
+    }
+    else {
+      mExclusions = null;
+    }
+
+    if(values.length > 8) {
+      if(values[8].equals("null")) {
+        mDurationRestrictionMinimum = VALUE_RESTRICTION_TIME_DEFAULT;
+        mDurationRestrictionMaximum = VALUE_RESTRICTION_TIME_DEFAULT;
+      }
+      else {
+        final String[] parts = values[8].split(",");
+
+        try {
+          mDurationRestrictionMinimum = Integer.parseInt(parts[0]);
+          mDurationRestrictionMaximum = Integer.parseInt(parts[1]);
+        }catch(NumberFormatException nfe) {
+          mDurationRestrictionMinimum = VALUE_RESTRICTION_TIME_DEFAULT;
+          mDurationRestrictionMaximum = VALUE_RESTRICTION_TIME_DEFAULT;
+        }
+      }
+    }
+    else {
+      mDurationRestrictionMinimum = VALUE_RESTRICTION_TIME_DEFAULT;
+      mDurationRestrictionMaximum = VALUE_RESTRICTION_TIME_DEFAULT;
+    }
+
+    if(values.length > 9) {
+      parseArray(ATTRIBUTE_RESTRICTION_TYPE, values[9]);
+    }
+
+    if(values.length > 10) {
+      if(values[10].equals("null")) {
+        mUniqueProgramIds = null;
+      }
+      else {
+        final String[] parts = values[10].split(",");
+
+        mUniqueProgramIds = new long[parts.length];
+
+        for(int i = 0; i < parts.length; i++) {
+          mUniqueProgramIds[i] = Long.parseLong(parts[i]);
+        }
+      }
+    }
+  }
+
+  @Override
+  public Favorite clone() {
+      return copy();
   }
 }
