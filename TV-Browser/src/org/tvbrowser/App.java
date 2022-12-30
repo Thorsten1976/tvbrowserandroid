@@ -8,8 +8,11 @@ import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
+import androidx.multidex.MultiDex;
 
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.tvbrowser.R;
@@ -43,6 +46,12 @@ public final class App extends Application {
 		return mPrefUtils;
 	}
 
+
+	protected void attachBaseContext(@NonNull final Context base) {
+		super.attachBaseContext(base);
+		MultiDex.install(this);
+	}
+
 	@Override
 	public void onCreate() {
 		super.onCreate();
@@ -68,7 +77,7 @@ public final class App extends Application {
 	public String getNotificationChannelId(final int type) {
 	  final StringBuilder builder = new StringBuilder(getPackageName());
 
-	  switch(type) {
+	  switch (type) {
 	    case TYPE_NOTIFICATION_REMINDER_DAY:builder.append(".reminderDayMode");break;
 	    case TYPE_NOTIFICATION_REMINDER_WORK:builder.append(".reminderWorkMode");break;
 	    case TYPE_NOTIFICATION_REMINDER_NIGHT:builder.append(".reminderNightMode");break;
@@ -89,7 +98,7 @@ public final class App extends Application {
 	private String getNotificationChannelName(final int type) {
 	  final StringBuilder builder = new StringBuilder(getString(R.string.app_name));
 
-	  switch(type) {
+	  switch (type) {
 	    case TYPE_NOTIFICATION_REMINDER_DAY:builder.append(": ").append(getString(R.string.notification_channel_reminder_day));break;
 	    case TYPE_NOTIFICATION_REMINDER_WORK:builder.append(": ").append(getString(R.string.notification_channel_reminder_work));break;
 	    case TYPE_NOTIFICATION_REMINDER_NIGHT:builder.append(": ").append(getString(R.string.notification_channel_reminder_night));break;
@@ -135,7 +144,7 @@ public final class App extends Application {
 					service.createNotificationChannel(createReminderNotificationChannel(TYPE_NOTIFICATION_REMINDER_NIGHT, vibrationPattern, null, attributes, colorLED));
 				}
 			}
-		}catch(RuntimeException ignore) {}
+		} catch (RuntimeException ignore) {}
 	}
 
 	@RequiresApi(api = Build.VERSION_CODES.O)
