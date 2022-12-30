@@ -60,13 +60,12 @@ android {
     namespace 'org.tvbrowser.tvbrowser'
 
     compileSdk 33
-
     defaultConfig {
         applicationId "org.tvbrowser.tvbrowser"
-        targetSdk 33
         minSdk 16
-        // Required when setting minSdk to 20 or lower
+        // Required when setting minSdkVersion to 20 or lower
         multiDexEnabled true
+        targetSdk 33
         versionCode 4270
         versionName "0.7.0.8"
         vectorDrawables.useSupportLibrary = true
@@ -240,7 +239,6 @@ dependencies {
     implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
     implementation 'androidx.work:work-runtime:2.7.1'
     implementation 'com.google.android.material:material:1.7.0'
-    implementation 'me.drakeet.support:toastcompat:1.1.0'
     implementation project(path: ':ListViewDraggingAnimation')
     implementation project(path: ':ToastCompat')
 }
