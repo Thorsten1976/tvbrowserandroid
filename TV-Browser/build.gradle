@@ -56,6 +56,9 @@ gradle.taskGraph.whenReady { taskGraph ->
 }*/
 
 android {
+
+    namespace 'org.tvbrowser.tvbrowser'
+
     signingConfigs {
         google {
             storePassword ''
@@ -72,6 +75,8 @@ android {
         applicationId "org.tvbrowser.tvbrowser"
         targetSdkVersion 30
         minSdkVersion 16
+        // Required when setting minSdkVersion to 20 or lower
+        multiDexEnabled true
         versionCode 4270
         versionName "0.7.0.8"
         vectorDrawables.useSupportLibrary = true
@@ -189,6 +194,9 @@ android {
         androidTest.setRoot('androidTest')
     }
     compileOptions {
+        // Enable support for new language APIs
+        coreLibraryDesugaringEnabled true
+
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
@@ -221,8 +229,11 @@ if (project.hasProperty("AndroidProject.signing")
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.5.1'
+    // Note: desugar 2.0.0 requires AGP 7.4.0-alpha10 or higher
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
+    implementation 'androidx.appcompat:appcompat:1.7.0-alpha01'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.0-alpha05'
+    implementation 'androidx.multidex:multidex:2.0.1'
     implementation 'androidx.preference:preference:1.2.0'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
     implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
