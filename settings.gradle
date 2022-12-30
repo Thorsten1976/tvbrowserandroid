@@ -1,1 +1,1 @@
-include(':TV-Browser', ':ListViewDraggingAnimation')
+include(':TV-Browser', ':ListViewDraggingAnimation', ':ToastCompat')

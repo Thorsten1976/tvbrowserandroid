@@ -1,0 +1,7 @@
+The license of TV-Browser for Android does not apply for files in this module folder.
+It follows the license stated in the LICENSE file relative to this file.
+
+This Android library module forks parts of https://github.com/PureWriter/ToastCompat
+(me.drakeet.support:toastcompat:1.1.0) without build files, and test and sample code.
+Dependencies are updated to utilize Jetpack support libraries and the latest
+minSdk and targetSdk.
