@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:installLocation="internalOnly">
 
@@ -33,9 +34,13 @@
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.App.Dark"
         tools:targetApi="m">
+
         <meta-data
             android:name="android.max_aspect"
             android:value="2.1" />
+        <meta-data
+            android:name="android.app.default_searchable"
+            android:value="org.tvbrowser.tvbrowser.ActivityTvBrowserSearchResults" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -46,25 +51,10 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
         </provider>
-
-        <meta-data
-            android:name="android.app.default_searchable"
-            android:value="org.tvbrowser.tvbrowser.ActivityTvBrowserSearchResults" />
-
         <provider
             android:name="org.tvbrowser.content.TvBrowserContentProvider"
             android:authorities="org.tvbrowser.tvbrowsercontentprovider"
             android:exported="false" />
-
-        <service
-            android:name=".TvDataUpdateService"
-            android:enabled="true" />
-        <service
-            android:name="org.tvbrowser.widgets.ImportantProgramsRemoteViewsService"
-            android:permission="android.permission.BIND_REMOTEVIEWS" />
-        <service
-            android:name="org.tvbrowser.widgets.RunningProgramsRemoteViewsService"
-            android:permission="android.permission.BIND_REMOTEVIEWS" />
 
         <activity
             android:name=".TvBrowser"
@@ -210,12 +200,24 @@
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
-
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_toggle_reminder_state" />
         </receiver>
+        <receiver
+            android:name=".BroadcastReceiverReminderToggle"
+            android:enabled="true"
+            android:exported="false" />
 
+        <service
+            android:name=".TvDataUpdateService"
+            android:enabled="true" />
+        <service
+            android:name="org.tvbrowser.widgets.ImportantProgramsRemoteViewsService"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+        <service
+            android:name="org.tvbrowser.widgets.RunningProgramsRemoteViewsService"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
         <service
             android:name=".ServiceUpdateDataTable"
             android:enabled="true"
@@ -229,10 +231,6 @@
             android:enabled="true"
             android:exported="false" />
 
-        <receiver
-            android:name=".BroadcastReceiverReminderToggle"
-            android:enabled="true"
-            android:exported="false" />
     </application>
 
 </manifest>
