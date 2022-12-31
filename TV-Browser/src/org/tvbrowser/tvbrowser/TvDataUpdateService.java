@@ -811,7 +811,7 @@ public class TvDataUpdateService extends Service {
       final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
       
       if(pref.getString(getString(R.string.PREF_AUTO_UPDATE_TYPE), getString(R.string.pref_auto_update_type_default)).equals("2")) {
-        JobDataUpdateAuto.cancelJob();
+        JobDataUpdateAuto.cancelJob(getApplicationContext());
         JobDataUpdateAuto.scheduleJob(getApplicationContext(),true);
       }
     }

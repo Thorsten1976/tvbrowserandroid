@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import org.tvbrowser.App;
+import org.tvbrowser.job.JobDataUpdateAuto;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.utils.CompatUtils;
 import org.tvbrowser.utils.IOUtils;
@@ -150,7 +151,7 @@ public class AutoDataUpdateReceiver extends BroadcastReceiver {
   }
   
   public static void reschedule(Context context, SharedPreferences pref) {
-    IOUtils.removeDataUpdateTime(pref);
+    JobDataUpdateAuto.cancelJob(context);
     
     long current = System.currentTimeMillis() + (30 * 60000);
     

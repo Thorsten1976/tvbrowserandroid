@@ -625,20 +625,7 @@ public final class IOUtils {
       CompatUtils.setAlarmInexact(alarmManager,AlarmManager.RTC_WAKEUP, Math.max(System.currentTimeMillis()+28*60000,time), pending);
     }*/
   }
-  
-  public static synchronized void removeDataUpdateTime(SharedPreferences pref) {
-    JobDataUpdateAuto.cancelJob();
-    /*AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-    
-    Intent dataUpdate = new Intent(context, AutoDataUpdateReceiver.class);
-    
-    PendingIntent pending = PendingIntent.getBroadcast(context, DATA_UPDATE_KEY, dataUpdate, PendingIntent.FLAG_NO_CREATE);
-    
-    if(pending != null) {
-      alarmManager.cancel(pending);
-    }*/
-  }
-  
+
   public static void setDataTableRefreshTime(Context context) {
     Calendar now = Calendar.getInstance();
     
