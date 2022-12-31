@@ -30,6 +30,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
 import android.os.Bundle;
 import android.os.Handler;
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.loader.app.LoaderManager;
@@ -39,6 +40,7 @@ import androidx.loader.content.Loader;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.cursoradapter.widget.SimpleCursorAdapter;
 import androidx.appcompat.app.AlertDialog;
+
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextMenu;
@@ -72,1015 +74,1017 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class FragmentFavorites extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, OnSharedPreferenceChangeListener, ShowDateInterface, MarkingsUpdateListener, LoaderUpdater.Callback {
-  private static final String KEY_UPDATE_FAVORITES_MENU = "updateFavoritesMenu";
-  private static final String KEY_EDIT_DELETE_ENABLED = "editDeleteEnabled";
-  
-  private ProgramListViewBinderAndClickHandler mViewAndClickHandler;
-  private SimpleCursorAdapter mProgramListAdapter;
-  private ArrayAdapter<FavoriteSpinnerEntry> mFavoriteAdapter;
-  private ArrayList<FavoriteSpinnerEntry> mFavoriteList;
-  private DataSetObserver mFavoriteSelectionObserver;
-  
-  private ListView mFavoriteProgramList;
-  private ListView mMarkingsList;
-  
-  private ArrayAdapter<FavoriteSpinnerEntry> mMarkingsAdapter;
-  
-  private WhereClause mWhereClause;
-  
-  private Handler handler;
-  private Thread mUpdateThread;
-  
-  private LoaderUpdater mLoaderUpdate;
-  private LoaderUpdater.CallbackObjects mCallback;
-   
-  private BroadcastReceiver mFavoriteChangedReceiver;
-  private BroadcastReceiver mRefreshReceiver;
-  private BroadcastReceiver mDataUpdateReceiver;
-  private BroadcastReceiver mDontWantToSeeReceiver;
-  
-  private boolean mContainsListViewFavoriteSelection;
+    private static final String KEY_UPDATE_FAVORITES_MENU = "updateFavoritesMenu";
+    private static final String KEY_EDIT_DELETE_ENABLED = "editDeleteEnabled";
 
-  private static final Comparator<FavoriteSpinnerEntry> COMPARATOR_FAVORITES = (o1, o2) -> UiUtils.getCollator().compare(o1.toString(), o2.toString());
-  
-  @Override
-  public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                           Bundle savedInstanceState) {
-    int layout = R.layout.fragment_favorite_layout;
-    
-    if(App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_FAVORITE_TAB_LAYOUT, R.string.pref_favorite_tab_layout_default).equals("1")) {
-      layout = R.layout.fragment_favorite_selection_list_layout;
-    }
-    
-    return inflater.inflate(layout, container, false);
-  }
-  
-  public void updateSynchroButton(final Handler handler) {
-    removeMarkingSelections(handler);
-    addMarkingSelections(handler);
-  }
-  
-  @Override
-  public void onResume() {
-    super.onResume();
-    
-    if(getActivity() != null) {
-      ProgramUtils.registerMarkingsListener(getActivity(), this);
-      
-      handler.post(() -> {
-        if(!isDetached() && !isRemoving()) {
-          mFavoriteAdapter.notifyDataSetChanged();
+    private ProgramListViewBinderAndClickHandler mViewAndClickHandler;
+    private SimpleCursorAdapter mProgramListAdapter;
+    private ArrayAdapter<FavoriteSpinnerEntry> mFavoriteAdapter;
+    private ArrayList<FavoriteSpinnerEntry> mFavoriteList;
+    private DataSetObserver mFavoriteSelectionObserver;
+
+    private ListView mFavoriteProgramList;
+    private ListView mMarkingsList;
+
+    private ArrayAdapter<FavoriteSpinnerEntry> mMarkingsAdapter;
+
+    private WhereClause mWhereClause;
+
+    private Handler handler;
+    private Thread mUpdateThread;
+
+    private LoaderUpdater mLoaderUpdate;
+    private LoaderUpdater.CallbackObjects mCallback;
+
+    private BroadcastReceiver mFavoriteChangedReceiver;
+    private BroadcastReceiver mRefreshReceiver;
+    private BroadcastReceiver mDataUpdateReceiver;
+    private BroadcastReceiver mDontWantToSeeReceiver;
+
+    private boolean mContainsListViewFavoriteSelection;
+
+    private static final Comparator<FavoriteSpinnerEntry> COMPARATOR_FAVORITES = (o1, o2) -> UiUtils.getCollator().compare(o1.toString(), o2.toString());
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        int layout = R.layout.fragment_favorite_layout;
+
+        if (App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_FAVORITE_TAB_LAYOUT, R.string.pref_favorite_tab_layout_default).equals("1")) {
+            layout = R.layout.fragment_favorite_selection_list_layout;
         }
-      });
+
+        return inflater.inflate(layout, container, false);
     }
-  }
-  
-  private boolean mIsStarted = false;
-  
-  @Override
-  public void onStart() {
-    try {
-      Activity activity = getActivity();
-      if(activity != null) {
-        int selection = App.get().prefs().getValue(R.string.PREF_MISC_LAST_FAVORITE_SELECTION, 0);
-        Log.d("info13", "selection " + selection + " " + mContainsListViewFavoriteSelection);
-        if(mFavoriteSelection != null) {
-          Log.d("info13", "count " + mFavoriteSelection.getCount());
+
+    public void updateSynchroButton(final Handler handler) {
+        removeMarkingSelections(handler);
+        addMarkingSelections(handler);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        if (getActivity() != null) {
+            ProgramUtils.registerMarkingsListener(getActivity(), this);
+
+            handler.post(() -> {
+                if (!isDetached() && !isRemoving()) {
+                    mFavoriteAdapter.notifyDataSetChanged();
+                }
+            });
         }
-        if(selection < 0 && mMarkingsList != null && Math.abs(selection) < mMarkingsList.getChildCount()) {
-          selection = Math.abs(selection);
-          
-          mMarkingsList.performItemClick(null, selection, -1);
+    }
+
+    private boolean mIsStarted = false;
+
+    @Override
+    public void onStart() {
+        try {
+            Activity activity = getActivity();
+            if (activity != null) {
+                int selection = App.get().prefs().getValue(R.string.PREF_MISC_LAST_FAVORITE_SELECTION, 0);
+                Log.d("info13", "selection " + selection + " " + mContainsListViewFavoriteSelection);
+                if (mFavoriteSelection != null) {
+                    Log.d("info13", "count " + mFavoriteSelection.getCount());
+                }
+                if (selection < 0 && mMarkingsList != null && Math.abs(selection) < mMarkingsList.getChildCount()) {
+                    selection = Math.abs(selection);
+
+                    mMarkingsList.performItemClick(null, selection, -1);
         }
         else if(mFavoriteSelection != null && selection >= 0 && selection < mFavoriteSelection.getCount()) {
-          if(mContainsListViewFavoriteSelection) {
-            mFavoriteSelection.performItemClick(null, selection, -1);
+                    if (mContainsListViewFavoriteSelection) {
+                        mFavoriteSelection.performItemClick(null, selection, -1);
           }
           else {
-            mFavoriteSelection.setSelection(selection);
-          }
-        }
-        
-        handler.post(() -> mIsStarted = true);
-      }
-    }catch(Throwable ignored) {
-      
-    }
-    
-    super.onStart();
-  }
-  
-  @Override
-  public void onStop() {
-    mIsStarted = false;
-    
-    super.onStop();
-  }
-    
-  @Override
-  public void onPause() {
-    ProgramUtils.unregisterMarkingsListener(getActivity(), this);
-    
-    super.onPause();
-  }
-  
-  private void startUpdateThread() {
-    startUpdateThread(false,false);
-  }
-  
-  private void startUpdateThread(final boolean updateFavoritesMenu, final boolean editDeleteEnabled) {
-    mCallback.addOrReplace(new LoaderUpdater.CallbackObject<>(KEY_UPDATE_FAVORITES_MENU, updateFavoritesMenu));
-    mCallback.addOrReplace(new LoaderUpdater.CallbackObject<>(KEY_EDIT_DELETE_ENABLED, editDeleteEnabled));
-    
-    mLoaderUpdate.startUpdate(mCallback);
-  }
-  
-  private AdapterView<ArrayAdapter<FavoriteSpinnerEntry>> mFavoriteSelection;
-  private FavoriteSpinnerEntry mCurrentFavoriteSelection;
-  
-  private TextView mHelp;
-    
-  @Override
-  public void onActivityCreated(Bundle savedInstanceState) {
-    super.onActivityCreated(savedInstanceState);
-    
-    handler = new Handler();
-    
-    if(mLoaderUpdate == null) {
-      try {
-        mLoaderUpdate = new LoaderUpdater(FragmentFavorites.this, handler);
-      } catch (UnsupportedFragmentException e1) {
-        Log.d("info14", "", e1);
-        // Ignore
-      }
-    }
-    
-    mCallback = new LoaderUpdater.CallbackObjects();
-    
-    mWhereClause = new WhereClause();
-
-    mFavoriteList = new ArrayList<>();
-
-    final PrefUtils prefUtils = App.get().prefs();
-    
-    updateFavoriteList(handler, false);
-    removeMarkingSelections(handler);
-    
-    Collections.sort(mFavoriteList, COMPARATOR_FAVORITES);
-    
-    mFavoriteSelection = getView().findViewById(R.id.favorite_fragment_selection);
-    
-    final AtomicInteger rowLayout = new AtomicInteger(android.R.layout.simple_list_item_1);
-    
-    mContainsListViewFavoriteSelection = false;
-    
-    if(mFavoriteSelection.getClass().getCanonicalName().equals("android.widget.ListView")) {
-      rowLayout.set(android.R.layout.simple_list_item_activated_1);
-      
-      mMarkingsList = getView().findViewById(R.id.favorite_fragment_selection_markings);
-      
-      if(mMarkingsList != null) {
-        mMarkingsAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1) {
-            @NonNull
-            public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-                if (convertView == null) {
-                    convertView = getActivity().getLayoutInflater().inflate(android.R.layout.simple_list_item_1, parent, false);
-                }
-
-                String name = getItem(position).toString();
-
-                if (!getItem(position).containsFavorite()) {
-
-                    if (name.equals(getString(R.string.marking_value_marked))) {
-                        convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_COLOR_KEY, getContext()));
-              }
-              else if(name.equals(getString(R.string.marking_value_sync))) {
-                        convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_SYNC_COLOR_KEY, getContext()));
-              }
-              else {
-                        convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_REMINDER_COLOR_KEY, getContext()));
+                        mFavoriteSelection.setSelection(selection);
                     }
                 }
 
-                ((TextView) convertView).setMaxLines(3);
-                ((TextView) convertView).setText(name);
-
-                return convertView;
+                handler.post(() -> mIsStarted = true);
             }
-        };
-        
-        mMarkingsList.setAdapter(mMarkingsAdapter);
-      }
-      
-      mMarkingsList.setOnItemClickListener((parent, view, position, id) -> {
-        try {
-          Method setItemChecked = mFavoriteSelection.getClass().getMethod("setItemChecked", int.class,boolean.class);
-          setItemChecked.invoke(mFavoriteSelection, -1,true);
-        } catch (Exception ignored) {
+        } catch (Throwable ignored) {
+
         }
 
-        mCurrentFavoriteSelection = mMarkingsAdapter.getItem(position);
-        mWhereClause = getWhereClause();
+        super.onStart();
+    }
 
-        final TvBrowser tvb = (TvBrowser)getActivity();
+    @Override
+    public void onStop() {
+        mIsStarted = false;
 
-        if(tvb != null) {
-          tvb.updateFavoritesMenu(false);
+        super.onStop();
+    }
 
-          startUpdateThread();
+    @Override
+    public void onPause() {
+        ProgramUtils.unregisterMarkingsListener(getActivity(), this);
 
-          saveCurrentSelection(tvb, (position * -1));
+        super.onPause();
+    }
+
+    private void startUpdateThread() {
+        startUpdateThread(false, false);
+    }
+
+    private void startUpdateThread(final boolean updateFavoritesMenu, final boolean editDeleteEnabled) {
+        mCallback.addOrReplace(new LoaderUpdater.CallbackObject<>(KEY_UPDATE_FAVORITES_MENU, updateFavoritesMenu));
+        mCallback.addOrReplace(new LoaderUpdater.CallbackObject<>(KEY_EDIT_DELETE_ENABLED, editDeleteEnabled));
+
+        mLoaderUpdate.startUpdate(mCallback);
+    }
+
+    private AdapterView<ArrayAdapter<FavoriteSpinnerEntry>> mFavoriteSelection;
+    private FavoriteSpinnerEntry mCurrentFavoriteSelection;
+
+    private TextView mHelp;
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        handler = new Handler();
+
+        if (mLoaderUpdate == null) {
+            try {
+                mLoaderUpdate = new LoaderUpdater(FragmentFavorites.this, handler);
+            } catch (UnsupportedFragmentException e1) {
+                Log.d("info14", "", e1);
+                // Ignore
+            }
         }
-      });
-      
-      try {
-        Method setChoiceMode = mFavoriteSelection.getClass().getMethod("setChoiceMode", int.class);
-        setChoiceMode.invoke(mFavoriteSelection, ListView.CHOICE_MODE_SINGLE);
-      } catch (Exception ignored) {
-      }
-      
-      mContainsListViewFavoriteSelection = true;
-    }
-    
-    addMarkingSelections(handler);
-    
-    final AtomicReference<Object> backgroundRef = new AtomicReference<>(null);
 
-    TypedValue a = new TypedValue();
-    getActivity().getTheme().resolveAttribute(android.R.attr.windowBackground, a, true);
-    if (a.type >= TypedValue.TYPE_FIRST_COLOR_INT && a.type <= TypedValue.TYPE_LAST_COLOR_INT) {
-        // windowBackground is a color
-      backgroundRef.set(a.data);
-    } else {
-        // windowBackground is not a color, probably a drawable
-        ///Drawable d = ContextCompat.getDrawable(getActivity(),a.resourceId);
-      backgroundRef.set(ContextCompat.getDrawable(getActivity(),a.resourceId));
-    }
-    
-    mFavoriteAdapter = new ArrayAdapter<FavoriteSpinnerEntry>(getActivity(), rowLayout.get(), mFavoriteList){
-      @NonNull
-      @Override
-      public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-        return getView(position, convertView, parent, false);
-      }
+        mCallback = new LoaderUpdater.CallbackObjects();
 
-      View getView(int position, View convertView, ViewGroup parent, boolean popup) {
-        if(position < getCount()) {
-          FavoriteSpinnerEntry entry = getItem(position);
+        mWhereClause = new WhereClause();
 
-          if(convertView == null) {
-            convertView = getActivity().getLayoutInflater().inflate(rowLayout.get(), parent, false);
-          }
+        mFavoriteList = new ArrayList<>();
 
-          String name = entry.toString();
+        final PrefUtils prefUtils = App.get().prefs();
 
-          Drawable layerDrawable = null;
-          Drawable background = null;
+        updateFavoriteList(handler, false);
+        removeMarkingSelections(handler);
 
-          if(backgroundRef.get() instanceof Drawable) {
-            background = (Drawable)backgroundRef.get();
-          }
-          else if(backgroundRef.get() instanceof Integer) {
-            background = new ColorDrawable((Integer) backgroundRef.get());
-          }
+        Collections.sort(mFavoriteList, COMPARATOR_FAVORITES);
 
-          if(!mContainsListViewFavoriteSelection) {
-            Drawable selector = ContextCompat.getDrawable(getContext(),android.R.drawable.list_selector_background);
-            Drawable draw = selector;
+        mFavoriteSelection = getView().findViewById(R.id.favorite_fragment_selection);
 
-            if(!entry.containsFavorite()) {
-              if(name.equals(getString(R.string.marking_value_marked))) {
-                draw = new ColorDrawable(UiUtils.getColor(UiUtils.MARKED_COLOR_KEY, getContext()));
+        final AtomicInteger rowLayout = new AtomicInteger(android.R.layout.simple_list_item_1);
+
+        mContainsListViewFavoriteSelection = false;
+
+        if (mFavoriteSelection.getClass().getCanonicalName().equals("android.widget.ListView")) {
+            rowLayout.set(android.R.layout.simple_list_item_activated_1);
+
+            mMarkingsList = getView().findViewById(R.id.favorite_fragment_selection_markings);
+
+            if (mMarkingsList != null) {
+                mMarkingsAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1) {
+                    @NonNull
+                    public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+                        if (convertView == null) {
+                            convertView = getActivity().getLayoutInflater().inflate(android.R.layout.simple_list_item_1, parent, false);
+                        }
+
+                        String name = getItem(position).toString();
+
+                        if (!getItem(position).containsFavorite()) {
+
+                            if (name.equals(getString(R.string.marking_value_marked))) {
+                                convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_COLOR_KEY, getContext()));
               }
               else if(name.equals(getString(R.string.marking_value_sync))) {
-                draw = new ColorDrawable(UiUtils.getColor(UiUtils.MARKED_SYNC_COLOR_KEY, getContext()));
+                                convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_SYNC_COLOR_KEY, getContext()));
               }
               else {
-                draw = new ColorDrawable(UiUtils.getColor(UiUtils.MARKED_REMINDER_COLOR_KEY, getContext()));
-              }
+                                convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_REMINDER_COLOR_KEY, getContext()));
+                            }
+                        }
+
+                        ((TextView) convertView).setMaxLines(3);
+                        ((TextView) convertView).setText(name);
+
+                        return convertView;
+                    }
+                };
+
+                mMarkingsList.setAdapter(mMarkingsAdapter);
             }
 
-            final StateListDrawable listDrawable = new StateListDrawable();
-            listDrawable.addState(new int[] {-android.R.attr.state_pressed, -android.R.attr.state_focused }, draw);
-            listDrawable.addState(new int[] {android.R.attr.state_pressed}, selector);
-            listDrawable.addState(new int[] {android.R.attr.state_focused}, selector);
-            listDrawable.addState(new int[] {}, selector);
-
-            layerDrawable = listDrawable;
-          }
-          else if(popup) {
-            layerDrawable = background;
-          }
-
-          if(layerDrawable != null) {
-            CompatUtils.setBackground(convertView, layerDrawable);
-          }
-
-          int pixel = UiUtils.convertDpToPixel(5f, getResources());
-          convertView.setPadding(pixel, 0, pixel, 0);
-
-          ((TextView)convertView).setMaxLines(3);
-          ((TextView)convertView).setText(name);
-
-          return convertView;
-        }
-
-        return null;
-      }
-
-      @Override
-      public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
-        return getView(position, convertView, parent, true);
-      }
-    };
-    
-    mHelp = getView().findViewById(R.id.favorite_fragment_help);
-    
-    mFavoriteSelectionObserver = new DataSetObserver() {
-      @Override
-      public void onChanged() {
-        if(mIsStarted) {
-          final AtomicInteger position = new AtomicInteger(-1);
- //         int currentValue = -1;
-          
-          if(mCurrentFavoriteSelection != null) {
-            for(int i = 0; i < mFavoriteList.size(); i++) {
-              FavoriteSpinnerEntry entry = mFavoriteList.get(i);
-              
-              if((mCurrentFavoriteSelection.containsFavorite() && entry.containsFavorite() && entry.getFavorite().equals(mCurrentFavoriteSelection.getFavorite()))
-                  || (!mCurrentFavoriteSelection.containsFavorite()) && !entry.containsFavorite() && mCurrentFavoriteSelection.toString().equals(entry.toString())) {
-                position.set(i);
-                break;
-              }
-            }
-            
-            if(position.get() == -1 && mMarkingsList != null) {
-              for(int i = 0; i < mMarkingsAdapter.getCount(); i++) {
-                FavoriteSpinnerEntry entry = mMarkingsAdapter.getItem(i);
-                
-                if(!mCurrentFavoriteSelection.containsFavorite() && !entry.containsFavorite() && mCurrentFavoriteSelection.toString().equals(entry.toString())) {
-                  position.set(-2);
-                  break;
-                }
-              }
-            }
-            
-       //     currentValue = mFavoriteSelection.getSelectedItemPosition();
-          }
-          
-          if(position.get() == -1) {
-            int lastPosition = prefUtils.getValue(R.string.PREF_MISC_LAST_FAVORITE_SELECTION, 0);
-            
-            if(lastPosition >= 0 && mFavoriteAdapter.getCount() > lastPosition) {
-              position.set(lastPosition);
-            }
-          }
-          
-          if(/*currentValue != position.get() &&*/ position.get() >= 0) {
-            handler.post(() -> {
-              if(mContainsListViewFavoriteSelection) {
+            mMarkingsList.setOnItemClickListener((parent, view, position, id) -> {
                 try {
-                  Method setItemChecked = mFavoriteSelection.getClass().getMethod("setItemChecked", int.class,boolean.class);
-                  setItemChecked.invoke(mFavoriteSelection, position.get(),true);
-
-                  if(position.get() < mFavoriteList.size()) {
-                    selectFavorite(position.get());
-                    mFavoriteSelection.setSelection(position.get());
-                  }
+                    Method setItemChecked = mFavoriteSelection.getClass().getMethod("setItemChecked", int.class, boolean.class);
+                    setItemChecked.invoke(mFavoriteSelection, -1, true);
                 } catch (Exception ignored) {
                 }
-              }
-              else {
-                mFavoriteSelection.setSelection(position.get());
-              }
-            });
-          }
-        }
-      }
-    };
-    
-    mFavoriteSelection.setAdapter(mFavoriteAdapter);
-    mFavoriteSelection.getAdapter().registerDataSetObserver(mFavoriteSelectionObserver);
-    
-    mFavoriteSelection.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-      @Override
-      public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        selectFavorite(position);
-      }
-      
-      @Override
-      public void onNothingSelected(AdapterView<?> parent) {
-        mCurrentSelection = mCurrentFavoriteSelection = null;
-        mWhereClause = new WhereClause();
-        
-        startUpdateThread(true,false);
-      }
-    });
-    
-    if(mContainsListViewFavoriteSelection) {
-      mFavoriteSelection.setOnItemClickListener((adapterView, v, position, id) -> selectFavorite(position));
-    }
-    
-    updateSynchroButton(handler);
- 
-    mFavoriteProgramList = getView().findViewById(R.id.favorite_program_list);
-    mFavoriteProgramList.setOnItemClickListener((adapterView, v, position, id) -> mViewAndClickHandler.onListItemClick(null, v, position, id));
-    mFavoriteProgramList.setItemsCanFocus(true);
 
-    registerForContextMenu(mFavoriteSelection);
-            
-    String[] projection = {
-        TvBrowserContentProvider.DATA_KEY_UNIX_DATE,
-        TvBrowserContentProvider.DATA_KEY_STARTTIME,
-        TvBrowserContentProvider.DATA_KEY_ENDTIME,
-        TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID,
-        TvBrowserContentProvider.DATA_KEY_TITLE,
-        TvBrowserContentProvider.DATA_KEY_EPISODE_TITLE,
-        TvBrowserContentProvider.DATA_KEY_GENRE,
-        TvBrowserContentProvider.DATA_KEY_PICTURE_COPYRIGHT,
-        TvBrowserContentProvider.DATA_KEY_CATEGORIES
-    };
-    
-    mViewAndClickHandler = new ProgramListViewBinderAndClickHandler(getActivity(),this,handler);
-    
-    // Create a new Adapter an bind it to the List View
-    mProgramListAdapter = new OrientationHandlingCursorAdapter(getActivity(),/*android.R.layout.simple_list_item_1*/R.layout.program_lists_entries,null,
-        projection,new int[] {R.id.startDateLabelPL,R.id.startTimeLabelPL,R.id.endTimeLabelPL,R.id.channelLabelPL,R.id.titleLabelPL,R.id.episodeLabelPL,R.id.genre_label_pl,R.id.picture_copyright_pl,R.id.info_label_pl},0, true, handler);
-    mProgramListAdapter.setViewBinder(mViewAndClickHandler);
-        
-    mFavoriteProgramList.setAdapter(mProgramListAdapter);
-    
-    SeparatorDrawable drawable = new SeparatorDrawable(getActivity());
-    
-    mFavoriteProgramList.setDivider(drawable);
+                mCurrentFavoriteSelection = mMarkingsAdapter.getItem(position);
+                mWhereClause = getWhereClause();
 
-    prefUtils.getDefault().registerOnSharedPreferenceChangeListener(this);
-    
-    setDividerSize(prefUtils.getStringValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
-  }
-  
-  private WhereClause getWhereClause() {
-    WhereClause whereClause = mCurrentFavoriteSelection.getWhereClause();
-    
-    if(whereClause == null) {
-      WhereClause marking = ProgramUtils.getPluginMarkingsSelection(getActivity());
-      
-      if(marking.getWhere().trim().isEmpty()) {
-        marking = new WhereClause(TvBrowserContentProvider.KEY_ID + "<0", null);
-      }
-      
-      whereClause = new WhereClause(TvBrowserContentProvider.CONCAT_TABLE_PLACE_HOLDER + " " + marking.getWhere(), marking.getSelectionArgs());
-    }
-    
-    return whereClause;
-  }
-  
-  private void selectFavorite(final int position) {
-    if(position >= 0 && position < mFavoriteList.size()) {
-      mCurrentSelection = mCurrentFavoriteSelection = mFavoriteList.get(position);
-      mWhereClause = getWhereClause();
-      
-      final Activity tvb = getActivity();
-      
-      if(tvb != null) {
-        startUpdateThread(true, mCurrentFavoriteSelection.containsFavorite());
-        
-        saveCurrentSelection(tvb, position);
-      }
-    }
-  }
-  
-  private void saveCurrentSelection(final Context context, final int position) {
-    Log.d("info13", "mIsStarted " + mIsStarted + " " + position);
-    if(mIsStarted) {
-      final PrefUtils prefUtils = App.get().prefs();
-      boolean success = prefUtils.edit().putInt(context.getString(R.string.PREF_MISC_LAST_FAVORITE_SELECTION), position).commit();
-      Log.d("info13", "success " + success + " " + prefUtils.getValue(R.string.PREF_MISC_LAST_FAVORITE_SELECTION, 0));
-    }
-  }
-  
-  @Override
-  public void onAttach(@NonNull Context context) {
-    super.onAttach(context);
-    
-    if(handler == null) {
-      handler = new Handler();
-    }
-    
-    if(mLoaderUpdate == null) {
-      try {
-        mLoaderUpdate = new LoaderUpdater(FragmentFavorites.this, handler);
-      } catch (UnsupportedFragmentException e1) {
-        Log.d("info14", "", e1);
-        // Ignore
-      }
-    }
-    
-    mFavoriteChangedReceiver = new BroadcastReceiver() {
-      @Override
-      public void onReceive(Context context, final Intent intent) {
-        if(mUpdateThread == null || !mUpdateThread.isAlive()) {
-          mUpdateThread = new Thread(() -> {
-            if(intent.hasExtra(Favorite.FAVORITE_EXTRA)) {
-              String oldName = intent.getStringExtra(Favorite.OLD_NAME_KEY);
+                final TvBrowser tvb = (TvBrowser) getActivity();
 
-              FavoriteSpinnerEntry fav = null;
+                if (tvb != null) {
+                    tvb.updateFavoritesMenu(false);
 
-              if(oldName != null) {
-                for(FavoriteSpinnerEntry favorite : mFavoriteList) {
-                  if(favorite.containsFavorite() && favorite.getFavorite().getName().equals(oldName)) {
-                    fav = favorite;
-                    break;
-                  }
+                    startUpdateThread();
+
+                    saveCurrentSelection(tvb, (position * -1));
                 }
+            });
+
+            try {
+                Method setChoiceMode = mFavoriteSelection.getClass().getMethod("setChoiceMode", int.class);
+                setChoiceMode.invoke(mFavoriteSelection, ListView.CHOICE_MODE_SINGLE);
+            } catch (Exception ignored) {
+            }
+
+            mContainsListViewFavoriteSelection = true;
+        }
+
+        addMarkingSelections(handler);
+
+        final AtomicReference<Object> backgroundRef = new AtomicReference<>(null);
+
+        TypedValue a = new TypedValue();
+        getActivity().getTheme().resolveAttribute(android.R.attr.windowBackground, a, true);
+        if (a.type >= TypedValue.TYPE_FIRST_COLOR_INT && a.type <= TypedValue.TYPE_LAST_COLOR_INT) {
+            // windowBackground is a color
+            backgroundRef.set(a.data);
+        } else {
+            // windowBackground is not a color, probably a drawable
+            ///Drawable d = ContextCompat.getDrawable(getActivity(),a.resourceId);
+            backgroundRef.set(ContextCompat.getDrawable(getActivity(), a.resourceId));
+        }
+
+        mFavoriteAdapter = new ArrayAdapter<FavoriteSpinnerEntry>(getActivity(), rowLayout.get(), mFavoriteList) {
+            @NonNull
+            @Override
+            public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+                return getView(position, convertView, parent, false);
+            }
+
+            View getView(int position, View convertView, ViewGroup parent, boolean popup) {
+                if (position < getCount()) {
+                    FavoriteSpinnerEntry entry = getItem(position);
+
+                    if (convertView == null) {
+                        convertView = getActivity().getLayoutInflater().inflate(rowLayout.get(), parent, false);
+                    }
+
+                    String name = entry.toString();
+
+                    Drawable layerDrawable = null;
+                    Drawable background = null;
+
+                    if (backgroundRef.get() instanceof Drawable) {
+                        background = (Drawable) backgroundRef.get();
+          }
+          else if(backgroundRef.get() instanceof Integer) {
+                        background = new ColorDrawable((Integer) backgroundRef.get());
+                    }
+
+                    if (!mContainsListViewFavoriteSelection) {
+                        Drawable selector = ContextCompat.getDrawable(getContext(), android.R.drawable.list_selector_background);
+                        Drawable draw = selector;
+
+                        if (!entry.containsFavorite()) {
+                            if (name.equals(getString(R.string.marking_value_marked))) {
+                                draw = new ColorDrawable(UiUtils.getColor(UiUtils.MARKED_COLOR_KEY, getContext()));
               }
-
-              if(fav == null) {
-                fav = new FavoriteSpinnerEntry((Favorite)intent.getSerializableExtra(Favorite.FAVORITE_EXTRA));
-                mCurrentFavoriteSelection = fav;
-
-                add(handler,fav);
+              else if(name.equals(getString(R.string.marking_value_sync))) {
+                                draw = new ColorDrawable(UiUtils.getColor(UiUtils.MARKED_SYNC_COLOR_KEY, getContext()));
               }
               else {
-                Favorite temp = (Favorite)intent.getSerializableExtra(Favorite.FAVORITE_EXTRA);
+                                draw = new ColorDrawable(UiUtils.getColor(UiUtils.MARKED_REMINDER_COLOR_KEY, getContext()));
+                            }
+                        }
 
-                fav.getFavorite().setValues(temp.getName(), temp.getSearchValue(), temp.getType(), temp.remind(), temp.getTimeRestrictionStart(), temp.getTimeRestrictionEnd(), temp.getDayRestriction(), temp.getChannelRestrictionIDs(), temp.getExclusions(), temp.getDurationRestrictionMinimum(), temp.getDurationRestrictionMaximum(), temp.getAttributeRestrictionIndices(), temp.getUniqueProgramIds());
+                        final StateListDrawable listDrawable = new StateListDrawable();
+                        listDrawable.addState(new int[]{-android.R.attr.state_pressed, -android.R.attr.state_focused}, draw);
+                        listDrawable.addState(new int[]{android.R.attr.state_pressed}, selector);
+                        listDrawable.addState(new int[]{android.R.attr.state_focused}, selector);
+                        listDrawable.addState(new int[]{}, selector);
+
+                        layerDrawable = listDrawable;
+          }
+          else if(popup) {
+                        layerDrawable = background;
+                    }
+
+                    if (layerDrawable != null) {
+                        CompatUtils.setBackground(convertView, layerDrawable);
+                    }
+
+                    int pixel = UiUtils.convertDpToPixel(5f, getResources());
+                    convertView.setPadding(pixel, 0, pixel, 0);
+
+                    ((TextView) convertView).setMaxLines(3);
+                    ((TextView) convertView).setText(name);
+
+                    return convertView;
+                }
+
+                return null;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
+                return getView(position, convertView, parent, true);
+            }
+        };
+
+        mHelp = getView().findViewById(R.id.favorite_fragment_help);
+
+        mFavoriteSelectionObserver = new DataSetObserver() {
+            @Override
+            public void onChanged() {
+                if (mIsStarted) {
+                    final AtomicInteger position = new AtomicInteger(-1);
+                    //         int currentValue = -1;
+
+                    if (mCurrentFavoriteSelection != null) {
+                        for (int i = 0; i < mFavoriteList.size(); i++) {
+                            FavoriteSpinnerEntry entry = mFavoriteList.get(i);
+
+                            if ((mCurrentFavoriteSelection.containsFavorite() && entry.containsFavorite() && entry.getFavorite().equals(mCurrentFavoriteSelection.getFavorite()))
+                                    || (!mCurrentFavoriteSelection.containsFavorite()) && !entry.containsFavorite() && mCurrentFavoriteSelection.toString().equals(entry.toString())) {
+                                position.set(i);
+                                break;
+                            }
+                        }
+
+                        if (position.get() == -1 && mMarkingsList != null) {
+                            for (int i = 0; i < mMarkingsAdapter.getCount(); i++) {
+                                FavoriteSpinnerEntry entry = mMarkingsAdapter.getItem(i);
+
+                                if (!mCurrentFavoriteSelection.containsFavorite() && !entry.containsFavorite() && mCurrentFavoriteSelection.toString().equals(entry.toString())) {
+                                    position.set(-2);
+                                    break;
+                                }
+                            }
+                        }
+
+                        // currentValue = mFavoriteSelection.getSelectedItemPosition();
+                    }
+
+                    if (position.get() == -1) {
+                        int lastPosition = prefUtils.getValue(R.string.PREF_MISC_LAST_FAVORITE_SELECTION, 0);
+
+                        if (lastPosition >= 0 && mFavoriteAdapter.getCount() > lastPosition) {
+                            position.set(lastPosition);
+                        }
+                    }
+
+                    if (/*currentValue != position.get() &&*/ position.get() >= 0) {
+                        handler.post(() -> {
+                            if (mContainsListViewFavoriteSelection) {
+                                try {
+                                    Method setItemChecked = mFavoriteSelection.getClass().getMethod("setItemChecked", int.class, boolean.class);
+                                    setItemChecked.invoke(mFavoriteSelection, position.get(), true);
+
+                                    if (position.get() < mFavoriteList.size()) {
+                                        selectFavorite(position.get());
+                                        mFavoriteSelection.setSelection(position.get());
+                                    }
+                                } catch (Exception ignored) {
+                                }
               }
+              else {
+                                mFavoriteSelection.setSelection(position.get());
+                            }
+                        });
+                    }
+                }
+            }
+        };
 
-              handler.post(() -> {
-                mFavoriteAdapter.notifyDataSetChanged();
-                mFavoriteSelectionObserver.onChanged();
-              });
+        mFavoriteSelection.setAdapter(mFavoriteAdapter);
+        mFavoriteSelection.getAdapter().registerDataSetObserver(mFavoriteSelectionObserver);
+
+        mFavoriteSelection.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectFavorite(position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                mCurrentSelection = mCurrentFavoriteSelection = null;
+                mWhereClause = new WhereClause();
+        
+                startUpdateThread(true, false);
+            }
+        });
+
+        if (mContainsListViewFavoriteSelection) {
+            mFavoriteSelection.setOnItemClickListener((adapterView, v, position, id) -> selectFavorite(position));
+        }
+
+        updateSynchroButton(handler);
+
+        mFavoriteProgramList = getView().findViewById(R.id.favorite_program_list);
+        mFavoriteProgramList.setOnItemClickListener((adapterView, v, position, id) -> mViewAndClickHandler.onListItemClick(id));
+        mFavoriteProgramList.setItemsCanFocus(true);
+
+        registerForContextMenu(mFavoriteSelection);
+
+        String[] projection = {
+                TvBrowserContentProvider.DATA_KEY_UNIX_DATE,
+                TvBrowserContentProvider.DATA_KEY_STARTTIME,
+                TvBrowserContentProvider.DATA_KEY_ENDTIME,
+                TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID,
+                TvBrowserContentProvider.DATA_KEY_TITLE,
+                TvBrowserContentProvider.DATA_KEY_EPISODE_TITLE,
+                TvBrowserContentProvider.DATA_KEY_GENRE,
+                TvBrowserContentProvider.DATA_KEY_PICTURE_COPYRIGHT,
+                TvBrowserContentProvider.DATA_KEY_CATEGORIES
+        };
+
+        mViewAndClickHandler = new ProgramListViewBinderAndClickHandler(getActivity(), this, handler);
+
+        // Create a new Adapter an bind it to the List View
+        mProgramListAdapter = new OrientationHandlingCursorAdapter(getActivity(),/*android.R.layout.simple_list_item_1*/R.layout.program_lists_entries, null,
+                projection, new int[]{R.id.startDateLabelPL, R.id.startTimeLabelPL, R.id.endTimeLabelPL, R.id.channelLabelPL, R.id.titleLabelPL, R.id.episodeLabelPL, R.id.genre_label_pl, R.id.picture_copyright_pl, R.id.info_label_pl}, 0, true, handler);
+        mProgramListAdapter.setViewBinder(mViewAndClickHandler);
+        
+        mFavoriteProgramList.setAdapter(mProgramListAdapter);
+    
+        SeparatorDrawable drawable = new SeparatorDrawable(getActivity());
+    
+        mFavoriteProgramList.setDivider(drawable);
+
+        prefUtils.getDefault().registerOnSharedPreferenceChangeListener(this);
+    
+        setDividerSize(prefUtils.getStringValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
+    }
+
+    private WhereClause getWhereClause() {
+        WhereClause whereClause = mCurrentFavoriteSelection.getWhereClause();
+
+        if (whereClause == null) {
+            WhereClause marking = ProgramUtils.getPluginMarkingsSelection(getActivity());
+
+            if (marking.getWhere().trim().isEmpty()) {
+                marking = new WhereClause(TvBrowserContentProvider.KEY_ID + "<0", null);
+            }
+
+            whereClause = new WhereClause(TvBrowserContentProvider.CONCAT_TABLE_PLACE_HOLDER + " " + marking.getWhere(), marking.getSelectionArgs());
+        }
+
+        return whereClause;
+    }
+
+    private void selectFavorite(final int position) {
+        if (position >= 0 && position < mFavoriteList.size()) {
+            mCurrentSelection = mCurrentFavoriteSelection = mFavoriteList.get(position);
+            mWhereClause = getWhereClause();
+
+            final Activity tvb = getActivity();
+      
+            if (tvb != null) {
+                startUpdateThread(true, mCurrentFavoriteSelection.containsFavorite());
+        
+                saveCurrentSelection(tvb, position);
+            }
+        }
+    }
+
+    private void saveCurrentSelection(final Context context, final int position) {
+        Log.d("info13", "mIsStarted " + mIsStarted + " " + position);
+        if (mIsStarted) {
+            final PrefUtils prefUtils = App.get().prefs();
+            boolean success = prefUtils.edit().putInt(context.getString(R.string.PREF_MISC_LAST_FAVORITE_SELECTION), position).commit();
+            Log.d("info13", "success " + success + " " + prefUtils.getValue(R.string.PREF_MISC_LAST_FAVORITE_SELECTION, 0));
+        }
+    }
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+
+        if (handler == null) {
+            handler = new Handler();
+        }
+
+        if (mLoaderUpdate == null) {
+            try {
+                mLoaderUpdate = new LoaderUpdater(FragmentFavorites.this, handler);
+            } catch (UnsupportedFragmentException e1) {
+                Log.d("info14", "", e1);
+                // Ignore
+            }
+        }
+
+        mFavoriteChangedReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, final Intent intent) {
+                if (mUpdateThread == null || !mUpdateThread.isAlive()) {
+                    mUpdateThread = new Thread(() -> {
+                        if (intent.hasExtra(Favorite.FAVORITE_EXTRA)) {
+                            String oldName = intent.getStringExtra(Favorite.OLD_NAME_KEY);
+
+                            FavoriteSpinnerEntry fav = null;
+
+                            if (oldName != null) {
+                                for (FavoriteSpinnerEntry favorite : mFavoriteList) {
+                                    if (favorite.containsFavorite() && favorite.getFavorite().getName().equals(oldName)) {
+                                        fav = favorite;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (fav == null) {
+                                fav = new FavoriteSpinnerEntry((Favorite) intent.getSerializableExtra(Favorite.FAVORITE_EXTRA));
+                                mCurrentFavoriteSelection = fav;
+
+                                add(handler, fav);
+              }
+              else {
+                                Favorite temp = (Favorite) intent.getSerializableExtra(Favorite.FAVORITE_EXTRA);
+
+                                fav.getFavorite().setValues(temp.getName(), temp.getSearchValue(), temp.getType(), temp.remind(), temp.getTimeRestrictionStart(), temp.getTimeRestrictionEnd(), temp.getDayRestriction(), temp.getChannelRestrictionIDs(), temp.getExclusions(), temp.getDurationRestrictionMinimum(), temp.getDurationRestrictionMaximum(), temp.getAttributeRestrictionIndices(), temp.getUniqueProgramIds());
+                            }
+
+                            handler.post(() -> {
+                                mFavoriteAdapter.notifyDataSetChanged();
+                                mFavoriteSelectionObserver.onChanged();
+                            });
             }
             else {
-              if(!isDetached() && getActivity() != null) {
-                for(FavoriteSpinnerEntry fav : mFavoriteList) {
-                  if(fav.containsFavorite()) {
-                    Favorite.handleFavoriteMarking(getActivity(), fav.getFavorite(), Favorite.TYPE_MARK_REMOVE);
-                  }
+                            if (!isDetached() && getActivity() != null) {
+                                for (FavoriteSpinnerEntry fav : mFavoriteList) {
+                                    if (fav.containsFavorite()) {
+                                        Favorite.handleFavoriteMarking(getActivity(), fav.getFavorite(), Favorite.TYPE_MARK_REMOVE);
+                                    }
+                                }
+
+                                mFavoriteAdapter.clear();
+                                updateFavoriteList(handler, true);
+                            }
+                        }
+
+                        handler.post(() -> {
+                            mFavoriteAdapter.notifyDataSetChanged();
+
+                            removeMarkingSelections(handler);
+
+                            sort(handler);
+
+                            addMarkingSelections(handler);
+                        });
+                    });
+                    mUpdateThread.start();
                 }
-
-                mFavoriteAdapter.clear();
-                updateFavoriteList(handler,true);
-              }
             }
+        };
 
-            handler.post(() -> {
-              mFavoriteAdapter.notifyDataSetChanged();
+        mDataUpdateReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                handler.post(() -> {
+                    if (!isDetached() && !isRemoving()) {
+                        mFavoriteList.clear();
+                        updateFavoriteList(handler, false);
 
-              removeMarkingSelections(handler);
+                        removeMarkingSelections(handler);
 
-              sort(handler);
+                        sort(handler);
 
-              addMarkingSelections(handler);
-            });
-          });
-          mUpdateThread.start();
-        }
-      }
-    };
+                        addMarkingSelections(handler);
+
+                        mFavoriteAdapter.notifyDataSetChanged();
+                    }
+                });
+            }
+        };
+
+        mDontWantToSeeReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (!isDetached() && !isRemoving()) {
+                    handler.post(() -> mFavoriteAdapter.notifyDataSetChanged());
+                }
+            }
+        };
+
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mDontWantToSeeReceiver, new IntentFilter(SettingConstants.DONT_WANT_TO_SEE_CHANGED));
+
+        mRefreshReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                startUpdateThread();
+            }
+        };
+
+        IntentFilter dataUpdateFilter = new IntentFilter(SettingConstants.DATA_UPDATE_DONE);
     
-    mDataUpdateReceiver = new BroadcastReceiver() {
-      @Override
-      public void onReceive(Context context, Intent intent) {
+        getActivity().registerReceiver(mDataUpdateReceiver, dataUpdateFilter);
+    
+        //LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mDataUpdateReceiver, dataUpdateFilter);
+    
+        IntentFilter filter = new IntentFilter(SettingConstants.FAVORITES_CHANGED);
+    
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mFavoriteChangedReceiver, filter);
+    
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mRefreshReceiver, SettingConstants.REFRESH_FILTER);
+    
+        mLoaderUpdate.setIsRunning();
+    }
+
+    final static int TYPE_POST_ADD = 1;
+    final static int TYPE_POST_DELETE = 2;
+    final static int TYPE_POST_SORT = 3;
+
+    private void add(final Handler handler, final FavoriteSpinnerEntry entry) {
+        post(handler, entry, TYPE_POST_ADD);
+    }
+
+    private void delete(final Handler handler, final FavoriteSpinnerEntry entry) {
+        post(handler, entry, TYPE_POST_DELETE);
+    }
+
+    private void sort(final Handler handler) {
+        post(handler, null, TYPE_POST_SORT);
+    }
+
+    private void post(final Handler handler, final FavoriteSpinnerEntry entry, final int type) {
         handler.post(() -> {
-          if(!isDetached() && !isRemoving()) {
-            mFavoriteList.clear();
-            updateFavoriteList(handler,false);
-
-            removeMarkingSelections(handler);
-
-            sort(handler);
-
-            addMarkingSelections(handler);
-
-            mFavoriteAdapter.notifyDataSetChanged();
-          }
-        });
-      }
-    };
-    
-    mDontWantToSeeReceiver = new BroadcastReceiver() {
-      @Override
-      public void onReceive(Context context, Intent intent) {
-        if(!isDetached() && !isRemoving()) {
-          handler.post(() -> mFavoriteAdapter.notifyDataSetChanged());
-        }
-      }
-    };
-    
-    LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mDontWantToSeeReceiver, new IntentFilter(SettingConstants.DONT_WANT_TO_SEE_CHANGED));
-    
-    mRefreshReceiver = new BroadcastReceiver() {
-      @Override
-      public void onReceive(Context context, Intent intent) {
-        startUpdateThread();
-      }
-    };
-    
-    IntentFilter dataUpdateFilter = new IntentFilter(SettingConstants.DATA_UPDATE_DONE);
-    
-    getActivity().registerReceiver(mDataUpdateReceiver, dataUpdateFilter);
-    
-    //LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mDataUpdateReceiver, dataUpdateFilter);
-    
-    IntentFilter filter = new IntentFilter(SettingConstants.FAVORITES_CHANGED);
-    
-    LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mFavoriteChangedReceiver, filter);
-    
-    LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mRefreshReceiver, SettingConstants.REFRESH_FILTER);
-    
-    mLoaderUpdate.setIsRunning();
-  }
-
-  final static int TYPE_POST_ADD = 1;
-  final static int TYPE_POST_DELETE = 2;
-  final static int TYPE_POST_SORT = 3;
-
-  private void add(final Handler handler, final FavoriteSpinnerEntry entry) {
-    post(handler, entry, TYPE_POST_ADD);
-  }
-
-  private void delete(final Handler handler, final FavoriteSpinnerEntry entry) {
-    post(handler, entry, TYPE_POST_DELETE);
-  }
-
-  private void sort(final Handler handler) {
-    post(handler, null, TYPE_POST_SORT);
-  }
-
-  private void post(final Handler handler, final FavoriteSpinnerEntry entry, final int type) {
-    handler.post(() -> {
-      switch (type) {
+            switch (type) {
         case TYPE_POST_ADD: mFavoriteAdapter.add(entry);break;
         case TYPE_POST_DELETE: mFavoriteAdapter.remove(entry);break;
         case TYPE_POST_SORT: mFavoriteAdapter.sort(COMPARATOR_FAVORITES);break;
-      }
-    });
-  }
+            }
+        });
+    }
 
-  private void removeMarkingSelections(final Handler handler) {
-    if(!mContainsListViewFavoriteSelection) {
-      for(int i = mFavoriteList.size()-1; i >= 0; i--) {
-        if(!mFavoriteList.get(i).containsFavorite()) {
-          delete(handler,mFavoriteList.get(i));
-        }
-      }
+    private void removeMarkingSelections(final Handler handler) {
+        if (!mContainsListViewFavoriteSelection) {
+            for (int i = mFavoriteList.size() - 1; i >= 0; i--) {
+                if (!mFavoriteList.get(i).containsFavorite()) {
+                    delete(handler, mFavoriteList.get(i));
+                }
+            }
     }
     else {
-      handler.post(() -> {
-        mMarkingsAdapter.clear();
-        mMarkingsAdapter.notifyDataSetChanged();
-      });
-    }
-  }
-  
-  private void addMarkingSelections(final Handler handler) {
-    if(getActivity() != null) {
-      try {
-        final FavoriteSpinnerEntry marked = new FavoriteSpinnerEntry(getString(R.string.marking_value_marked), null);
-          
-        String name = getString(R.string.marking_value_reminder);
-        String whereClause = TvBrowserContentProvider.CONCAT_TABLE_PLACE_HOLDER + " ";
-        
-        whereClause += " ( ( " + TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER + " ) OR ( " + TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER  + " ) ) ";
-        
-        final FavoriteSpinnerEntry reminder = new FavoriteSpinnerEntry(name, new WhereClause(whereClause,null));
-        FavoriteSpinnerEntry syncTemp = null;
-        
-        if(App.get().prefs().getBooleanValueWithDefaultKey(R.string.PREF_SYNC_FAV_FROM_DESKTOP, R.bool.pref_sync_fav_from_desktop_default) && App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_TRANSPORTATION).getString(SettingConstants.USER_NAME, "").trim().length() > 0) {
-          syncTemp = new FavoriteSpinnerEntry(getString(R.string.marking_value_sync), new WhereClause(TvBrowserContentProvider.CONCAT_TABLE_PLACE_HOLDER + " " + TvBrowserContentProvider.DATA_KEY_MARKING_SYNC, null));
+            handler.post(() -> {
+                mMarkingsAdapter.clear();
+                mMarkingsAdapter.notifyDataSetChanged();
+            });
         }
-        
-        final FavoriteSpinnerEntry sync = syncTemp;
-        
-        if(!mContainsListViewFavoriteSelection) {
-          if(mFavoriteAdapter != null) {
-            add(handler, marked);
-            add(handler, reminder);
+    }
 
-            if(sync != null) {
-              add(handler, sync);
-            }
+    private void addMarkingSelections(final Handler handler) {
+        if (getActivity() != null) {
+            try {
+                final FavoriteSpinnerEntry marked = new FavoriteSpinnerEntry(getString(R.string.marking_value_marked), null);
 
-            mFavoriteAdapter.notifyDataSetChanged();
+                String name = getString(R.string.marking_value_reminder);
+                String whereClause = TvBrowserContentProvider.CONCAT_TABLE_PLACE_HOLDER + " ";
+
+                whereClause += " ( ( " + TvBrowserContentProvider.DATA_KEY_MARKING_REMINDER + " ) OR ( " + TvBrowserContentProvider.DATA_KEY_MARKING_FAVORITE_REMINDER + " ) ) ";
+
+                final FavoriteSpinnerEntry reminder = new FavoriteSpinnerEntry(name, new WhereClause(whereClause, null));
+                FavoriteSpinnerEntry syncTemp = null;
+
+                if (App.get().prefs().getBooleanValueWithDefaultKey(R.string.PREF_SYNC_FAV_FROM_DESKTOP, R.bool.pref_sync_fav_from_desktop_default) && App.get().prefs().getShared(PrefUtils.TYPE_PREFERENCES_TRANSPORTATION).getString(SettingConstants.USER_NAME, "").trim().length() > 0) {
+                    syncTemp = new FavoriteSpinnerEntry(getString(R.string.marking_value_sync), new WhereClause(TvBrowserContentProvider.CONCAT_TABLE_PLACE_HOLDER + " " + TvBrowserContentProvider.DATA_KEY_MARKING_SYNC, null));
+                }
+
+                final FavoriteSpinnerEntry sync = syncTemp;
+
+                if (!mContainsListViewFavoriteSelection) {
+                    if (mFavoriteAdapter != null) {
+                        add(handler, marked);
+                        add(handler, reminder);
+
+                        if (sync != null) {
+                            add(handler, sync);
+                        }
+
+                        mFavoriteAdapter.notifyDataSetChanged();
           }
           else {
-            mFavoriteList.add(marked);
-            mFavoriteList.add(reminder);
+                        mFavoriteList.add(marked);
+                        mFavoriteList.add(reminder);
 
-            if(sync != null) {
-              mFavoriteList.add(sync);
-            }
-          }
+                        if (sync != null) {
+                            mFavoriteList.add(sync);
+                        }
+                    }
         }
         else {
-          handler.post(() -> {
-            mMarkingsAdapter.add(marked);
-            mMarkingsAdapter.add(reminder);
+                    handler.post(() -> {
+                        mMarkingsAdapter.add(marked);
+                        mMarkingsAdapter.add(reminder);
 
-            if(sync != null) {
-              mMarkingsAdapter.add(sync);
-            }
+                        if (sync != null) {
+                            mMarkingsAdapter.add(sync);
+                        }
 
-            mMarkingsAdapter.notifyDataSetChanged();
-          });
-        }
+                        mMarkingsAdapter.notifyDataSetChanged();
+                    });
+                }
       }catch(IllegalStateException ignored) {}
-    }
-  }
-  
-  @Override
-  public void onDetach() {
-    mLoaderUpdate.setIsNotRunning();
-    
-    if(mFavoriteChangedReceiver != null) {
-      LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mFavoriteChangedReceiver);
-    }
-    if(mDataUpdateReceiver != null) {
-      getActivity().unregisterReceiver(mDataUpdateReceiver);
-    }
-    if(mRefreshReceiver != null) {
-      LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mRefreshReceiver);
-    }
-    if(mDontWantToSeeReceiver != null) {
-      LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mDontWantToSeeReceiver);
-    }
-    super.onDetach();
-  }
-  
-  @NonNull
-  @Override
-  public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-    String[] projection;
-    
-    if(App.get().prefs().getBooleanValueWithDefaultKey(R.string.SHOW_PICTURE_IN_LISTS, R.bool.show_pictures_in_lists_default)) {
-      projection = new String[14 + TvBrowserContentProvider.MARKING_COLUMNS.length];
-      
-      projection[projection.length-1] = TvBrowserContentProvider.DATA_KEY_PICTURE;
-    }
-    else {
-      projection = new String[13 + TvBrowserContentProvider.MARKING_COLUMNS.length];
-    }
-    
-    projection[0] = TvBrowserContentProvider.KEY_ID;
-    projection[1] = TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID;
-    projection[2] = TvBrowserContentProvider.DATA_KEY_STARTTIME;
-    projection[3] = TvBrowserContentProvider.DATA_KEY_ENDTIME;
-    projection[4] = TvBrowserContentProvider.DATA_KEY_TITLE;
-    projection[5] = TvBrowserContentProvider.DATA_KEY_SHORT_DESCRIPTION;
-    projection[6] = TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER;
-    projection[7] = TvBrowserContentProvider.DATA_KEY_EPISODE_TITLE;
-    projection[8] = TvBrowserContentProvider.DATA_KEY_GENRE;
-    projection[9] = TvBrowserContentProvider.DATA_KEY_PICTURE_COPYRIGHT;
-    projection[10] = TvBrowserContentProvider.DATA_KEY_UNIX_DATE;
-    projection[11] = TvBrowserContentProvider.CHANNEL_KEY_NAME;
-    projection[12] = TvBrowserContentProvider.DATA_KEY_CATEGORIES;
-    
-    System.arraycopy(TvBrowserContentProvider.MARKING_COLUMNS, 0, projection, 13, TvBrowserContentProvider.MARKING_COLUMNS.length);
-    
-    String where = mWhereClause.getWhere();
-    
-    if(where == null) {
-      where = " " + TvBrowserContentProvider.CONCAT_TABLE_PLACE_HOLDER + " " + TvBrowserContentProvider.DATA_KEY_STARTTIME + "<=0 ";
-    }
-    
-    if(where.trim().length() > 0 && !where.trim().equals(TvBrowserContentProvider.CONCAT_TABLE_PLACE_HOLDER)) {
-      where += " AND ";
-    }
-    
-    where += " ( " + TvBrowserContentProvider.DATA_KEY_STARTTIME + "<=" + System.currentTimeMillis() + " AND " + TvBrowserContentProvider.DATA_KEY_ENDTIME + ">=" + System.currentTimeMillis();
-    where += " OR " + TvBrowserContentProvider.DATA_KEY_STARTTIME + ">" + System.currentTimeMillis() + " ) ";
-    where += UiUtils.getDontWantToSeeFilterString(getActivity());
-    
-    TvBrowser tvb = (TvBrowser)getActivity();
-    
-    if(tvb != null && !isDetached()) {
-      tvb.showSQLquery(where, mWhereClause.getSelectionArgs());
-    }
-    
-    return new CursorLoader(tvb, TvBrowserContentProvider.RAW_QUERY_CONTENT_URI_DATA, projection, where, mWhereClause.getSelectionArgs(), TvBrowserContentProvider.DATA_KEY_STARTTIME + " , " + TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER + " , " + TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID);
-  }
-
-  private void updateFavoriteList(final Handler handler, boolean mark) {
-    Favorite[] favorites = Favorite.getAllFavorites(getActivity());
-    
-    for(Favorite favorite : favorites) {
-      if(mark) {
-        Favorite.handleFavoriteMarking(getActivity(), favorite, Favorite.TYPE_MARK_ADD);
-      }
-
-      if(mFavoriteAdapter != null) {
-        add(handler, new FavoriteSpinnerEntry(favorite));
-      }
-      else {
-        mFavoriteList.add(new FavoriteSpinnerEntry(favorite));
-      }
-    }
-    
-    
-  }
-  
-  private void updateFavorites() {
-    handler.post(() -> mFavoriteAdapter.notifyDataSetChanged());
-  }
-  
-  private void editFavorite(final Favorite fav) {
-    UiUtils.editFavorite(fav, getActivity(), null);
-  }
-  
-  private FavoriteSpinnerEntry mCurrentSelection;
-  
-  @Override
-  public void onCreateContextMenu(@NonNull ContextMenu menu, @NonNull View v, ContextMenuInfo menuInfo) {
-    int pos = mFavoriteSelection.getSelectedItemPosition();
-    
-    if(pos == -1 && menuInfo instanceof AdapterContextMenuInfo) {
-      pos = ((AdapterContextMenuInfo)menuInfo).position;
-    }
-    
-    FavoriteSpinnerEntry entry = mFavoriteList.get(pos);
-    
-    if(entry.containsFavorite()) {
-      mCurrentSelection = entry;
-      getActivity().getMenuInflater().inflate(R.menu.favorite_context, menu);
-    }
-  }
-  
-  @Override
-  public boolean onContextItemSelected(@NonNull MenuItem item) {
-    if(getUserVisibleHint()) {
-      if(mCurrentSelection != null) {
-        if(item.getItemId() == R.id.delete_favorite) {
-          deleteSelectedFavorite();
-          return true;
         }
-        else if(item.getItemId() == R.id.edit_favorite) {
-          editSelectedFavorite();
-          return true;
+    }
+
+    @Override
+    public void onDetach() {
+        mLoaderUpdate.setIsNotRunning();
+        final Activity activity = getActivity();
+        if (activity != null) {
+            if (mFavoriteChangedReceiver != null) {
+                LocalBroadcastManager.getInstance(activity).unregisterReceiver(mFavoriteChangedReceiver);
+            }
+            if (mDataUpdateReceiver != null) {
+                activity.unregisterReceiver(mDataUpdateReceiver);
+            }
+            if (mRefreshReceiver != null) {
+                LocalBroadcastManager.getInstance(activity).unregisterReceiver(mRefreshReceiver);
+            }
+            if (mDontWantToSeeReceiver != null) {
+                LocalBroadcastManager.getInstance(activity).unregisterReceiver(mDontWantToSeeReceiver);
+            }
         }
-      }
+        super.onDetach();
     }
-    
-    return false;
-  }
-  
-  @Override
-  public void onLoadFinished(@NonNull Loader<Cursor> loader,
-                             Cursor c) {
-    if(c != null && c.getCount() > 0) {
-      mHelp.setVisibility(View.GONE);
-    }
-    else {
-      mHelp.setVisibility(View.VISIBLE);
-    }
-    
-    mProgramListAdapter.swapCursor(c);
-  }
 
-  @Override
-  public void onLoaderReset(@NonNull Loader<Cursor> loader) {
-    mProgramListAdapter.swapCursor(null);
-    mHelp.setVisibility(View.VISIBLE);
-  }
-  
-
-  private void setDividerSize(String size) {    
-    mFavoriteProgramList.setDividerHeight(UiUtils.convertDpToPixel(Integer.parseInt(size), getResources()));
-  }
-
-  @Override
-  public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-    if(!isDetached() && getActivity() != null) {
-      if(getString(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE).equals(key)) {
-        setDividerSize(App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
-      }
-      else if(mFavoriteProgramList != null && (getString(R.string.PREF_COLOR_SEPARATOR_LINE).equals(key) || getString(R.string.PREF_COLOR_SEPARATOR_SPACE).equals(key))) {
-        final Drawable separator = mFavoriteProgramList.getDivider();
-        
-        if(separator instanceof SeparatorDrawable) {
-          ((SeparatorDrawable) separator).updateColors(getActivity());
-        }
-      }
-    }
-  }
-  
-  public void updateProgramsList() {
-    mProgramListAdapter.notifyDataSetChanged();
-  }
-
-  @Override
-  public boolean showDate() {
-    return true;
-  }
-  
-  private static final class FavoriteSpinnerEntry {
-    private String mName;
-    private WhereClause mEntryWhereClause;
-    private final Favorite mFavorite;
-    
-    FavoriteSpinnerEntry(String name, WhereClause whereClause) {
-      mName = name;
-      mEntryWhereClause = whereClause;
-      mFavorite = null;
-    }
-    
-    FavoriteSpinnerEntry(Favorite fav) {
-      mFavorite = fav;
-    }
-    
-    boolean containsFavorite() {
-      return mFavorite != null;
-    }
-    
-    Favorite getFavorite() {
-      return mFavorite;
-    }
-    
-    WhereClause getWhereClause() {
-      if(containsFavorite()) {
-        return mFavorite.getExternalWhereClause();
-      }
-      
-      return mEntryWhereClause;
-    }
-    
     @NonNull
     @Override
-    public String toString() {
-      if(containsFavorite()) {
-        return mFavorite.toString();
-      }
-      
-      return mName;
-    }
-  }
-  
-  public void editSelectedFavorite() {
-    if(mCurrentSelection != null) {
-      editFavorite(mCurrentSelection.getFavorite());
-    }
-  }
-  
-  public void deleteSelectedFavorite() {
-    if(mCurrentSelection != null) {
-      AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-      
-      builder.setTitle(R.string.dialog_favorite_delete_title);
-      builder.setMessage(getString(R.string.dialog_favorite_delete_message).replace("{0}", mCurrentSelection.getFavorite().getName()));
-      
-      builder.setPositiveButton(R.string.dialog_favorite_delete_button, (dialog, which) -> {
-        mFavoriteAdapter.remove(mCurrentSelection);
-        updateFavorites();
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        String[] projection;
 
-        if(mCurrentSelection != null) {
-          final Favorite current = mCurrentSelection.getFavorite();
-          mCurrentSelection = null;
-          final Context context = getActivity().getApplicationContext();
+        if (App.get().prefs().getBooleanValueWithDefaultKey(R.string.SHOW_PICTURE_IN_LISTS, R.bool.show_pictures_in_lists_default)) {
+            projection = new String[14 + TvBrowserContentProvider.MARKING_COLUMNS.length];
 
-          new Thread("DELETE FAVORITE REMOVE MARKING THREAD") {
-            public void run() {
-              Favorite.deleteFavorite(context, current);
-              mCurrentSelection = null;
-            }
-          }.start();
+            projection[projection.length - 1] = TvBrowserContentProvider.DATA_KEY_PICTURE;
+    }
+    else {
+            projection = new String[13 + TvBrowserContentProvider.MARKING_COLUMNS.length];
         }
-      });
-      
-      builder.setNegativeButton(android.R.string.cancel, null);
-      builder.show();
-    }
-  }
 
-  @Override
-  public void refreshMarkings() {
-    
-      handler.post(() -> {
-        if(mCurrentFavoriteSelection != null) {
-          if(mLoaderUpdate.isRunning() && !isDetached() && !isRemoving()) {
-            WhereClause test = mCurrentFavoriteSelection.getWhereClause();
+        projection[0] = TvBrowserContentProvider.KEY_ID;
+        projection[1] = TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID;
+        projection[2] = TvBrowserContentProvider.DATA_KEY_STARTTIME;
+        projection[3] = TvBrowserContentProvider.DATA_KEY_ENDTIME;
+        projection[4] = TvBrowserContentProvider.DATA_KEY_TITLE;
+        projection[5] = TvBrowserContentProvider.DATA_KEY_SHORT_DESCRIPTION;
+        projection[6] = TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER;
+        projection[7] = TvBrowserContentProvider.DATA_KEY_EPISODE_TITLE;
+        projection[8] = TvBrowserContentProvider.DATA_KEY_GENRE;
+        projection[9] = TvBrowserContentProvider.DATA_KEY_PICTURE_COPYRIGHT;
+        projection[10] = TvBrowserContentProvider.DATA_KEY_UNIX_DATE;
+        projection[11] = TvBrowserContentProvider.CHANNEL_KEY_NAME;
+        projection[12] = TvBrowserContentProvider.DATA_KEY_CATEGORIES;
 
-            if(test == null) {
-              mWhereClause = getWhereClause();
+        System.arraycopy(TvBrowserContentProvider.MARKING_COLUMNS, 0, projection, 13, TvBrowserContentProvider.MARKING_COLUMNS.length);
 
-              startUpdateThread();
+        String where = mWhereClause.getWhere();
 
-              return;
-            }
-          }
-
-          mFavoriteProgramList.invalidateViews();
+        if (where == null) {
+            where = " " + TvBrowserContentProvider.CONCAT_TABLE_PLACE_HOLDER + " " + TvBrowserContentProvider.DATA_KEY_STARTTIME + "<=0 ";
         }
-      });
-    
-  }
 
-  @Override
-  public void handleCallback(CallbackObjects callbackObjects) {
-    if(callbackObjects != null) {
-      if((Boolean)callbackObjects.getCallbackObjectValue(KEY_UPDATE_FAVORITES_MENU, false)) {
-        ((TvBrowser)getActivity()).updateFavoritesMenu((Boolean)callbackObjects.getCallbackObjectValue(KEY_EDIT_DELETE_ENABLED, false));
-      }
+        if (where.trim().length() > 0 && !where.trim().equals(TvBrowserContentProvider.CONCAT_TABLE_PLACE_HOLDER)) {
+            where += " AND ";
+        }
+
+        where += " ( " + TvBrowserContentProvider.DATA_KEY_STARTTIME + "<=" + System.currentTimeMillis() + " AND " + TvBrowserContentProvider.DATA_KEY_ENDTIME + ">=" + System.currentTimeMillis();
+        where += " OR " + TvBrowserContentProvider.DATA_KEY_STARTTIME + ">" + System.currentTimeMillis() + " ) ";
+        where += UiUtils.getDontWantToSeeFilterString(getActivity());
+
+        TvBrowser tvb = (TvBrowser) getActivity();
+
+        if (tvb != null && !isDetached()) {
+            tvb.showSQLquery(where, mWhereClause.getSelectionArgs());
+        }
+
+        return new CursorLoader(tvb, TvBrowserContentProvider.RAW_QUERY_CONTENT_URI_DATA, projection, where, mWhereClause.getSelectionArgs(), TvBrowserContentProvider.DATA_KEY_STARTTIME + " , " + TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER + " , " + TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID);
     }
-  }
+
+    private void updateFavoriteList(final Handler handler, boolean mark) {
+        Favorite[] favorites = Favorite.getAllFavorites(getActivity());
+    
+        for (Favorite favorite : favorites) {
+            if (mark) {
+                Favorite.handleFavoriteMarking(getActivity(), favorite, Favorite.TYPE_MARK_ADD);
+            }
+
+            if (mFavoriteAdapter != null) {
+                add(handler, new FavoriteSpinnerEntry(favorite));
+      }
+      else {
+                mFavoriteList.add(new FavoriteSpinnerEntry(favorite));
+            }
+        }
+    
+    
+    }
+
+    private void updateFavorites() {
+        handler.post(() -> mFavoriteAdapter.notifyDataSetChanged());
+    }
+
+    private void editFavorite(final Favorite fav) {
+        UiUtils.editFavorite(fav, getActivity(), null);
+    }
+
+    private FavoriteSpinnerEntry mCurrentSelection;
+
+    @Override
+    public void onCreateContextMenu(@NonNull ContextMenu menu, @NonNull View v, ContextMenuInfo menuInfo) {
+        int pos = mFavoriteSelection.getSelectedItemPosition();
+    
+        if (pos == -1 && menuInfo instanceof AdapterContextMenuInfo) {
+            pos = ((AdapterContextMenuInfo) menuInfo).position;
+        }
+    
+        FavoriteSpinnerEntry entry = mFavoriteList.get(pos);
+    
+        if (entry.containsFavorite()) {
+            mCurrentSelection = entry;
+            getActivity().getMenuInflater().inflate(R.menu.favorite_context, menu);
+        }
+    }
+
+    @Override
+    public boolean onContextItemSelected(@NonNull MenuItem item) {
+        if (getUserVisibleHint()) {
+            if (mCurrentSelection != null) {
+                if (item.getItemId() == R.id.delete_favorite) {
+                    deleteSelectedFavorite();
+                    return true;
+        }
+        else if(item.getItemId() == R.id.edit_favorite) {
+                    editSelectedFavorite();
+                    return true;
+                }
+            }
+        }
+    
+        return false;
+    }
+
+    @Override
+  public void onLoadFinished(@NonNull Loader<Cursor> loader,
+                             Cursor c) {
+        if (c != null && c.getCount() > 0) {
+            mHelp.setVisibility(View.GONE);
+    }
+    else {
+            mHelp.setVisibility(View.VISIBLE);
+        }
+    
+        mProgramListAdapter.swapCursor(c);
+    }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+        mProgramListAdapter.swapCursor(null);
+        mHelp.setVisibility(View.VISIBLE);
+    }
+
+
+    private void setDividerSize(String size) {
+        mFavoriteProgramList.setDividerHeight(UiUtils.convertDpToPixel(Integer.parseInt(size), getResources()));
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (!isDetached() && getActivity() != null) {
+            if (getString(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE).equals(key)) {
+                setDividerSize(App.get().prefs().getStringValueWithDefaultKey(R.string.PREF_PROGRAM_LISTS_DIVIDER_SIZE, R.string.pref_program_lists_divider_size_default));
+      }
+      else if(mFavoriteProgramList != null && (getString(R.string.PREF_COLOR_SEPARATOR_LINE).equals(key) || getString(R.string.PREF_COLOR_SEPARATOR_SPACE).equals(key))) {
+                final Drawable separator = mFavoriteProgramList.getDivider();
+        
+                if (separator instanceof SeparatorDrawable) {
+                    ((SeparatorDrawable) separator).updateColors(getActivity());
+                }
+            }
+        }
+    }
+
+    public void updateProgramsList() {
+        mProgramListAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public boolean showDate() {
+        return true;
+    }
+
+    private static final class FavoriteSpinnerEntry {
+        private String mName;
+        private WhereClause mEntryWhereClause;
+        private final Favorite mFavorite;
+
+        FavoriteSpinnerEntry(String name, WhereClause whereClause) {
+            mName = name;
+            mEntryWhereClause = whereClause;
+            mFavorite = null;
+        }
+
+        FavoriteSpinnerEntry(Favorite fav) {
+            mFavorite = fav;
+        }
+
+        boolean containsFavorite() {
+            return mFavorite != null;
+        }
+
+        Favorite getFavorite() {
+            return mFavorite;
+        }
+
+        WhereClause getWhereClause() {
+            if (containsFavorite()) {
+                return mFavorite.getExternalWhereClause();
+            }
+      
+            return mEntryWhereClause;
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            if (containsFavorite()) {
+                return mFavorite.toString();
+            }
+      
+            return mName;
+        }
+    }
+
+    public void editSelectedFavorite() {
+        if (mCurrentSelection != null) {
+            editFavorite(mCurrentSelection.getFavorite());
+        }
+    }
+
+    public void deleteSelectedFavorite() {
+        if (mCurrentSelection != null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+
+            builder.setTitle(R.string.dialog_favorite_delete_title);
+            builder.setMessage(getString(R.string.dialog_favorite_delete_message).replace("{0}", mCurrentSelection.getFavorite().getName()));
+
+            builder.setPositiveButton(R.string.dialog_favorite_delete_button, (dialog, which) -> {
+                mFavoriteAdapter.remove(mCurrentSelection);
+                updateFavorites();
+
+                if (mCurrentSelection != null) {
+                    final Favorite current = mCurrentSelection.getFavorite();
+                    mCurrentSelection = null;
+                    final Context context = getActivity().getApplicationContext();
+
+                    new Thread("DELETE FAVORITE REMOVE MARKING THREAD") {
+                        public void run() {
+                            Favorite.deleteFavorite(context, current);
+                            mCurrentSelection = null;
+                        }
+                    }.start();
+                }
+            });
+
+            builder.setNegativeButton(android.R.string.cancel, null);
+            builder.show();
+        }
+    }
+
+    @Override
+    public void refreshMarkings() {
+    
+        handler.post(() -> {
+            if (mCurrentFavoriteSelection != null) {
+                if (mLoaderUpdate.isRunning() && !isDetached() && !isRemoving()) {
+                    WhereClause test = mCurrentFavoriteSelection.getWhereClause();
+
+                    if (test == null) {
+                        mWhereClause = getWhereClause();
+
+                        startUpdateThread();
+
+                        return;
+                    }
+                }
+
+                mFavoriteProgramList.invalidateViews();
+            }
+        });
+    
+    }
+
+    @Override
+    public void handleCallback(CallbackObjects callbackObjects) {
+        if (callbackObjects != null) {
+            if ((Boolean) callbackObjects.getCallbackObjectValue(KEY_UPDATE_FAVORITES_MENU, false)) {
+                ((TvBrowser) getActivity()).updateFavoritesMenu((Boolean) callbackObjects.getCallbackObjectValue(KEY_EDIT_DELETE_ENABLED, false));
+            }
+        }
+    }
 }

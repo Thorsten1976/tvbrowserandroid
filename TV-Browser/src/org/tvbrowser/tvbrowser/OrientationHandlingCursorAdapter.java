@@ -19,6 +19,7 @@ package org.tvbrowser.tvbrowser;
 import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.settings.SettingConstants;
+import org.tvbrowser.utils.AsyncInfo;
 import org.tvbrowser.utils.PrefUtils;
 import org.tvbrowser.utils.UiUtils;
 
@@ -64,7 +65,7 @@ class OrientationHandlingCursorAdapter extends SimpleCursorAdapter {
         Long tag = (Long)v.getTag();
 
         if(tag != null) {
-          UiUtils.showProgramInfo(context, tag, null, mHandler);
+          AsyncInfo.showProgramInfo(context, tag, null, mHandler);
         }
       };
       

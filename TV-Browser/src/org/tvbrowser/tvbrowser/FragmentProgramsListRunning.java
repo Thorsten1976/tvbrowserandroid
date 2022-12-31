@@ -68,6 +68,7 @@ import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.tvbrowser.LoaderUpdater.UnsupportedFragmentException;
+import org.tvbrowser.utils.AsyncInfo;
 import org.tvbrowser.utils.CompatUtils;
 import org.tvbrowser.utils.IOUtils;
 import org.tvbrowser.utils.PrefUtils;
@@ -862,7 +863,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
       Long tag = (Long)v.getTag();
 
       if(tag != null) {
-        UiUtils.showProgramInfo(getActivity(), tag, getActivity().getCurrentFocus(), handler);
+        AsyncInfo.showProgramInfo(getActivity(), tag, getActivity().getCurrentFocus(), handler);
       }
     };
     

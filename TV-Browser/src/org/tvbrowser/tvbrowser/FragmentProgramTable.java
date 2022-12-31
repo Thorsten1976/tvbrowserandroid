@@ -26,6 +26,7 @@ import java.util.TimeZone;
 import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.settings.SettingConstants;
+import org.tvbrowser.utils.AsyncInfo;
 import org.tvbrowser.utils.CompatUtils;
 import org.tvbrowser.utils.IOUtils;
 import org.tvbrowser.utils.PrefUtils;
@@ -38,6 +39,7 @@ import org.tvbrowser.view.ProgramTableLayout;
 import org.tvbrowser.view.ProgramTableLayoutConstants;
 import org.tvbrowser.view.TimeBlockProgramTableLayout;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.ContentUris;
 import android.content.Context;
@@ -125,6 +127,7 @@ public class FragmentProgramTable extends Fragment {
 
   private HashMap<String, Integer> mMarkingsMap;
 
+  @SuppressLint("Range")
   public void scrollToTime(int time, final MenuItem timeItem) {
     Log.d("info4", "time " + time);
     if(isResumed()) {
@@ -251,28 +254,23 @@ public class FragmentProgramTable extends Fragment {
 
     mClickListener = v -> {
       Long id = (Long)v.getTag();
-
-      if(id != null) {
-        UiUtils.showProgramInfo(getActivity(), id, null, handler);
+      if (id != null) {
+        AsyncInfo.showProgramInfo(getActivity(), id, null, handler);
       }
     };
   }
-
 
   private final Handler handler = new Handler();
 
   @Override
   public void onResume() {
     super.onResume();
-
     mKeepRunning = true;
-
     startUpdateThread();
   }
 
   @Override
   public void onPause() {
-
     mKeepRunning = false;
     super.onPause();
   }
@@ -764,6 +762,7 @@ public class FragmentProgramTable extends Fragment {
     mUpdatingLayout = false;
   }
 
+  @SuppressLint("Range")
   private void addChannelLabelToChannelBar(Cursor channels, int orderNumberColumn, LinearLayout channelBar, ArrayList<Integer> channelIDsOrdered) {
     channelIDsOrdered.add(channels.getInt(channels.getColumnIndex(TvBrowserContentProvider.KEY_ID)));
 

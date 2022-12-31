@@ -21,7 +21,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.os.Build;
 import android.os.Handler;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -36,6 +35,7 @@ import androidx.preference.PreferenceManager;
 import org.tvbrowser.App;
 import org.tvbrowser.filter.ChannelFilter;
 import org.tvbrowser.settings.SettingConstants;
+import org.tvbrowser.utils.AsyncInfo;
 import org.tvbrowser.utils.CompatUtils;
 import org.tvbrowser.utils.PrefUtils;
 import org.tvbrowser.utils.UiUtils;
@@ -83,10 +83,9 @@ public class InfoActivity extends AppCompatActivity {
         finish();
       }
     }
-    else if(programID >= 0) {
+    else if (programID >= 0) {
       setTheme(UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_TRANSLUCENT, prefs.isDarkTheme()));
-
-      UiUtils.showProgramInfo(this, programID, this, getCurrentFocus(), new Handler());
+      AsyncInfo.showProgramInfo(this, programID, this, getCurrentFocus(), new Handler());
     }
     else if(intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
       final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(InfoActivity.this);
@@ -125,13 +124,12 @@ public class InfoActivity extends AppCompatActivity {
       if(prefs.getBooleanValueWithDefaultKey(R.string.SORT_RUNNING_TIMES, R.bool.sort_running_times_default)) {
         Collections.sort(values);
       }
-      
-      final boolean hasNext = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN;
-      final int indexOffset = hasNext ? 1 : 0;
+
+      final int indexOffset = 1;
       
       int selection = 0;
       
-      if(currentValue == -2 && hasNext) {
+      if(currentValue == -2) {
         selection = 1;
       }
       
@@ -144,11 +142,9 @@ public class InfoActivity extends AppCompatActivity {
       
       List<String> formattedTimes = new ArrayList<>();
       formattedTimes.add(getString(R.string.button_now));
-      
-      if(hasNext) {
-        formattedTimes.add(getString(R.string.button_after));
-      }
-      
+
+      formattedTimes.add(getString(R.string.button_after));
+
       for(int i = 0; i < values.size(); i++) {
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.HOUR_OF_DAY, values.get(i) / 60);
@@ -164,10 +160,10 @@ public class InfoActivity extends AppCompatActivity {
       builder.setSingleChoiceItems(formattedTimes.toArray(new String[0]), selection, (dialog, which) -> {
         int value = -1;
 
-        if(which == 1 && hasNext) {
+        if(which == 1) {
           value = -2;
         }
-        else if(which > 1 || (!hasNext && which > 0)) {
+        else if(which > 1) {
           value = values.get(which-1-indexOffset);
         }
 

@@ -16,16 +16,7 @@
  */
 package org.tvbrowser.tvbrowser;
 
-import java.util.Date;
-
-import org.tvbrowser.App;
-import org.tvbrowser.content.TvBrowserContentProvider;
-import org.tvbrowser.settings.SettingConstants;
-import org.tvbrowser.utils.IOUtils;
-import org.tvbrowser.utils.PrefUtils;
-import org.tvbrowser.utils.ProgramUtils;
-import org.tvbrowser.utils.UiUtils;
-
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.database.Cursor;
@@ -33,20 +24,27 @@ import android.database.StaleDataException;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
-import androidx.cursoradapter.widget.SimpleCursorAdapter;
 import android.text.Spannable;
 import android.text.format.DateFormat;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import androidx.cursoradapter.widget.SimpleCursorAdapter;
+
+import org.tvbrowser.App;
+import org.tvbrowser.content.TvBrowserContentProvider;
+import org.tvbrowser.settings.SettingConstants;
+import org.tvbrowser.utils.AsyncInfo;
+import org.tvbrowser.utils.IOUtils;
+import org.tvbrowser.utils.PrefUtils;
+import org.tvbrowser.utils.ProgramUtils;
+import org.tvbrowser.utils.UiUtils;
+
+import java.util.Date;
 
 class ProgramListViewBinderAndClickHandler implements SimpleCursorAdapter.ViewBinder{
   private final Activity mActivity;
@@ -64,6 +62,7 @@ class ProgramListViewBinderAndClickHandler implements SimpleCursorAdapter.ViewBi
   }
 
   @Override
+  @SuppressLint("Range")
   public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
     try {
       final PrefUtils prefs = App.get().prefs();
@@ -291,35 +290,29 @@ class ProgramListViewBinderAndClickHandler implements SimpleCursorAdapter.ViewBi
           }
         }
       }
-    }catch (IllegalStateException e) {
+    } catch (IllegalStateException e) {
       // IGNORE
-    }catch (StaleDataException e) {
+    } catch (StaleDataException e) {
       Log.d("info22","", e);
     }
     
     return false;
   }
 
-  
-  public void onCreateContextMenu(ContextMenu menu, View v,
-      ContextMenuInfo menuInfo) {
+  /*public void onCreateContextMenu(ContextMenu menu, ContextMenuInfo menuInfo) {
     long programID = ((AdapterView.AdapterContextMenuInfo)menuInfo).id;
-    
     UiUtils.createContextMenu(mActivity, menu, programID);
   }
   
-  
   public boolean onContextItemSelected(MenuItem item) {
-    if(item.getMenuInfo() != null) {
+    if (item.getMenuInfo() != null) {
       long programID = ((AdapterView.AdapterContextMenuInfo)item.getMenuInfo()).id;
-      
       UiUtils.handleContextMenuSelection(mActivity, item, programID, null, null);
     }
-    
     return false;
-  }
-  
-  public void onListItemClick(ListView l, View v, int position, long id) {
-    UiUtils.showProgramInfo(mActivity, id, null,mHandler);
+  }*/
+
+  public void onListItemClick(long id) {
+    AsyncInfo.showProgramInfo(mActivity, id, null, mHandler);
   }
 }
