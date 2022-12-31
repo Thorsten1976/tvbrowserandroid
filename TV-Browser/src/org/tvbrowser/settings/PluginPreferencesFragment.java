@@ -16,6 +16,9 @@
  */
 package org.tvbrowser.settings;
 
+import static org.tvbrowser.settings.PluginPreferencesActivity.*;
+
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -34,10 +37,13 @@ import org.tvbrowser.view.InfoPreferenceCompat;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
+import androidx.preference.PreferenceScreen;
 
 /**
  * The preferences fragment for the plugins.
@@ -45,6 +51,19 @@ import androidx.preference.PreferenceManager;
  * @author René Mach
  */
 public class PluginPreferencesFragment extends PreferenceFragmentCompat {
+
+  private final ActivityResultLauncher<Intent> uninstallActivityResultLauncher =
+    registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+      final Activity activity = getActivity();
+      if (activity instanceof ActivityPluginFragment) {
+        activity.finish();
+      }
+      final PluginPreferencesActivity instance = PluginPreferencesActivity.getInstance();
+      if (instance!=null) {
+        instance.onActivityResult(REQUEST_CODE_UNINSTALL, result.getResultCode(), result.getData());
+      }
+      Log.d("info9","" + activity);
+    });
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -60,7 +79,7 @@ public class PluginPreferencesFragment extends PreferenceFragmentCompat {
     Log.d("info9",""+mPluginId);
     // Load the preferences from an XML resource
 
-    androidx.preference.PreferenceScreen preferenceScreen = getPreferenceManager().createPreferenceScreen(getActivity());
+    PreferenceScreen preferenceScreen = getPreferenceManager().createPreferenceScreen(getActivity());
     // add preferences using preferenceScreen.addPreference()
     this.setPreferenceScreen(preferenceScreen);
     preferenceScreen.setTitle("ccccc");
@@ -88,11 +107,10 @@ public class PluginPreferencesFragment extends PreferenceFragmentCompat {
         InfoPreferenceCompat uninstall = new InfoPreferenceCompat(getActivity());
         uninstall.setTitle(R.string.uninstall);
         uninstall.setOnPreferenceClickListener(preference -> {
-          final Intent intent = new Intent(Intent.ACTION_UNINSTALL_PACKAGE);
-          intent.setData(Uri.parse("package:"+pluginConnection.getPackageId()));
-          intent.putExtra(Intent.EXTRA_RETURN_RESULT, true);
-          startActivityForResult(intent, PluginPreferencesActivity.REQUEST_CODE_UNINSTALL);
-
+          final Intent intent = new Intent(Intent.ACTION_UNINSTALL_PACKAGE)
+          .setData(Uri.parse("package:"+pluginConnection.getPackageId()))
+          .putExtra(Intent.EXTRA_RETURN_RESULT, true);
+          uninstallActivityResultLauncher.launch(intent);
           return false;
         });
         preferenceScreen.addPreference(uninstall);
@@ -197,23 +215,5 @@ public class PluginPreferencesFragment extends PreferenceFragmentCompat {
 
   @Override
   public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-
-  }
-
-
-  @Override
-  public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if(requestCode == PluginPreferencesActivity.REQUEST_CODE_UNINSTALL) {
-      if(getActivity() instanceof  ActivityPluginFragment) {
-        getActivity().finish();
-      }
-
-      PluginPreferencesActivity.getInstance().onActivityResult(requestCode, resultCode, data);
-      Log.d("info9",""+getActivity());
-   //   ((PluginPreferencesActivity) getActivity()).onActivityResult(requestCode, resultCode, data);
-    }
-    else {
-      super.onActivityResult(requestCode, resultCode, data);
-    }
   }
 }

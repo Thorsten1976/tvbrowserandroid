@@ -13,26 +13,31 @@ import java.util.Calendar;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.utils.CompatUtils;
 
-class DonationRatingHelperImpl extends DonationRatingHelper {
+final class DonationRatingHelperImpl extends DonationRatingHelper {
 
 	DonationRatingHelperImpl(final TvBrowser tvBrowser) {
 		super(tvBrowser);
 	}
 
+	@Override
 	boolean onActivityResult(int requestCode, int resultCode, Intent data) {
 		return false;
 	}
 
+	@Override
 	void onDestroy() {
 	}
 
+	@Override
 	void prepareInAppPayment() {
 	}
 
+	@Override
 	boolean showDonationMenuItem() {
 		return true;
 	}
 
+	@Override
 	void showRatingAndDonationInfo() {
 		AlertDialog.Builder alert = new AlertDialog.Builder(tvBrowser);
 
@@ -53,42 +58,42 @@ class DonationRatingHelperImpl extends DonationRatingHelper {
 		final AlertDialog d = alert.create();
 
 		cancel.setOnClickListener(v -> {
-      setRatingAndDonationInfoShown();
-      d.dismiss();
-      tvBrowser.finish();
-    });
+		  setRatingAndDonationInfoShown();
+		  d.dismiss();
+		  tvBrowser.finish();
+		});
 
 		donate.setOnClickListener(v -> {
-      setRatingAndDonationInfoShown();
-      d.dismiss();
-      showDonationInfo();
-    });
+		  setRatingAndDonationInfoShown();
+		  d.dismiss();
+		  showDonationInfo();
+		});
 
 		d.setOnShowListener(dialog -> new Thread("Cancel wait thread") {
-      @Override
-      public void run() {
-        setRatingAndDonationInfoShown();
+		  @Override
+		  public void run() {
+			setRatingAndDonationInfoShown();
 
-        int count = 9;
+			int count = 9;
 
-        while(--count >= 0) {
-          final int countValue = count+1;
+			while (--count >= 0) {
+			  final int countValue = count+1;
 
-          tvBrowser.getHandler().post(() -> cancel.setText(tvBrowser.getString(R.string.not_now).replace("{0}", " (" + countValue + ")")));
+			  tvBrowser.getHandler().post(() -> cancel.setText(tvBrowser.getString(R.string.not_now).replace("{0}", " (" + countValue + ")")));
 
-          try {
-            sleep(1000);
-          } catch (InterruptedException e) {
-            e.printStackTrace();
-          }
-        }
+			  try {
+				sleep(1000);
+			  } catch (InterruptedException e) {
+				e.printStackTrace();
+			  }
+			}
 
-        tvBrowser.getHandler().post(() -> {
-          cancel.setText(tvBrowser.getString(R.string.not_now).replace("{0}", ""));
-          cancel.setEnabled(true);
-        });
-      }
-    }.start());
+			tvBrowser.getHandler().post(() -> {
+			  cancel.setText(tvBrowser.getString(R.string.not_now).replace("{0}", ""));
+			  cancel.setEnabled(true);
+			});
+		  }
+    	}.start());
 
 		tvBrowser.showAlertDialog(d,true);
 	}
@@ -114,14 +119,14 @@ class DonationRatingHelperImpl extends DonationRatingHelper {
 
 		builder.setMessage(expiredMessage);
 		builder.setPositiveButton(updateText, (dialog, which) -> {
-      tvBrowser.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(SettingConstants.URL_SYNC_BASE + "/index.php?id=download")));
-      System.exit(0);
-    });
+          tvBrowser.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(SettingConstants.URL_SYNC_BASE + "/index.php?id=download")));
+		  System.exit(0);
+		});
 		builder.setNegativeButton(R.string.update_not_now, (dialog, which) -> {
-      if(diff < 0) {
-        System.exit(0);
-      }
-    });
+		  if(diff < 0) {
+			System.exit(0);
+		  }
+		});
 		builder.setCancelable(false);
 		tvBrowser.showAlertDialog(builder);
 	}

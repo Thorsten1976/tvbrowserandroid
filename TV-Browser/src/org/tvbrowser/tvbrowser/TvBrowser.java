@@ -16,6 +16,8 @@
  */
 package org.tvbrowser.tvbrowser;
 
+import static androidx.activity.result.contract.ActivityResultContracts.*;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.NotificationManager;
@@ -58,6 +60,9 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import com.google.android.material.tabs.TabLayout;
@@ -176,7 +181,28 @@ import me.drakeet.support.toast.ToastCompat;
 import static org.tvbrowser.utils.VersionUtils.applyUpdates;
 
 @SuppressLint("ApplySharedPref")
-public class TvBrowser extends AppCompatActivity {
+public final class TvBrowser extends AppCompatActivity {
+
+  private final ActivityResultLauncher<Intent> editFilterActivityResultLauncher =
+    registerForActivityResult(new StartActivityForResult(), result -> {
+      updateFromFilterEdit();
+      sendChannelFilterUpdate();
+    });
+
+  private final ActivityResultLauncher<Intent> showPluginPreferencesActivityResultLauncher =
+    registerForActivityResult(new StartActivityForResult(), result -> {
+      PluginPreferencesActivity.clearPlugins();
+      final PluginServiceConnection[] plugins = PluginHandler.getAvailablePlugins();
+      if (plugins != null) {
+        for (PluginServiceConnection plugin : plugins) {
+          plugin.loadIcon();
+        }
+      }
+    });
+
+  private final ActivityResultLauncher<Intent> showPreferencesActivityResultLauncher =
+    registerForActivityResult(new StartActivityForResult(), result -> updateFromPreferences(false));
+
   private static final boolean TEST_VERSION = false;
 
   private static final int ID_LINKIFY_DISABLED = 0;
@@ -813,7 +839,7 @@ public class TvBrowser extends AppCompatActivity {
 
           final DonationRatingHelper donationHelper = new DonationRatingHelperImpl(TvBrowser.this);
 
-          if(donationHelper.hideWebDonation()) {
+          if (!donationHelper.hideWebDonation()) {
             builder.setNegativeButton(R.string.donation, (dialog, which) -> {
               saveSetting.run();
               donationHelper.showDonationInfo();
@@ -1034,14 +1060,14 @@ public class TvBrowser extends AppCompatActivity {
       int count = 0;
 
       try {
-        if(test != null) {
+        if (test != null) {
           count = test.getCount();
         }
-      }finally {
+      } finally {
         IOUtils.close(test);
       }
 
-      if(count > 0) {
+      if (count > 0) {
         AlertDialog.Builder builder = new AlertDialog.Builder(TvBrowser.this);
 
         builder.setTitle(R.string.synchronize_replace_add_title);
@@ -1253,7 +1279,7 @@ public class TvBrowser extends AppCompatActivity {
   private void synchronizeDontWantToSee(final boolean replace) {
     new Thread() {
       public void run() {
-        if(!SettingConstants.UPDATING_FILTER && IOUtils.isDatabaseAccessible(TvBrowser.this)) {
+        if (!SettingConstants.UPDATING_FILTER && IOUtils.isDatabaseAccessible(TvBrowser.this)) {
           SettingConstants.UPDATING_FILTER = true;
 
           Context applicationContext = getApplicationContext();
@@ -1287,7 +1313,7 @@ public class TvBrowser extends AppCompatActivity {
             String car = pref.getString(SettingConstants.USER_NAME, null);
             String bicycle = pref.getString(SettingConstants.USER_PASSWORD, null);
 
-            if(car != null && bicycle != null) {
+            if (car != null && bicycle != null) {
               String userpass = car + ":" + bicycle;
               String basicAuth = "basic " + Base64.encodeToString(userpass.getBytes(), Base64.NO_WRAP);
 
@@ -1301,8 +1327,8 @@ public class TvBrowser extends AppCompatActivity {
               HashSet<String> exclusions = new HashSet<>();
               HashSet<String> newExclusions = new HashSet<>();
 
-              while((line = read.readLine()) != null) {
-                if(line.contains(";;") && line.trim().length() > 0) {
+              while ((line = read.readLine()) != null) {
+                if (line.contains(";;") && line.trim().length() > 0) {
                   exclusions.add(line);
                   newExclusions.add(line);
                   exclusionBuilder.append(line).append("\n");
@@ -1314,10 +1340,10 @@ public class TvBrowser extends AppCompatActivity {
 
               Set<String> oldValues = pref1.getStringSet(key, null);
 
-              if(exclusions.size() > 0) {
-                if(!replace && oldValues != null) {
-                  for(String old : oldValues) {
-                    if(!exclusions.contains(old)) {
+              if (exclusions.size() > 0) {
+                if (!replace && oldValues != null) {
+                  for (String old : oldValues) {
+                    if (!exclusions.contains(old)) {
                       exclusions.add(old);
                       exclusionBuilder.append(old).append("\n");
                     }
@@ -1329,7 +1355,7 @@ public class TvBrowser extends AppCompatActivity {
 
                 ArrayList<DontWantToSeeExclusion> exclusionList = new ArrayList<>();
 
-                for(String exclusion : newExclusions) {
+                for (String exclusion : newExclusions) {
                   exclusionList.add(new DontWantToSeeExclusion(exclusion));
                 }
 
@@ -1340,10 +1366,10 @@ public class TvBrowser extends AppCompatActivity {
 
                 DontWantToSeeExclusion[] exclusionArr = exclusionList.toArray(new DontWantToSeeExclusion[0]);
 
-                if(exclusionArr.length > 0) {
+                if (exclusionArr.length > 0) {
                   String where = null;
 
-                  if(!replace) {
+                  if (!replace) {
                     where = "NOT " + TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE;
                   }
 
@@ -1354,7 +1380,7 @@ public class TvBrowser extends AppCompatActivity {
                   try {
                     int count;
 
-                    if(IOUtils.prepareAccess(c)) {
+                    if (IOUtils.prepareAccess(c)) {
                       count = c.getCount()/10;
 
                       builder.setProgress(count, 0, false);
@@ -1363,10 +1389,10 @@ public class TvBrowser extends AppCompatActivity {
                       int keyColumn = c.getColumnIndex(TvBrowserContentProvider.KEY_ID);
                       int titleColumn = c.getColumnIndex(TvBrowserContentProvider.DATA_KEY_TITLE);
 
-                      while(c.moveToNext()) {
+                      while (c.moveToNext()) {
                         int position = c.getPosition();
 
-                        if(position % 10 == 0) {
+                        if (position % 10 == 0) {
                           builder.setProgress(count, position/10, false);
                           notification.notify(notifyID, builder.build());
                         }
@@ -1386,14 +1412,14 @@ public class TvBrowser extends AppCompatActivity {
                         //updateValuesList.add(opBuilder.build());
                       }
                     }
-                  }finally {
+                  } finally {
                     IOUtils.close(c);
                   }
 
                   builder.setProgress(0, 0, true);
                   notification.notify(notifyID, builder.build());
 
-                  if(dontWantToSeeUpdate.operationsAvailable()) {
+                  if (dontWantToSeeUpdate.operationsAvailable()) {
                     dontWantToSeeUpdate.finish();
                     //getContentResolver().applyBatch(TvBrowserContentProvider.AUTHORITY, updateValuesList);
                     UiUtils.sendDontWantToSeeChangedBroadcast(applicationContext,true);
@@ -1407,13 +1433,13 @@ public class TvBrowser extends AppCompatActivity {
                   handler.post(() -> ToastCompat.makeText(getApplicationContext(), R.string.dont_want_to_see_sync_success, ToastCompat.LENGTH_LONG).show());
                 }
 
-                if(!replace && exclusionBuilder.length() > 0) {
+                if (!replace && exclusionBuilder.length() > 0) {
                   startSynchronizeUp(false, exclusionBuilder.toString(), SettingConstants.URL_SYNC_BASE + "data/scripts/syncUp.php?type=dontWantToSee", null, null);
                 }
               }
               else {
-                if(!replace && oldValues != null && !oldValues.isEmpty()) {
-                  for(String old : oldValues) {
+                if (!replace && oldValues != null && !oldValues.isEmpty()) {
+                  for (String old : oldValues) {
                     exclusionBuilder.append(old).append("\n");
                   }
 
@@ -1423,7 +1449,7 @@ public class TvBrowser extends AppCompatActivity {
                 handler.post(() -> ToastCompat.makeText(getApplicationContext(), R.string.no_dont_want_to_see_sync, ToastCompat.LENGTH_LONG).show());
               }
             }
-          }catch(Throwable t) {
+          } catch (Throwable t) {
             handler.post(() -> ToastCompat.makeText(getApplicationContext(), R.string.no_dont_want_to_see_sync, ToastCompat.LENGTH_LONG).show());
           } finally {
         	  IOUtils.disconnect(connection);
@@ -3451,41 +3477,17 @@ public class TvBrowser extends AppCompatActivity {
   }
 
   @Override
-  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
- // Pass on the activity result to the helper for handling
+  protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+
     boolean handled = false;
 
-    if(donationsRatingHelper != null) {
+    if (donationsRatingHelper != null) {
+      // Pass on the activity result to the helper for handling
       handled = donationsRatingHelper.onActivityResult(requestCode, resultCode, data);
     }
-    if(!handled && mPluginUpdateHelper != null) {
-      handled = mPluginUpdateHelper.onActivityResult(requestCode, resultCode, data);
-    }
 
-    if(!handled) {
+    if (!handled) {
       super.onActivityResult(requestCode, resultCode, data);
-    }
-
-    switch (requestCode) {
-      case SHOW_PREFERENCES:
-        updateFromPreferences(false);
-        break;
-      case OPEN_FILTER_EDIT:
-        updateFromFilterEdit();
-
-        sendChannelFilterUpdate();
-        break;
-      case SHOW_PLUGIN_PREFERENCES:
-        PluginPreferencesActivity.clearPlugins();
-
-        PluginServiceConnection[] plugins = PluginHandler.getAvailablePlugins();
-
-        if (plugins != null) {
-          for (PluginServiceConnection plugin : plugins) {
-            plugin.loadIcon();
-          }
-        }
-        break;
     }
   }
 
@@ -3883,11 +3885,6 @@ public class TvBrowser extends AppCompatActivity {
     builder.setPositiveButton(android.R.string.ok, (arg0, arg1) -> {});
 
     showAlertDialog(builder);
-  }
-
-  private void openFilterEdit() {
-    Intent startFilterEdit = new Intent(this, ActivityFilterListEdit.class);
-    startActivityForResult(startFilterEdit, OPEN_FILTER_EDIT);
   }
 
   private void sendChannelFilterUpdate() {
@@ -4304,24 +4301,22 @@ public class TvBrowser extends AppCompatActivity {
   }
 
   @Override
-  public boolean onOptionsItemSelected(MenuItem item) {
+  public boolean onOptionsItemSelected(@NonNull final MenuItem item) {
     final PrefUtils prefs = App.get().prefs();
     switch (item.getItemId()) {
-      case R.id.action_username_password:
-      {
-          showAcceptTerms(false);
+      case R.id.action_username_password: {
+        showAcceptTerms(false);
+        break;
       }
-      break;
       case R.id.action_show_markings: showMarkingData();break;
       case R.id.menu_tvbrowser_action_favorite_add: UiUtils.editFavorite(null, TvBrowser.this, null);break;
       case R.id.menu_tvbrowser_action_favorite_edit: editFavorite();break;
       case R.id.menu_tvbrowser_action_favorite_delete: deleteFavorite();break;
       case R.id.action_donation: donationsRatingHelper.showDonationInfo(); break;
       case R.id.action_search_plugins:
-        if(isOnline()) {
+        if (isOnline()) {
           mPluginUpdateHelper.searchPlugins(false);
-        }
-        else {
+        } else {
           showNoInternetConnection(getString(R.string.no_network_info_data_search_plugins), () -> mPluginUpdateHelper.searchPlugins(false));
         }
         break;
@@ -4335,20 +4330,19 @@ public class TvBrowser extends AppCompatActivity {
         mPauseReminder.setVisible(true);
         mContinueReminder.setVisible(false);
         UiUtils.updateToggleReminderStateWidget(getApplicationContext());
-      }break;
+        break;
+      }
       case R.id.action_synchronize_reminders_down:
-        if(isOnline()) {
+        if (isOnline()) {
           startSynchronizeRemindersDown();
-        }
-        else {
+        } else {
           showNoInternetConnection(getString(R.string.no_network_info_data_sync_reminder), null);
         }
         break;
       case R.id.action_synchronize_reminders_up:
-        if(isOnline()) {
+        if (isOnline()) {
           startSynchronizeUp(true, null, SettingConstants.URL_SYNC_BASE + "data/scripts/syncUp.php?type=reminderFromApp", SettingConstants.SYNCHRONIZE_UP_DONE, null);
-        }
-        else {
+        } else {
           showNoInternetConnection(getString(R.string.no_network_info_data_sync_reminder),null);
         }
         break;
@@ -4356,31 +4350,27 @@ public class TvBrowser extends AppCompatActivity {
         editDontWantToSee();
         break;
       case R.id.action_synchronize_dont_want_to_see:
-        if(isOnline()) {
+        if (isOnline()) {
           synchronizeDontWantToSee();
-        }
-        else {
+        } else {
           showNoInternetConnection(getString(R.string.no_network_info_data_sync_dont_want_to_see), null);
         }
         break;
       case R.id.action_synchronize_channels:
-        if(isOnline()) {
-          if(!hasChannels()) {
+        if (isOnline()) {
+          if (!hasChannels()) {
             askChannelDownload(R.string.channel_notification_title);
-          }
-          else {
+          } else {
             syncronizeChannels();
           }
-        }
-        else {
+        } else {
           showNoInternetConnection(getString(R.string.no_network_info_data_sync_channels),null);
         }
         break;
       case R.id.action_synchronize_channels_up:
-        if(isOnline()) {
+        if (isOnline()) {
           uploadChannels();
-        }
-        else {
+        } else {
           showNoInternetConnection(getString(R.string.no_network_info_data_sync_channels),null);
         }
         break;
@@ -4392,18 +4382,15 @@ public class TvBrowser extends AppCompatActivity {
       case R.id.action_send_plugin_log:sendLogMail(SettingConstants.LOG_FILE_NAME_PLUGINS,getString(R.string.log_send_plugin));break;
       case R.id.menu_tvbrowser_action_settings_basic:
         mCurrentTabLayoutFavorites = prefs.getStringValueWithDefaultKey(R.string.PREF_FAVORITE_TAB_LAYOUT, R.string.pref_favorite_tab_layout_default);
-        Intent startPref = new Intent(this, TvbPreferencesActivity.class);
-        startActivityForResult(startPref, SHOW_PREFERENCES);
+        showPreferencesActivityResultLauncher.launch(new Intent(this, TvbPreferencesActivity.class));
         break;
       case R.id.menu_tvbrowser_action_settings_plugins:
-        Intent startPluginPref = new Intent(this, PluginPreferencesActivity.class);
-        startActivityForResult(startPluginPref, SHOW_PLUGIN_PREFERENCES);
+        showPluginPreferencesActivityResultLauncher.launch(new Intent(this, PluginPreferencesActivity.class));
         break;
       case R.id.menu_tvbrowser_action_update_data:
-        if(isOnline()) {
+        if (isOnline()) {
           checkTermsAccepted();
-        }
-        else {
+        } else {
           showNoInternetConnection(getString(R.string.no_network_info_data_update), null);
         }
         break;
@@ -4413,27 +4400,28 @@ public class TvBrowser extends AppCompatActivity {
       case R.id.action_select_channels: selectChannels(false);break;
       case R.id.action_sort_channels: sortChannels(false);break;
       case R.id.action_delete_all_data: getContentResolver().delete(TvBrowserContentProvider.CONTENT_URI_DATA, TvBrowserContentProvider.KEY_ID + " > 0", null);
-                                        getContentResolver().delete(TvBrowserContentProvider.CONTENT_URI_DATA_VERSION, TvBrowserContentProvider.KEY_ID + " > 0", null);
+        getContentResolver().delete(TvBrowserContentProvider.CONTENT_URI_DATA_VERSION, TvBrowserContentProvider.KEY_ID + " > 0", null);
         prefs.resetDataMetaData();
-                                        break;
+        break;
       case R.id.action_scroll_now:scrollToTime(0);break;
       case R.id.action_scroll_next:scrollToTime(Integer.MAX_VALUE);break;
       case R.id.action_scroll_time_free:scrollToTimePick();break;
-      case R.id.action_activity_filter_list_edit_open:openFilterEdit();break;
-     // case R.id.action_filter_channels:filterChannels();break;
+      case R.id.action_activity_filter_list_edit_open:
+        editFilterActivityResultLauncher.launch(new Intent(this, ActivityFilterListEdit.class));
+        break;
+      // case R.id.action_filter_channels:filterChannels();break;
       case R.id.action_reset: {
         Editor edit = prefs.edit();
         edit.putLong(getString(R.string.LAST_DATA_UPDATE), 0);
         edit.commit();
-
         break;
       }
       case R.id.action_backup_preferences_save: backupPreferences();break;
       case R.id.action_backup_preferences_restore: restorePreferences();break;
     }
 
-    for(int i = 0; i < SCROLL_IDS.length; i++) {
-      if(item.getItemId() == SCROLL_IDS[i]) {
+    for (int i = 0; i < SCROLL_IDS.length; i++) {
+      if (item.getItemId() == SCROLL_IDS[i]) {
         scrollToTime(SCROLL_TIMES[i]+1);
         break;
       }

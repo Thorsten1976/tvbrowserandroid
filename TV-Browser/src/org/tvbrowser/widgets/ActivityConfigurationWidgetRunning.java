@@ -16,33 +16,40 @@
  */
 package org.tvbrowser.widgets;
 
+import static androidx.activity.result.contract.ActivityResultContracts.*;
+
 import android.appwidget.AppWidgetManager;
 import android.content.Intent;
-import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.appcompat.app.AppCompatActivity;
 
 import org.tvbrowser.tvbrowser.InfoActivity;
 import org.tvbrowser.tvbrowser.R;
 import org.tvbrowser.utils.CompatUtils;
 
 public class ActivityConfigurationWidgetRunning extends AppCompatActivity {
+
+  private final ActivityResultLauncher<Intent> activityResultLauncher =
+    registerForActivityResult(new StartActivityForResult(), result -> finish());
+
   private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
-  private static final int REQUEST_CODE = 1;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_configuration_widget_running);
 
-    if(getIntent().hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
+    if (getIntent().hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
       mAppWidgetId = getIntent().getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 
       if (CompatUtils.showWidgetRefreshInfo()) {
-        Intent info = new Intent(getApplicationContext(), InfoActivity.class);
-        info.setAction(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE);
-        info.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-        info.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivityForResult(info,REQUEST_CODE);
+        final Intent info = new Intent(getApplicationContext(), InfoActivity.class)
+          .setAction(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE)
+          .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId)
+          .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activityResultLauncher.launch(info);
       }
       else {
         finish();
@@ -55,23 +62,15 @@ public class ActivityConfigurationWidgetRunning extends AppCompatActivity {
   }
 
   @Override
-  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    super.onActivityResult(requestCode, resultCode, data);
-    finish();
-  }
-
-  @Override
   public void finish() {
-    if(mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+    if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
       Intent result = new Intent();
-
       result.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
       setResult(RESULT_OK, result);
     }
     else {
       setResult(RESULT_OK);
     }
-
     super.finish();
   }
 }
