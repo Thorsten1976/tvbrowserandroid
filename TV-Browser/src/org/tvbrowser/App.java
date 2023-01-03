@@ -97,14 +97,12 @@ public final class App extends Application {
 	 */
 	private String getNotificationChannelName(final int type) {
 	  final StringBuilder builder = new StringBuilder(getString(R.string.app_name));
-
 	  switch (type) {
 	    case TYPE_NOTIFICATION_REMINDER_DAY:builder.append(": ").append(getString(R.string.notification_channel_reminder_day));break;
 	    case TYPE_NOTIFICATION_REMINDER_WORK:builder.append(": ").append(getString(R.string.notification_channel_reminder_work));break;
 	    case TYPE_NOTIFICATION_REMINDER_NIGHT:builder.append(": ").append(getString(R.string.notification_channel_reminder_night));break;
-    }
-
-		return builder.toString();
+	  }
+	return builder.toString();
 	}
 
 	/**

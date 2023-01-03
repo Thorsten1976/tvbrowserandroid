@@ -139,7 +139,6 @@ final class DonationRatingHelperImpl extends DonationRatingHelper {
             alert2.setMessage(message);
 
 			final Purchase toConsume = donated;
-
             alert2.setPositiveButton(R.string.donate_again, (dialog, which) -> {
                 tvBrowser.updateProgressIcon(true);
 
@@ -153,8 +152,7 @@ final class DonationRatingHelperImpl extends DonationRatingHelper {
                     }
                 });
             });
-
-			alert2.setNegativeButton(R.string.stop_donation, (dialog, which) -> {
+            alert2.setNegativeButton(R.string.stop_donation, (dialog, which) -> {
       });
 
             tvBrowser.showAlertDialog(alert2);
@@ -249,10 +247,8 @@ final class DonationRatingHelperImpl extends DonationRatingHelper {
 			View view = tvBrowser.getLayoutInflater().inflate(R.layout.open_donation, tvBrowser.getParentViewGroup(), false);
 
 			alert.setView(view);
-
             ((TextView) view.findViewById(R.id.donation_open_info)).setText(tvBrowser.getString(R.string.make_donation_info).replace("{0}", skuDetails.getPrice()));
-
-			alert.setNegativeButton(R.string.stop_donation, (dialog, which) -> {
+            alert.setNegativeButton(R.string.stop_donation, (dialog, which) -> {
       });
 
             alert.setPositiveButton(R.string.make_donation, (dialog, which) -> tvBrowser.getHandler().post(() -> iabHelper.launchPurchaseFlow(tvBrowser, skuDetails.getSku(), 1012, (result, info) -> {
