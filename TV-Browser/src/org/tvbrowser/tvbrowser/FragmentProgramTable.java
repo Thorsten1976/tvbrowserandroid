@@ -878,7 +878,7 @@ public class FragmentProgramTable extends Fragment {
 
     final PrefUtils prefs = App.get().prefs();
     if(prefs.isDarkTheme()) {
-      programTableLayout.findViewById(R.id.button_panel).setBackgroundColor(ContextCompat.getColor(getActivity(), R.color.background_material_dark));
+      programTableLayout.findViewById(R.id.button_panel).setBackgroundColor(ContextCompat.getColor(getActivity(), androidx.appcompat.R.color.background_material_dark));
     }
 
     ProgramTableLayoutConstants.initialize(getActivity());

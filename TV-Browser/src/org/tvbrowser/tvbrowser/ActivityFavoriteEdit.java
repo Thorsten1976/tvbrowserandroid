@@ -99,10 +99,10 @@ public class ActivityFavoriteEdit extends AppCompatActivity implements ChannelFi
 
     UiUtils.createAdapterForSpinner(ActivityFavoriteEdit.this, mTypeSelection, R.array.activity_edit_favorite_input_text_type);
 
-    int color = ContextCompat.getColor(this, R.color.abc_primary_text_material_light);
+    int color = ContextCompat.getColor(this, androidx.appcompat.R.color.abc_primary_text_material_light);
     
     if(App.get().prefs().isDarkTheme()) {
-      color = ContextCompat.getColor(this, R.color.abc_primary_text_material_dark);
+      color = ContextCompat.getColor(this, androidx.appcompat.R.color.abc_primary_text_material_dark);
     }
     
     mDuration.setTextColor(color);
