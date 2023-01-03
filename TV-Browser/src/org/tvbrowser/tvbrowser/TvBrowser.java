@@ -16,7 +16,8 @@
  */
 package org.tvbrowser.tvbrowser;
 
-import static androidx.activity.result.contract.ActivityResultContracts.*;
+import static androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult;
+import static org.tvbrowser.utils.VersionUtils.applyUpdates;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -60,26 +61,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.IntDef;
-import androidx.annotation.NonNull;
-import com.google.android.material.tabs.TabLayout;
-
-import androidx.fragment.app.Fragment;
-import androidx.core.app.NotificationCompat;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.collection.SparseArrayCompat;
-import androidx.viewpager.widget.ViewPager;
-import androidx.cursoradapter.widget.SimpleCursorAdapter;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SearchView;
-import androidx.appcompat.widget.Toolbar;
 import android.text.Editable;
 import android.text.Html.TagHandler;
 import android.text.Spannable;
@@ -119,11 +100,28 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.collection.SparseArrayCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
+import androidx.cursoradapter.widget.SimpleCursorAdapter;
+import androidx.fragment.app.Fragment;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
+import androidx.viewpager.widget.ViewPager;
 
 import com.example.android.listviewdragginganimation.DynamicListView;
 import com.example.android.listviewdragginganimation.SortInterface;
 import com.example.android.listviewdragginganimation.StableArrayAdapter;
+import com.google.android.material.tabs.TabLayout;
 
 import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
@@ -177,8 +175,6 @@ import java.util.zip.GZIPInputStream;
 
 import de.epgpaid.EPGpaidDataConnection;
 import me.drakeet.support.toast.ToastCompat;
-
-import static org.tvbrowser.utils.VersionUtils.applyUpdates;
 
 @SuppressLint("ApplySharedPref")
 public final class TvBrowser extends AppCompatActivity {
@@ -881,6 +877,7 @@ public final class TvBrowser extends AppCompatActivity {
     return result;
   }
 
+  @SuppressLint("Range")
   int getEpgDonateChannelsCount() {
     int result = 0;
     Log.d("info6", "getEpgDonateChannelsCount");
@@ -1084,6 +1081,7 @@ public final class TvBrowser extends AppCompatActivity {
     }
   }
 
+  @SuppressLint("Range")
   private void synchronizeChannels(final boolean replace) {
     if(IOUtils.isDatabaseAccessible(TvBrowser.this)) {
       AsyncTask<Void, Void, Void> synchronize = new AsyncTask<>() {
@@ -1580,10 +1578,10 @@ public final class TvBrowser extends AppCompatActivity {
 
               final Favorite[] existingFavorites = Favorite.getAllFavorites(getApplicationContext());
 
-              while((line = read.readLine()) != null) {
+              while ((line = read.readLine()) != null) {
                 int index = line.indexOf(":");
 
-                if(index > 0) {
+                if (index > 0) {
                   restored = true;
                   String type = line.substring(0,index);
                   String[] parts = line.substring(index+1).split("=");
@@ -1714,6 +1712,7 @@ public final class TvBrowser extends AppCompatActivity {
     }
   }
 
+  @SuppressLint("Range")
   private void uploadChannels() {
     if(IOUtils.isDatabaseAccessible(TvBrowser.this)) {
       String[] projection = {
@@ -4531,6 +4530,7 @@ public final class TvBrowser extends AppCompatActivity {
         private int mPositionLast = -1;
         private boolean mShowChannelName = false;
 
+        @SuppressLint("Range")
         @Override
         public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
           final int positionCurrent = cursor.getPosition();

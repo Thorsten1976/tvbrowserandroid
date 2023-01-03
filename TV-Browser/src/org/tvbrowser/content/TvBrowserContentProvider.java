@@ -28,6 +28,7 @@ import org.tvbrowser.App;
 import org.tvbrowser.tvbrowser.R;
 import org.tvbrowser.utils.IOUtils;
 
+import android.annotation.SuppressLint;
 import android.app.SearchManager;
 import android.content.ContentProvider;
 import android.content.ContentProviderOperation;
@@ -1628,6 +1629,7 @@ public class TvBrowserContentProvider extends ContentProvider {
     }
   }
 
+  @SuppressLint("Range")
   private static boolean columnExists(SQLiteDatabase db, String columnName) {
     boolean result = false;
     Cursor c = null;

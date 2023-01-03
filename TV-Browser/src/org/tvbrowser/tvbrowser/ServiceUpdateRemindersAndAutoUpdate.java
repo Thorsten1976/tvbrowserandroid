@@ -25,6 +25,7 @@ import org.tvbrowser.utils.CompatUtils;
 import org.tvbrowser.utils.IOUtils;
 import org.tvbrowser.utils.PrefUtils;
 
+import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -106,8 +107,8 @@ public class ServiceUpdateRemindersAndAutoUpdate extends Service {
               try {
                 if(IOUtils.prepareAccess(alarms)) {
                   while(alarms.moveToNext()) {
-                    long id = alarms.getLong(alarms.getColumnIndex(TvBrowserContentProvider.KEY_ID));
-                    long startTime = alarms.getLong(alarms.getColumnIndex(TvBrowserContentProvider.DATA_KEY_STARTTIME));
+                    @SuppressLint("Range") long id = alarms.getLong(alarms.getColumnIndex(TvBrowserContentProvider.KEY_ID));
+                    @SuppressLint("Range") long startTime = alarms.getLong(alarms.getColumnIndex(TvBrowserContentProvider.DATA_KEY_STARTTIME));
                     
                     IOUtils.removeReminder(getApplicationContext(), id);
                     addReminder(getApplicationContext(), id, startTime, BroadcastReceiverUpdateAlarmValue.class, firstStart);

@@ -21,6 +21,7 @@ import org.tvbrowser.tvbrowser.MarkingsUpdateListener;
 import org.tvbrowser.tvbrowser.R;
 import org.tvbrowser.tvbrowser.WhereClause;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -62,20 +63,21 @@ public class ProgramUtils {
 
     final ProgramOrdered test = createProgramOrderedFromDataCursor(context, cursor);
 
-    if(test != null) {
+    if (test != null) {
       result = test.getProgram();
     }
 
     return result;
   }
   
+  @SuppressLint("Range")
   public static ProgramOrdered createProgramOrderedFromDataCursor(Context context, Cursor cursor) {
     ProgramOrdered result = null;
     
-    if(IOUtils.prepareAccessFirst(cursor) && cursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_STARTTIME) != -1) {
+    if (IOUtils.prepareAccessFirst(cursor) && cursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_STARTTIME) != -1) {
       ChannelOrdered channel = createChannelOrderedFromCursor(context, cursor);
       
-      if(channel != null) {
+      if (channel != null) {
         final long startTime = cursor.getLong(cursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_STARTTIME));
         
         Calendar test = Calendar.getInstance();
@@ -85,7 +87,7 @@ public class ProgramUtils {
         test.set(Calendar.SECOND, 0);
         test.set(Calendar.MILLISECOND, 0);
         
-        if(test.getTimeInMillis() <= startTime) {
+        if (test.getTimeInMillis() <= startTime) {
           final long endTime = cursor.getLong(cursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_ENDTIME));
           final String title = cursor.getString(cursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_TITLE));
           final String shortDescription = cursor.getString(cursor.getColumnIndex(TvBrowserContentProvider.DATA_KEY_SHORT_DESCRIPTION));
@@ -165,6 +167,7 @@ public class ProgramUtils {
     return channelOrdered;
   }*/
   
+  @SuppressLint("Range")
   private static ChannelOrdered createChannelOrderedFromCursor(Context context, Cursor cursor) {
     ChannelOrdered result = null;
     
@@ -202,6 +205,7 @@ public class ProgramUtils {
     return result;
   }
   
+  @SuppressLint("Range")
   public static boolean markProgram(Context context, Program program, String pluginId) {
     boolean result = false;
     
@@ -245,6 +249,7 @@ public class ProgramUtils {
     return result;
   }
   
+  @SuppressLint("Range")
   public static boolean unmarkProgram(Context context, Program program, String pluginId) {
     boolean result = false;
     

@@ -32,6 +32,7 @@ import org.tvbrowser.utils.ProgramUtils;
 import org.tvbrowser.utils.UiUtils;
 import org.tvbrowser.view.SeparatorDrawable;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
@@ -323,6 +324,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
   public void scrollToTime() {
     if(IOUtils.isDatabaseAccessible(getActivity())) {
       handler.post(new Thread("SCROLL TO TIME THREAD") {
+        @SuppressLint("Range")
         @Override
         public void run() {
           if(mScrollTime > 0) {
@@ -679,7 +681,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
             channelCursor = cr.query(TvBrowserContentProvider.CONTENT_URI_CHANNELS, new String[] {TvBrowserContentProvider.KEY_ID,TvBrowserContentProvider.CHANNEL_KEY_NAME,TvBrowserContentProvider.CHANNEL_KEY_LOGO,TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER}, TvBrowserContentProvider.CHANNEL_KEY_SELECTION + ((TvBrowser) getActivity()).getFilterSelection(true).replace(TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID, TvBrowserContentProvider.KEY_ID), null, TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER + " , " + TvBrowserContentProvider.GROUP_KEY_GROUP_ID);
             if(IOUtils.prepareAccessFirst(channelCursor)) {
               do {
-                Bitmap logo = UiUtils.createBitmapFromByteArray(channelCursor.getBlob(channelCursor.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_LOGO)));
+                @SuppressLint("Range") Bitmap logo = UiUtils.createBitmapFromByteArray(channelCursor.getBlob(channelCursor.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_LOGO)));
                               
                 Drawable logoDrawable = null;
                 
@@ -687,16 +689,16 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
                   logoDrawable = SettingConstants.createLayerDrawable(22, getActivity(), logo);
                 }
                               
-                String name = channelCursor.getString(channelCursor.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_NAME));
+                @SuppressLint("Range") String name = channelCursor.getString(channelCursor.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_NAME));
                 String shortName = SettingConstants.SHORT_CHANNEL_NAMES.get(name);
                 
                 if(shortName != null) {
                   name = shortName;
                 }
                 
-                int id = channelCursor.getInt(channelCursor.getColumnIndex(TvBrowserContentProvider.KEY_ID));
+                @SuppressLint("Range") int id = channelCursor.getInt(channelCursor.getColumnIndex(TvBrowserContentProvider.KEY_ID));
                 
-                ChannelSelection channelSel = new ChannelSelection(id, channelCursor.getString(channelCursor.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER)) + ". ", name, logoDrawable);
+                @SuppressLint("Range") ChannelSelection channelSel = new ChannelSelection(id, channelCursor.getString(channelCursor.getColumnIndex(TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER)) + ". ", name, logoDrawable);
                 
                 channelAdapter.add(channelSel);
                 
@@ -935,6 +937,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
     mProgramListAdapter.swapCursor(c);
     
     new Thread("FIND PROGRAMLIST NEXT UPDATE") {
+      @SuppressLint("Range")
       @SuppressWarnings("ConstantConditions")
       @Override
       public void run() {

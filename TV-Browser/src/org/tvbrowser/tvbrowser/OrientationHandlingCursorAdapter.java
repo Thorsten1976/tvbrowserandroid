@@ -23,6 +23,7 @@ import org.tvbrowser.utils.AsyncInfo;
 import org.tvbrowser.utils.PrefUtils;
 import org.tvbrowser.utils.UiUtils;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -120,6 +121,7 @@ class OrientationHandlingCursorAdapter extends SimpleCursorAdapter {
     View mPaddingView;
   }
   
+  @SuppressLint("Range")
   @Override
   public View getView(int position, View convertView, ViewGroup parent) {
     final PrefUtils prefs = App.get().prefs();

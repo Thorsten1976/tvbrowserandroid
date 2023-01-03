@@ -31,6 +31,7 @@ import org.tvbrowser.utils.PrefUtils;
 import org.tvbrowser.utils.ProgramUtils;
 import org.tvbrowser.utils.UiUtils;
 
+import android.annotation.SuppressLint;
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -154,6 +155,7 @@ public class Favorite implements Serializable, Cloneable, Comparable<Favorite> {
     return mUniqueChannelIds != null && mUniqueChannelIds.trim().length() > 0;
   }
   
+  @SuppressLint("Range")
   public void loadChannelRestrictionIdsFromUniqueChannelRestriction(Context context) {
     if(isUniqueChannelRestricted()) { 
       String[] parts = mUniqueChannelIds.split(",");

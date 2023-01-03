@@ -36,6 +36,7 @@ import org.tvbrowser.filter.FilterValues;
 import org.tvbrowser.filter.FilterValuesChannels;
 import org.tvbrowser.tvbrowser.R;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -259,7 +260,7 @@ public final class PrefUtils {
         valueCursor = context.getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA,
                 new String[] {column}, null, null, sort);
         if(valueCursor!=null && IOUtils.prepareAccessFirst(valueCursor)) {
-          long last = valueCursor.getLong(valueCursor.getColumnIndex(column));
+          @SuppressLint("Range") long last = valueCursor.getLong(valueCursor.getColumnIndex(column));
           edit().putLong(mResources.getString(value), last).commit();
         }
       }finally {
