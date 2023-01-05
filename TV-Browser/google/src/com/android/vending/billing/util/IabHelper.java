@@ -33,6 +33,7 @@ import android.util.Log;
 import com.android.vending.billing.IInAppBillingService;
 
 import org.json.JSONException;
+import org.tvbrowser.utils.CompatUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -607,7 +608,7 @@ public class IabHelper {
     public void queryInventoryAsync(final boolean querySkuDetails,
                                final List<String> moreSkus,
                                final QueryInventoryFinishedListener listener) {
-        final Handler handler = new Handler();
+        final Handler handler = CompatUtils.newHandler();
         checkNotDisposed();
         checkSetupDone("queryInventory");
         flagStartAsync("refresh inventory");
@@ -938,7 +939,7 @@ public class IabHelper {
     void consumeAsyncInternal(final List<Purchase> purchases,
                               final OnConsumeFinishedListener singleListener,
                               final OnConsumeMultiFinishedListener multiListener) {
-        final Handler handler = new Handler();
+        final Handler handler = CompatUtils.newHandler();
         flagStartAsync("consume");
         (new Thread(() -> {
             final List<IabResult> results = new ArrayList<>();

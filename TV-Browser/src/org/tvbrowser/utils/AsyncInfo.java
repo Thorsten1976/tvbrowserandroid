@@ -160,7 +160,7 @@ public final class AsyncInfo extends AsyncTask<Void, Void, Boolean> {
         mNextId = -1;
 
         mShowWaitingDialog = true;
-        mHandler = new Handler();
+        mHandler = CompatUtils.newHandler();
         mShowWaiting = () -> {
             mProgress = new ProgressDialog(context);
             mProgress.setMessage(context.getString(R.string.waiting_detail_show));

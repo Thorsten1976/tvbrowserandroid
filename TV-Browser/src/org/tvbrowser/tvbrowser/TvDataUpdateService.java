@@ -345,7 +345,7 @@ public class TvDataUpdateService extends Service {
         mBuilder.setSound(null);
         mBuilder.setOnlyAlertOnce(true);
 
-        mHandler = new Handler();
+        mHandler = CompatUtils.newHandler();
         mPrefUtils = App.get().prefs();
         startForeground(ID_NOTIFY, mBuilder.build());
     }

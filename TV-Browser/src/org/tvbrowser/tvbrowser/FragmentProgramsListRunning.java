@@ -89,7 +89,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
   private static final String DAY_CLAUSE_KEY = "DAY_CLAUSE_KEY";
   private static final int TIMEOUT_LAST_EXTRA_CLICK = 750;
     
-  private Handler handler = new Handler();
+  private Handler handler = CompatUtils.newHandler();
 
   private int mWhereClauseTime;
   

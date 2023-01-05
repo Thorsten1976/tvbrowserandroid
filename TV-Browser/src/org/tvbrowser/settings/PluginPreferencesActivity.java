@@ -29,6 +29,7 @@ import org.tvbrowser.devplugin.PluginHandler;
 import org.tvbrowser.devplugin.PluginManager;
 import org.tvbrowser.devplugin.PluginServiceConnection;
 import org.tvbrowser.tvbrowser.R;
+import org.tvbrowser.utils.CompatUtils;
 
 import java.util.List;
 
@@ -75,8 +76,8 @@ public class PluginPreferencesActivity extends ToolbarPreferencesActivity {
   @Override
   protected void onResume() {
     super.onResume();
-    
-    new Handler().postDelayed(() -> {
+
+    CompatUtils.newHandler().postDelayed(() -> {
       if(getListAdapter() != null && LAST_POS < getListAdapter().getCount()) {
         Object header = getListAdapter().getItem(LAST_POS);
 

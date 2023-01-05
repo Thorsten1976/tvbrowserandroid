@@ -144,7 +144,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
         mDayPreSelection = INDEX_DATE_TODAY;
       }
     }
-    handler = new Handler();
+    handler = CompatUtils.newHandler();
     
     try {
       mLoaderUpdate = new LoaderUpdater(FragmentProgramsList.this, handler);

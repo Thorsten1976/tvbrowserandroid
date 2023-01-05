@@ -34,7 +34,9 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.os.Build;
+import android.os.Handler;
 import android.os.LocaleList;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.text.Html;
 import android.text.Spanned;
@@ -397,5 +399,20 @@ public final class CompatUtils {
             }
         }
         return null;
+    }
+
+    /**
+     * Returns a new {@link Handler} initialized with the {@link Looper} of the current thread;
+     * if the current thread has no associated looper instance, the main looper will be used.
+     * <p>
+     * @return new {@link Handler} instance (using the current thread's looper or the main looper).
+     */
+    @NonNull
+    public static Handler newHandler() {
+        Looper looper = Looper.myLooper();
+        if (looper==null) {
+            looper = Looper.getMainLooper();
+        }
+        return new Handler(looper);
     }
 }

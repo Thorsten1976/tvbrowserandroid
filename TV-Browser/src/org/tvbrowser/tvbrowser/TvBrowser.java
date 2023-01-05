@@ -317,7 +317,7 @@ public final class TvBrowser extends AppCompatActivity {
   protected void onCreate(Bundle savedInstanceState) {
     checkAppReplacingState();
 
-    handler = new Handler();
+    handler = CompatUtils.newHandler();
     mCurrentFilter = new HashSet<>();
     mCurrentFilterId = new HashSet<>();
     mInfoType = INFO_TYPE_NOTHING;

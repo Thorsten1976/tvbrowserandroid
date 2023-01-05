@@ -206,7 +206,7 @@ public class FragmentFavorites extends Fragment implements LoaderManager.LoaderC
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        handler = new Handler();
+        handler = CompatUtils.newHandler();
 
         if (mLoaderUpdate == null) {
             try {
@@ -566,7 +566,7 @@ public class FragmentFavorites extends Fragment implements LoaderManager.LoaderC
         super.onAttach(context);
 
         if (handler == null) {
-            handler = new Handler();
+            handler = CompatUtils.newHandler();
         }
 
         if (mLoaderUpdate == null) {

@@ -40,6 +40,7 @@ import org.tvbrowser.App;
 import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.devplugin.PluginHandler;
 import org.tvbrowser.settings.SettingConstants;
+import org.tvbrowser.utils.CompatUtils;
 import org.tvbrowser.utils.PrefUtils;
 import org.tvbrowser.utils.ProgramUtils;
 import org.tvbrowser.utils.UiUtils;
@@ -94,7 +95,7 @@ public class ActivityTvBrowserSearchResults extends AppCompatActivity implements
     
     // Create a new Adapter an bind it to the List View
     
-    mHandler = new Handler();
+    mHandler = CompatUtils.newHandler();
 
     final ProgramListViewBinderAndClickHandler viewAndClickHandler = new ProgramListViewBinderAndClickHandler(this,this,mHandler);
     mProgramsListAdapter = new OrientationHandlingCursorAdapter(this,R.layout.program_lists_entries,null,
