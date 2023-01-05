@@ -747,11 +747,11 @@ public final class UiUtils {
 
     if (handler == null) {
       view.invalidate();
-      CompatUtils.setBackground(view, draw);
+      view.setBackground(draw);
     } else {
       handler.post(() -> {
         view.invalidate();
-        CompatUtils.setBackground(view, draw);
+        view.setBackground(draw);
       });
     }
   }

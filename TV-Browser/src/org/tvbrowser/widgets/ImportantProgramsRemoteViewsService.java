@@ -347,7 +347,7 @@ public class ImportantProgramsRemoteViewsService extends RemoteViewsService {
           }
         }
         
-        CompatUtils.setRemoteViewsPadding(rv, R.id.important_programs_widget_row, 0, mVerticalPadding, 0, mVerticalPadding);
+        rv.setViewPadding(R.id.important_programs_widget_row, 0, mVerticalPadding, 0, mVerticalPadding);
         
         final CharSequence date = WidgetUtils.getColoredString(UiUtils.formatDate(startTime, mContext, false, true, true), mUserDefinedColorDate);
         final CharSequence time = WidgetUtils.getColoredString(DateFormat.getTimeFormat(mContext).format(new Date(startTime)), mUserDefinedColorTime);

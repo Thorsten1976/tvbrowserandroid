@@ -207,10 +207,10 @@ public final class AsyncInfo extends AsyncTask<Void, Void, Boolean> {
 
                     if (userRemind.get() || favoriteRemind.get()) {
                         handleReminder.setImageResource(R.drawable.ic_action_remove_alarm);
-                        CompatUtils.setBackground(handleReminder, ContextCompat.getDrawable(context, R.drawable.button_selector_remove));
+                        handleReminder.setBackground(ContextCompat.getDrawable(context, R.drawable.button_selector_remove));
                     } else {
                         handleReminder.setImageResource(R.drawable.ic_action_add_alarm);
-                        CompatUtils.setBackground(handleReminder, ContextCompat.getDrawable(context, R.drawable.button_selector_add));
+                        handleReminder.setBackground(ContextCompat.getDrawable(context, R.drawable.button_selector_add));
                     }
 
                     handleReminder.setOnClickListener(v -> {
@@ -235,7 +235,7 @@ public final class AsyncInfo extends AsyncTask<Void, Void, Boolean> {
 
                                 mHandler.post(() -> {
                                     handleReminder.setImageResource(R.drawable.ic_action_remove_alarm);
-                                    CompatUtils.setBackground(handleReminder, ContextCompat.getDrawable(context, R.drawable.button_selector_remove));
+                                    handleReminder.setBackground(ContextCompat.getDrawable(context, R.drawable.button_selector_remove));
                                     handleReminder.invalidate();
                                 });
                             } else {
@@ -248,7 +248,7 @@ public final class AsyncInfo extends AsyncTask<Void, Void, Boolean> {
 
                                 mHandler.post(() -> {
                                     handleReminder.setImageResource(R.drawable.ic_action_add_alarm);
-                                    CompatUtils.setBackground(handleReminder, ContextCompat.getDrawable(context, R.drawable.button_selector_add));
+                                    handleReminder.setBackground(ContextCompat.getDrawable(context, R.drawable.button_selector_add));
                                     handleReminder.invalidate();
                                 });
                             }

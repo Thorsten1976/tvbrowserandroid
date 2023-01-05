@@ -488,10 +488,10 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
     mChannelSelection = rootView.findViewById(R.id.channel_selection);
     
     final Button minus = rootView.findViewById(R.id.channel_minus);
-    CompatUtils.setBackground(minus, ContextCompat.getDrawable(getActivity(),android.R.drawable.list_selector_background));
+    minus.setBackground(ContextCompat.getDrawable(getActivity(),android.R.drawable.list_selector_background));
     
     final Button plus = rootView.findViewById(R.id.channel_plus);
-    CompatUtils.setBackground(plus, ContextCompat.getDrawable(getActivity(),android.R.drawable.list_selector_background));
+    plus.setBackground(ContextCompat.getDrawable(getActivity(),android.R.drawable.list_selector_background));
             
     final ArrayList<ChannelSelection> channelEntries = new ArrayList<>();
     
@@ -611,29 +611,29 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
         }
 
         private View getView(int position, View convertView, ViewGroup parent, int id) {
-            if (convertView == null) {
-                LayoutInflater inflater = getActivity().getLayoutInflater();
+          if (convertView == null) {
+            LayoutInflater inflater = getActivity().getLayoutInflater();
 
-                convertView = inflater.inflate(id, parent, false);
-                ((TextView) convertView).setGravity(Gravity.CENTER_VERTICAL);
-            }
+            convertView = inflater.inflate(id, parent, false);
+            ((TextView) convertView).setGravity(Gravity.CENTER_VERTICAL);
+          }
 
-            String sel = getItem(position);
+          String sel = getItem(position);
 
-            TextView text = (TextView) convertView;
-            text.setText(sel);
+          TextView text = (TextView) convertView;
+          text.setText(sel);
 
-            switch (position) {
-                case 0:
-                case 5:
-            CompatUtils.setBackground(convertView,ContextCompat.getDrawable(getContext(), android.R.drawable.list_selector_background));break;
-          case 1: convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_FAVORITE_COLOR_KEY, getContext()));break;
-          case 2: convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_COLOR_KEY, getContext()));break;
-          case 3: convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_REMINDER_COLOR_KEY, getContext()));break;
-          case 4: convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_SYNC_COLOR_KEY, getContext()));break;
-            }
+          switch (position) {
+            case 0:
+            case 5:
+              convertView.setBackground(ContextCompat.getDrawable(getContext(), android.R.drawable.list_selector_background));break;
+            case 1: convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_FAVORITE_COLOR_KEY, getContext()));break;
+            case 2: convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_COLOR_KEY, getContext()));break;
+            case 3: convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_REMINDER_COLOR_KEY, getContext()));break;
+            case 4: convertView.setBackgroundColor(UiUtils.getColor(UiUtils.MARKED_SYNC_COLOR_KEY, getContext()));break;
+          }
 
-            return convertView;
+          return convertView;
         }
 
         @NonNull
@@ -715,7 +715,7 @@ public class FragmentProgramsList extends Fragment implements LoaderManager.Load
     };
     
     localBroadcastManager.registerReceiver(mChannelUpdateReceiver, channelUpdateFilter);
-    
+
     
     mLoaderUpdate.setIsRunning();
     updateDateSelection();

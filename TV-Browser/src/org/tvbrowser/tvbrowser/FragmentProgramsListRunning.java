@@ -682,7 +682,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
         
         viewHolder.mChannelInfo.setTag(block.mChannelID);
         viewHolder.mChannelInfo.setOnClickListener(mChannelSwitchListener);
-        CompatUtils.setBackground(viewHolder.mChannelInfo, ContextCompat.getDrawable(getActivity(), android.R.drawable.list_selector_background));
+        viewHolder.mChannelInfo.setBackground(ContextCompat.getDrawable(getActivity(), android.R.drawable.list_selector_background));
 
         channelSet = true;
       }
@@ -707,7 +707,7 @@ public class FragmentProgramsListRunning extends Fragment implements LoaderManag
         }.start();
       }
       else {
-        CompatUtils.setBackground(layout, ContextCompat.getDrawable(getActivity(), android.R.drawable.list_selector_background));
+        layout.setBackground(ContextCompat.getDrawable(getActivity(), android.R.drawable.list_selector_background));
       }
     }
     else {

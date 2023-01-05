@@ -375,7 +375,7 @@ public class FragmentFavorites extends Fragment implements LoaderManager.LoaderC
                     }
 
                     if (layerDrawable != null) {
-                        CompatUtils.setBackground(convertView, layerDrawable);
+                        convertView.setBackground(layerDrawable);
                     }
 
                     int pixel = UiUtils.convertDpToPixel(5f, getResources());

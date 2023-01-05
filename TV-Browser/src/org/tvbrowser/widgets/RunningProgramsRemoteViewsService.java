@@ -330,8 +330,8 @@ public final class RunningProgramsRemoteViewsService extends RemoteViewsService 
         
         final CharSequence time = WidgetUtils.getColoredString(
                 DateFormat.getTimeFormat(getApplicationContext()).format(new Date(startTime)), mUserDefinedColorTime);
-        
-        CompatUtils.setRemoteViewsPadding(rv, R.id.running_programs_widget_row, 0, mVerticalPadding, 0, mVerticalPadding);
+
+        rv.setViewPadding(R.id.running_programs_widget_row, 0, mVerticalPadding, 0, mVerticalPadding);
         
         rv.setViewVisibility(R.id.running_programs_widget_row_start_time, View.VISIBLE);
         rv.setViewVisibility(R.id.running_programs_widget_row_channel, View.VISIBLE);

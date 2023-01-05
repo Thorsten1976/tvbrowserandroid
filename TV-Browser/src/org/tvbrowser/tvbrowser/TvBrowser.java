@@ -378,10 +378,10 @@ public final class TvBrowser extends AppCompatActivity {
     final Toolbar toolbar = findViewById(R.id.activity_tvbrowser_toolbar);
     setSupportActionBar(toolbar);
     if(SettingConstants.isReminderPaused(this)) {
-      CompatUtils.setBackground(toolbar, new ColorDrawable(ContextCompat.getColor(this, R.color.activeReminderToolbarBackground)));
+      toolbar.setBackground(new ColorDrawable(ContextCompat.getColor(this, R.color.activeReminderToolbarBackground)));
     }
     else {
-      CompatUtils.setBackground(toolbar, new ColorDrawable(ContextCompat.getColor(this, R.color.colorPrimary)));
+      toolbar.setBackground(new ColorDrawable(ContextCompat.getColor(this, R.color.colorPrimary)));
     }
   }
 

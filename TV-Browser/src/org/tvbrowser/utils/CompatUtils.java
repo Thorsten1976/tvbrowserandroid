@@ -40,7 +40,6 @@ import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
@@ -53,364 +52,327 @@ import android.text.Html;
 import android.text.Spanned;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.View;
-import android.widget.RemoteViews;
 import android.widget.TimePicker;
 
 import androidx.preference.PreferenceManager;
 
 /**
  * A class that uses the current available method of deprecated methods on the Build.VERSION of the running device.
- * 
+ *
  * @author René Mach
  */
 @SuppressLint("NewApi")
 public final class CompatUtils {
 
-  CompatUtils() {}
+    CompatUtils() {}
 
-  public static boolean isKeyguardWidget(int appWidgetId, Context context) {
-    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+    public static boolean isKeyguardWidget(int appWidgetId, Context context) {
       AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context.getApplicationContext());
-      
       return appWidgetManager.getAppWidgetOptions(appWidgetId).getInt(AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY, -1) == AppWidgetProviderInfo.WIDGET_CATEGORY_KEYGUARD;
     }
-    
-    return false;
-  }
-  
-  /**
-   * Sets the view padding for View with viewId of RemoveViews views.
-   * Will only work from JELLY_BEAN.
-   * <p>
-   * @param views The RemoteViews that contains viewId to set the padding for.
-   * @param viewId The viewId to set the padding for
-   * @param left Left padding in pixels.
-   * @param top Top padding in pixels.
-   * @param right Right padding in pixels.
-   * @param bottom Bottom padding in pixels.
-   */
-  public static void setRemoteViewsPadding(RemoteViews views, int viewId, int left, int top, int right, int bottom) {
-    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-      views.setViewPadding(viewId, left, top, right, bottom);
-    }
-  }
-  
-  @SuppressWarnings("deprecation")
-  public static void setBackground(View view, Drawable draw) {
-    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-      view.setBackground(draw);
+
+    public static boolean isInteractive(PowerManager pm) {
+        boolean result;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+            result = pm.isInteractive();
     }
     else {
-      view.setBackgroundDrawable(draw);
-    }
-  }
+            result = pm.isScreenOn();
+        }
 
-  public static boolean isInteractive(PowerManager pm) {
-    boolean result;
-    
-    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
-      result = pm.isInteractive();
+        return result;
+    }
+
+    public static void setExactAlarmAndAllowWhileIdle(AlarmManager alarm, int type, long triggerAtMillis, PendingIntent operation) {
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1) {
+            try {
+                Method setExactAndAllowWhileIdle = alarm.getClass().getDeclaredMethod("setExactAndAllowWhileIdle", int.class, long.class, PendingIntent.class);
+                setExactAndAllowWhileIdle.setAccessible(true);
+                setExactAndAllowWhileIdle.invoke(alarm, type, triggerAtMillis, operation);
+            } catch (Throwable t) {
+                setAlarmExact(alarm, type, triggerAtMillis, operation);
+            }
     }
     else {
-      result = pm.isScreenOn();
+            setAlarmExact(alarm, type, triggerAtMillis, operation);
+        }
     }
-    
-    return result;
-  }
 
-  public static void setExactAlarmAndAllowWhileIdle(AlarmManager alarm, int type, long triggerAtMillis, PendingIntent operation) {
-    if(Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1) {
-      try {
-        Method setExactAndAllowWhileIdle = alarm.getClass().getDeclaredMethod("setExactAndAllowWhileIdle", int.class, long.class, PendingIntent.class);
-        setExactAndAllowWhileIdle.setAccessible(true);
-        setExactAndAllowWhileIdle.invoke(alarm, type, triggerAtMillis, operation);
-      } catch (Throwable t) {
-        setAlarmExact(alarm, type, triggerAtMillis, operation);
-      }
+    public static void setAlarmExact(AlarmManager alarm, int type, long triggerAtMillis, PendingIntent operation) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            alarm.setExact(type, triggerAtMillis, operation);
     }
     else {
-      setAlarmExact(alarm, type, triggerAtMillis, operation);
+            alarm.set(type, triggerAtMillis, operation);
+        }
     }
-  }
 
-  public static void setAlarmExact(AlarmManager alarm, int type, long triggerAtMillis, PendingIntent operation) {
-    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-      alarm.setExact(type, triggerAtMillis, operation);
+    public static void setAlarm(Context context, AlarmManager alarm, int type, long triggerAtMillis, PendingIntent operation, PendingIntent info) {
+        setAlarm(context, alarm, type, triggerAtMillis, operation, info, PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.PREF_REMINDER_AS_ALARM_CLOCK), context.getResources().getBoolean(R.bool.pref_reminder_as_alarm_clock_default)));
     }
-    else {
-      alarm.set(type, triggerAtMillis, operation);
-    }
-  }
 
-  public static void setAlarm(Context context, AlarmManager alarm, int type, long triggerAtMillis, PendingIntent operation, PendingIntent info) {
-    setAlarm(context,alarm,type,triggerAtMillis,operation,info,PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.PREF_REMINDER_AS_ALARM_CLOCK), context.getResources().getBoolean(R.bool.pref_reminder_as_alarm_clock_default)));
-  }
-
-  public static void setAlarm(Context context, AlarmManager alarm, int type, long triggerAtMillis, PendingIntent operation, PendingIntent info, final boolean asAlaramClock) {
-    if(Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1) {
-      // Cheap workaround for Marshmallow doze mode
-      if(asAlaramClock) {
-        alarm.setAlarmClock(new AlarmClockInfo(triggerAtMillis, info), operation);
+    public static void setAlarm(Context context, AlarmManager alarm, int type, long triggerAtMillis, PendingIntent operation, PendingIntent info, final boolean asAlaramClock) {
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1) {
+            // Cheap workaround for Marshmallow doze mode
+            if (asAlaramClock) {
+                alarm.setAlarmClock(new AlarmClockInfo(triggerAtMillis, info), operation);
       }
       else {
-        try {
-          Method setExactAndAllowWhileIdle = alarm.getClass().getDeclaredMethod("setExactAndAllowWhileIdle", int.class, long.class, PendingIntent.class);
-          setExactAndAllowWhileIdle.setAccessible(true);
-          setExactAndAllowWhileIdle.invoke(alarm, type, triggerAtMillis, operation);
-        } catch (Throwable t) {
-          Log.d("info22", "", t);
-          alarm.setExact(type, triggerAtMillis, operation);
-        }
-      }
+                try {
+                    Method setExactAndAllowWhileIdle = alarm.getClass().getDeclaredMethod("setExactAndAllowWhileIdle", int.class, long.class, PendingIntent.class);
+                    setExactAndAllowWhileIdle.setAccessible(true);
+                    setExactAndAllowWhileIdle.invoke(alarm, type, triggerAtMillis, operation);
+                } catch (Throwable t) {
+                    Log.d("info22", "", t);
+                    alarm.setExact(type, triggerAtMillis, operation);
+                }
+            }
     }
     else if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-      alarm.setExact(type, triggerAtMillis, operation);
+            alarm.setExact(type, triggerAtMillis, operation);
     }
     else {
-      alarm.set(type, triggerAtMillis, operation);
+            alarm.set(type, triggerAtMillis, operation);
+        }
     }
-  }
   
-  /*public static String getExternalDocumentsDir() {
-    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-      return Environment.DIRECTORY_DOCUMENTS;
-    }
-    else {
-      return Environment.DIRECTORY_DOWNLOADS;
-    }
-  }
-  
-  public static void quitLooperSafely(Looper looper) {
-    if(looper != null) {
-      if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-        looper.quitSafely();
+      /*public static String getExternalDocumentsDir() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+          return Environment.DIRECTORY_DOCUMENTS;
+        }
+        else {
+          return Environment.DIRECTORY_DOWNLOADS;
+        }
       }
-      else {
-        looper.quit();
-      }
-    }
-  }*/
-  
-  public static boolean acceptFileAsSdCard(File file) {
-    if(Build.VERSION.SDK_INT >= 23) {
-      return file.isDirectory();
+
+      public static void quitLooperSafely(Looper looper) {
+        if(looper != null) {
+          if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            looper.quitSafely();
+          }
+          else {
+            looper.quit();
+          }
+        }
+      }*/
+
+    public static boolean acceptFileAsSdCard(File file) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return file.isDirectory();
     }
     else {
-      return file.isDirectory() && file.getName().toLowerCase(Locale.GERMAN).contains("sdcard");
+            return file.isDirectory() && file.getName().toLowerCase(Locale.GERMAN).contains("sdcard");
+        }
     }
-  }
 
-  public static void setTimePickerHour(final TimePicker timePicker, final int hour) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ) {
-      timePicker.setHour(hour);
+    public static void setTimePickerHour(final TimePicker timePicker, final int hour) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            timePicker.setHour(hour);
     }
     else {
-      timePicker.setCurrentHour(hour);
+            timePicker.setCurrentHour(hour);
+        }
     }
-  }
 
-  public static int getTimePickerHour(final TimePicker timePicker) {
-    int hour;
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-      hour = timePicker.getHour();
-    }
-    else {
-      hour = timePicker.getCurrentHour();
-    }
-    return hour;
-  }
-
-  public static void setTimePickerMinute(final TimePicker timePicker, final int minute) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ) {
-      timePicker.setMinute(minute);
+    public static int getTimePickerHour(final TimePicker timePicker) {
+        int hour;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            hour = timePicker.getHour();
     }
     else {
-      timePicker.setCurrentMinute(minute);
+            hour = timePicker.getCurrentHour();
+        }
+        return hour;
     }
-  }
 
-  public static int getTimePickerMinute(final TimePicker timePicker) {
-    int minute;
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-      minute = timePicker.getMinute();
-    }
-    else {
-      minute = timePicker.getCurrentMinute();
-    }
-    return minute;
-  }
-
-  public static boolean isAtLeastAndroidN() {
-    return Build.VERSION.SDK_INT >= Build.VERSION_CODES.N;
-  }
-
-  public static boolean isAtLeastAndroidO() {
-    return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
-  }
-
-  public static boolean startForegroundService(final Context context, final Intent service) {
-    boolean result;
-
-    if(isAtLeastAndroidO()) {
-      result = context.startForegroundService(service) != null;
+    public static void setTimePickerMinute(final TimePicker timePicker, final int minute) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            timePicker.setMinute(minute);
     }
     else {
-      result = context.startService(service) != null;
+            timePicker.setCurrentMinute(minute);
+        }
     }
 
-    return result;
-  }
-
-  @SuppressWarnings("deprecation")
-  public static Spanned fromHtml(String html){
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-      return Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY);
-    } else {
-      return Html.fromHtml(html);
+    public static int getTimePickerMinute(final TimePicker timePicker) {
+        int minute;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            minute = timePicker.getMinute();
     }
-  }
-
-  @SuppressWarnings("deprecation")
-  public static Spanned fromHtml(String source, Html.ImageGetter imageGetter, Html.TagHandler tagHandler) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-      return Html.fromHtml(source, Html.FROM_HTML_MODE_LEGACY, imageGetter, tagHandler);
-    } else {
-      return Html.fromHtml(source, imageGetter, tagHandler);
+    else {
+            minute = timePicker.getCurrentMinute();
+        }
+        return minute;
     }
-  }
 
-  @SuppressWarnings("deprecation")
-  @Nullable
-  public static NetworkInfo getNetworkInfo(@Nullable final ConnectivityManager connectivityManager, final int type) {
-    if (connectivityManager!=null) {
-      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-        return connectivityManager.getNetworkInfo(type);
-      } else {
-        final Network[] networks = connectivityManager.getAllNetworks();
-        if (networks != null) {
-        for (final Network network : networks) {
-          if (network != null) {
-            final NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
-            if (networkInfo != null && networkInfo.getType() == type) {
-              return networkInfo;
+    public static boolean isAtLeastAndroidN() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.N;
+    }
+
+    public static boolean isAtLeastAndroidO() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
+    }
+
+    public static boolean startForegroundService(final Context context, final Intent service) {
+        boolean result;
+
+        if (isAtLeastAndroidO()) {
+            result = context.startForegroundService(service) != null;
+    }
+    else {
+            result = context.startService(service) != null;
+        }
+
+        return result;
+    }
+
+    @SuppressWarnings("deprecation")
+    public static Spanned fromHtml(String html) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            return Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY);
+        } else {
+            return Html.fromHtml(html);
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    public static Spanned fromHtml(String source, Html.ImageGetter imageGetter, Html.TagHandler tagHandler) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            return Html.fromHtml(source, Html.FROM_HTML_MODE_LEGACY, imageGetter, tagHandler);
+        } else {
+            return Html.fromHtml(source, imageGetter, tagHandler);
+        }
+    }
+
+    /**
+     * Wraps context with {@link WorkaroundContextForSamsungLDateTimeBug} instance if needed.
+     */
+    @Nullable
+    public static Context getDatePickerContext(final @Nullable Context context) {
+        if (context != null && (Build.VERSION.SDK_INT == Build.VERSION_CODES.LOLLIPOP
+                || Build.VERSION.SDK_INT == Build.VERSION_CODES.LOLLIPOP_MR1)) {
+            return new WorkaroundContextForSamsungLDateTimeBug(context);
+        }
+
+        return context;
+    }
+
+    /**
+     * Hack to force overflow menu button to be shown from:
+     * <a href="http://stackoverflow.com/questions/9286822/how-to-force-use-of-overflow-menu-on-devices-with-menu-button">http://stackoverflow.com/questions/9286822/how-to-force-use-of-overflow-menu-on-devices-with-menu-button</a>
+     * Access to sHasPermanentMenuKey is restricted starting with Android 9.0 Pie (SDK28):
+     * <a href="https://developer.android.com/about/versions/pie/restrictions-non-sdk-interfaces">https://developer.android.com/about/versions/pie/restrictions-non-sdk-interfaces</a>
+     */
+    @SuppressWarnings("JavaReflectionMemberAccess")
+    public static void forceOverflowMenu(@NonNull final Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+            final ViewConfiguration viewConfiguration = ViewConfiguration.get(context);
+            if (viewConfiguration != null && viewConfiguration.hasPermanentMenuKey()) {
+                try {
+                    final Field hasPermanentMenuKey = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+                    hasPermanentMenuKey.setAccessible(true);
+                    hasPermanentMenuKey.setBoolean(viewConfiguration, false);
+                } catch (Exception ignored) {
+                }
             }
-          }
         }
-      }
-    }
-    }
-    return null;
-  }
-
-  /**
-   * Wraps context with {@link WorkaroundContextForSamsungLDateTimeBug} instance if needed.
-   */
-  @Nullable
-  public static Context getDatePickerContext(final @Nullable Context context) {
-    if (context!=null && (Build.VERSION.SDK_INT == Build.VERSION_CODES.LOLLIPOP
-            || Build.VERSION.SDK_INT == Build.VERSION_CODES.LOLLIPOP_MR1)) {
-      return new WorkaroundContextForSamsungLDateTimeBug(context);
     }
 
-    return context;
-  }
+    /**
+     * Workaround for Samsung Lollipop devices that may crash due to wrong string resource supplied
+     * to {@code SimpleMonthView}'s content description.
+     */
+    private static class WorkaroundContextForSamsungLDateTimeBug extends ContextWrapper {
+        private Resources mWrappedResources;
 
-  /**
-   * Hack to force overflow menu button to be shown from:
-   * <a href="http://stackoverflow.com/questions/9286822/how-to-force-use-of-overflow-menu-on-devices-with-menu-button">http://stackoverflow.com/questions/9286822/how-to-force-use-of-overflow-menu-on-devices-with-menu-button</a>
-   * Access to sHasPermanentMenuKey is restricted starting with Android 9.0 Pie (SDK28):
-   * <a href="https://developer.android.com/about/versions/pie/restrictions-non-sdk-interfaces">https://developer.android.com/about/versions/pie/restrictions-non-sdk-interfaces</a>
-   */
-  @SuppressWarnings("JavaReflectionMemberAccess")
-  public static void forceOverflowMenu(@NonNull final Context context) {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-      final ViewConfiguration viewConfiguration = ViewConfiguration.get(context);
-      if (viewConfiguration!=null && viewConfiguration.hasPermanentMenuKey()) {
-        try {
-          final Field hasPermanentMenuKey = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
-          hasPermanentMenuKey.setAccessible(true);
-          hasPermanentMenuKey.setBoolean(viewConfiguration, false);
-        } catch (Exception ignored) {
+        private WorkaroundContextForSamsungLDateTimeBug(final @NonNull Context context) {
+            super(context);
         }
-      }
-    }
-  }
 
-  /**
-   * Workaround for Samsung Lollipop devices that may crash due to wrong string resource supplied
-   * to {@code SimpleMonthView}'s content description.
-   */
-  private static class WorkaroundContextForSamsungLDateTimeBug extends ContextWrapper {
-    private Resources mWrappedResources;
-
-    private WorkaroundContextForSamsungLDateTimeBug(final @NonNull Context context) {
-      super(context);
-    }
-
-    @Override
-    public Resources getResources() {
-      if (mWrappedResources == null) {
-        final Resources r = super.getResources();
-        mWrappedResources = new WrappedResources(
+        @Override
+        public Resources getResources() {
+            if (mWrappedResources == null) {
+                final Resources r = super.getResources();
+                mWrappedResources = new WrappedResources(
                 r.getAssets(), r.getDisplayMetrics(), r.getConfiguration()) {};
-      }
-      return mWrappedResources;
-    }
-
-    private static class WrappedResources extends Resources {
-      WrappedResources(final AssetManager assets, final DisplayMetrics displayMetrics,
-                       final Configuration configuration) {
-        super(assets, displayMetrics, configuration);
-      }
-
-      @NonNull
-      @Override
-      public String getString(final int id, final Object... formatArgs) throws NotFoundException {
-        try {
-          return super.getString(id, formatArgs);
-        } catch (IllegalFormatConversionException conversationException) {
-          String template = super.getString(id);
-          final char conversion = conversationException.getConversion();
-          // Trying to replace either all digit patterns (%d) or first one (%1$d).
-          template = template.replaceAll(Pattern.quote("%" + conversion), "%s")
-                  .replaceAll(Pattern.quote("%1$" + conversion), "%s");
-          Locale locale = getPrimaryUserLocale(getConfiguration());
-          if (locale==null) {
-            locale = Locale.getDefault();
-          }
-          return String.format(locale, template, formatArgs);
+            }
+            return mWrappedResources;
         }
-      }
-    }
-  }
 
-  @SuppressWarnings({"WeakerAccess"})
-  @NonNull
-  public static Locale getPrimaryUserLocale(@NonNull final Configuration configuration) {
-    final Locale result;
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-      final LocaleList locales = configuration.getLocales();
-      if (locales.size() > 0) {
-        result = locales.get(0);
-      } else {
-        result = Locale.getDefault();
-      }
-    } else {
-      result = configuration.locale;
-    }
-    return result;
-  }
+        private static class WrappedResources extends Resources {
+            WrappedResources(final AssetManager assets, final DisplayMetrics displayMetrics,
+                             final Configuration configuration) {
+                super(assets, displayMetrics, configuration);
+            }
 
-  public static boolean showWidgetRefreshInfo() {
-    final PrefUtils prefs = App.get().prefs();
-    boolean show = prefs.getBooleanValueWithDefaultKey(R.string.PREF_WIDGET_REFRESH_WARNING, R.bool.pref_widget_refresh_warning_default);
-
-    if(show && !Build.MANUFACTURER.toLowerCase(Locale.GERMAN).contains("huawei")) {
-      show = false;
-      prefs.setValue(R.string.PREF_WIDGET_REFRESH_WARNING, false);
+            @NonNull
+            @Override
+            public String getString(final int id, final Object... formatArgs) throws NotFoundException {
+                try {
+                    return super.getString(id, formatArgs);
+                } catch (IllegalFormatConversionException conversationException) {
+                    String template = super.getString(id);
+                    final char conversion = conversationException.getConversion();
+                    // Trying to replace either all digit patterns (%d) or first one (%1$d).
+                    template = template.replaceAll(Pattern.quote("%" + conversion), "%s")
+                            .replaceAll(Pattern.quote("%1$" + conversion), "%s");
+                    final Locale locale = getPrimaryUserLocale(getConfiguration());
+                    return String.format(locale, template, formatArgs);
+                }
+            }
+        }
     }
 
-    return show && isAtLeastAndroidO();
-  }
+    @SuppressWarnings({"WeakerAccess"})
+    @NonNull
+    public static Locale getPrimaryUserLocale(@NonNull final Configuration configuration) {
+        final Locale result;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            final LocaleList locales = configuration.getLocales();
+            if (locales.size() > 0) {
+                result = locales.get(0);
+            } else {
+                result = Locale.getDefault();
+            }
+        } else {
+            result = configuration.locale;
+        }
+        return result;
+    }
+
+    public static boolean showWidgetRefreshInfo() {
+        final PrefUtils prefs = App.get().prefs();
+        boolean show = prefs.getBooleanValueWithDefaultKey(R.string.PREF_WIDGET_REFRESH_WARNING, R.bool.pref_widget_refresh_warning_default);
+
+        if (show && !Build.MANUFACTURER.toLowerCase(Locale.GERMAN).contains("huawei")) {
+            show = false;
+            prefs.setValue(R.string.PREF_WIDGET_REFRESH_WARNING, false);
+        }
+
+        return show && isAtLeastAndroidO();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Nullable
+    public static NetworkInfo getNetworkInfo(@Nullable final ConnectivityManager connectivityManager, final int type) {
+        if (connectivityManager != null) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                return connectivityManager.getNetworkInfo(type);
+            } else {
+                final Network[] networks = connectivityManager.getAllNetworks();
+                if (networks != null) {
+                    for (final Network network : networks) {
+                        if (network != null) {
+                            final NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
+                            if (networkInfo != null && networkInfo.getType() == type) {
+                                return networkInfo;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
 }
