@@ -85,7 +85,7 @@ public class InfoActivity extends AppCompatActivity {
     }
     else if (programID >= 0) {
       setTheme(UiUtils.getThemeResourceId(UiUtils.TYPE_THEME_TRANSLUCENT, prefs.isDarkTheme()));
-      AsyncInfo.showProgramInfo(this, programID, this, getCurrentFocus(), CompatUtils.newHandler(););
+      AsyncInfo.showProgramInfo(this, programID, this, getCurrentFocus(), CompatUtils.newHandler());
     }
     else if(intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
       final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(InfoActivity.this);
