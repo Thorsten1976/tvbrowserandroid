@@ -1350,4 +1350,6 @@
     <string name="widget_toggle_reminder_state">Activate/deactive reminders</string>
     <string name="uninstall">Uninstall</string>
 
+    <string name="yes">Yes</string>
+
 </resources>

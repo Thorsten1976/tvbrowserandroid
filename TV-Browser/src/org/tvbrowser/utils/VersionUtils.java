@@ -58,11 +58,11 @@ public final class VersionUtils {
     try {
 
       final Context applicationContext = tvBrowser.getApplicationContext();
-      final PackageInfo pInfo = applicationContext.getPackageManager().getPackageInfo(applicationContext.getPackageName(), 0);
+      final PackageInfo pInfo = CompatUtils.getPackageInfo(applicationContext);
       final PrefUtils prefUtils = App.get().prefs();
       final SharedPreferences defaultSharedPreferences = prefUtils.getDefault();
 
-      final int currentVersion = pInfo.versionCode;
+      final int currentVersion = CompatUtils.getVersionCode(pInfo);
       final int oldVersion = prefUtils.getIntValueWithDefaultKey(R.string.OLD_VERSION, R.integer.old_version_default);
 
       Log.i("VersionUtils", String.format(Locale.getDefault(), "applyUpdates [currentVersion=%d, oldVersion=%d]", currentVersion, oldVersion));
@@ -301,7 +301,6 @@ public final class VersionUtils {
     } catch (final PackageManager.NameNotFoundException nameNotFoundException) {
       nameNotFoundException.printStackTrace();
     }
-
   }
 
   private static boolean addUserColor(@NonNull final Context context,

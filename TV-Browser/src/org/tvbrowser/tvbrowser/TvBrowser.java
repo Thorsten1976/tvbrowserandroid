@@ -2771,7 +2771,7 @@ public final class TvBrowser extends AppCompatActivity {
             builder.setCancelable(false);
             builder.setTitle(getString(R.string.sort_alphabetically)+"?");
             builder.setMessage(R.string.dialog_sort_alphabetically_message);
-            builder.setPositiveButton(android.R.string.yes, (dialog, which) -> {
+            builder.setPositiveButton(R.string.yes, (dialog, which) -> {
               Collections.sort(channelSource, (lhs, rhs) -> UiUtils.getCollator().compare(lhs.getName(), rhs.getName()));
 
               for (int i = 0; i < channelSource.size(); i++) {
@@ -3737,7 +3737,7 @@ public final class TvBrowser extends AppCompatActivity {
     View about = getLayoutInflater().inflate(R.layout.dialog_about, getParentViewGroup(), false);
 
     try {
-      PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+      final PackageInfo pInfo = CompatUtils.getPackageInfo(this);
       TextView version = about.findViewById(R.id.version);
       version.setText(pInfo.versionName);
     } catch (NameNotFoundException e) {

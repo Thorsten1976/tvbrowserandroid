@@ -23,6 +23,8 @@ import java.util.IllegalFormatConversionException;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.view.ViewConfiguration;
 
 import org.tvbrowser.App;
@@ -54,6 +56,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.TimePicker;
 
+import androidx.core.content.PackageManagerCompat;
 import androidx.preference.PreferenceManager;
 
 /**
@@ -353,6 +356,27 @@ public final class CompatUtils {
         return show && isAtLeastAndroidO();
     }
 
+    /**
+     * Returns the {@link PackageInfo} of this application in a SDK independent way.
+     * <p>
+     * @param context application context to retrieve the {@link PackageManager} from
+     * @throws PackageManager.NameNotFoundException if the package is not available to the caller.
+     */
+    public static PackageInfo getPackageInfo(@NonNull final Context context) throws PackageManager.NameNotFoundException {
+        final PackageManager packageManager = context.getApplicationContext().getPackageManager();
+        final PackageInfo packageInfo;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            packageInfo = packageManager.getPackageInfo(context.getPackageName(), PackageManager.PackageInfoFlags.of(0L));
+        } else {
+            packageInfo = packageManager.getPackageInfo(context.getPackageName(), 0);
+        }
+        return packageInfo;
+    }
+
+    public static int getVersionCode(@NonNull final PackageInfo packageInfo) {
+        return (int) PackageInfoCompat.getLongVersionCode(packageInfo);
+    }
+
     @SuppressWarnings("deprecation")
     @Nullable
     public static NetworkInfo getNetworkInfo(@Nullable final ConnectivityManager connectivityManager, final int type) {
@@ -375,4 +399,48 @@ public final class CompatUtils {
         }
         return null;
     }
+
+/*
+    public static boolean isConnected(@NonNull final Context context) {
+        boolean result = false;
+        final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Network activeNetwork = connectivityManager.getActiveNetwork();
+            NetworkCapabilities networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork);
+            networkCapabilities.hasTransport(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        }
+        else {
+
+        }
+        return result;
+    }
+
+    private fun isInternetAvailable(context: Context): Boolean {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val networkCapabilities = connectivityManager.activeNetwork ?: return false
+            val actNw =
+                    connectivityManager.getNetworkCapabilities(networkCapabilities) ?: return false
+            result = when {
+                actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+                actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+                actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
+                else -> false
+            }
+        } else {
+            connectivityManager.run {
+                connectivityManager.activeNetworkInfo?.run {
+                    result = when (type) {
+                        ConnectivityManager.TYPE_WIFI -> true
+                        ConnectivityManager.TYPE_MOBILE -> true
+                        ConnectivityManager.TYPE_ETHERNET -> true
+                        else -> false
+                    }
+
+                }
+            }
+        }
+
+        return result
+    }*/
 }

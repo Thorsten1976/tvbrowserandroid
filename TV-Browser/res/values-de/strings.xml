@@ -1330,4 +1330,6 @@
 	<string name="widget_toggle_reminder_state">Erinnerungen aktivieren/deaktivieren</string>
     <string name="uninstall">Deinstallieren</string>
 
+    <string name="yes">Ja</string>
+
 </resources>

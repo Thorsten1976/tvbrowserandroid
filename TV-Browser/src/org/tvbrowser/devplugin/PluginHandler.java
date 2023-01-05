@@ -27,6 +27,7 @@ import org.tvbrowser.content.TvBrowserContentProvider;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.tvbrowser.Logging;
 import org.tvbrowser.tvbrowser.R;
+import org.tvbrowser.utils.CompatUtils;
 import org.tvbrowser.utils.IOUtils;
 import org.tvbrowser.utils.PrefUtils;
 import org.tvbrowser.utils.ProgramUtils;
@@ -117,9 +118,9 @@ public final class PluginHandler {
         int versionCode = -1;
 
         try {
-          PackageInfo pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+          final PackageInfo pInfo = CompatUtils.getPackageInfo(context);
           version = pInfo.versionName;
-          versionCode = pInfo.versionCode;
+          versionCode = CompatUtils.getVersionCode(pInfo);
         } catch (NameNotFoundException ignored) {}
         final PrefUtils prefUtils = App.get().prefs();
         return new TvBrowserSettings(prefUtils.isDarkTheme(), version, versionCode,
