@@ -16,20 +16,6 @@
  */
 package org.tvbrowser.utils;
 
-import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.IllegalFormatConversionException;
-import java.util.Locale;
-import java.util.regex.Pattern;
-
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.view.ViewConfiguration;
-
-import org.tvbrowser.App;
-import org.tvbrowser.tvbrowser.R;
-
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.AlarmManager.AlarmClockInfo;
@@ -39,6 +25,8 @@ import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -48,16 +36,27 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.LocaleList;
 import android.os.PowerManager;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import android.text.Html;
 import android.text.Spanned;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.ViewConfiguration;
 import android.widget.TimePicker;
 
-import androidx.core.content.PackageManagerCompat;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.pm.PackageInfoCompat;
 import androidx.preference.PreferenceManager;
+
+import org.tvbrowser.App;
+import org.tvbrowser.tvbrowser.R;
+
+import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.IllegalFormatConversionException;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
  * A class that uses the current available method of deprecated methods on the Build.VERSION of the running device.
@@ -399,48 +398,4 @@ public final class CompatUtils {
         }
         return null;
     }
-
-/*
-    public static boolean isConnected(@NonNull final Context context) {
-        boolean result = false;
-        final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Network activeNetwork = connectivityManager.getActiveNetwork();
-            NetworkCapabilities networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork);
-            networkCapabilities.hasTransport(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-        }
-        else {
-
-        }
-        return result;
-    }
-
-    private fun isInternetAvailable(context: Context): Boolean {
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val networkCapabilities = connectivityManager.activeNetwork ?: return false
-            val actNw =
-                    connectivityManager.getNetworkCapabilities(networkCapabilities) ?: return false
-            result = when {
-                actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
-                actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-                actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
-                else -> false
-            }
-        } else {
-            connectivityManager.run {
-                connectivityManager.activeNetworkInfo?.run {
-                    result = when (type) {
-                        ConnectivityManager.TYPE_WIFI -> true
-                        ConnectivityManager.TYPE_MOBILE -> true
-                        ConnectivityManager.TYPE_ETHERNET -> true
-                        else -> false
-                    }
-
-                }
-            }
-        }
-
-        return result
-    }*/
 }
