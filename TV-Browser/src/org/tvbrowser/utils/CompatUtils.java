@@ -274,6 +274,7 @@ public final class CompatUtils {
             final ViewConfiguration viewConfiguration = ViewConfiguration.get(context);
             if (viewConfiguration != null && viewConfiguration.hasPermanentMenuKey()) {
                 try {
+                    @SuppressLint("DiscouragedPrivateApi")
                     final Field hasPermanentMenuKey = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
                     hasPermanentMenuKey.setAccessible(true);
                     hasPermanentMenuKey.setBoolean(viewConfiguration, false);

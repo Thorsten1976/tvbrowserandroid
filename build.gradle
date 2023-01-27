@@ -8,8 +8,11 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.1.0-alpha02'
+        classpath 'com.google.dagger:hilt-android-gradle-plugin:2.44.2'
     }
 }
+
+// plugins { id 'com.google.dagger.hilt.android' version '2.44.2' apply false }
 
 allprojects {
     repositories {
@@ -20,7 +23,8 @@ allprojects {
     gradle.projectsEvaluated {
         tasks.withType(JavaCompile).tap {
             configureEach {
-            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+                options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+            }
         }
     }
-}}
+}

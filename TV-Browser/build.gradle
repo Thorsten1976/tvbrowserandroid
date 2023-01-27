@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'dagger.hilt.android.plugin'
 
 //import groovy.swing.SwingBuilder
 //System.setProperty('java.awt.headless', 'false')
@@ -243,6 +244,8 @@ if (project.hasProperty("AndroidProject.signing")
 }
 
 dependencies {
+    // annotationProcessor 'androidx.hilt:hilt-compiler:1.0.0'
+    annotationProcessor 'com.google.dagger:hilt-compiler:2.44.2'
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.0'
     implementation 'androidx.appcompat:appcompat:1.7.0-alpha01'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.0-alpha06'
@@ -252,6 +255,7 @@ dependencies {
     implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
     implementation 'androidx.work:work-runtime:2.7.1'
     implementation 'com.google.android.material:material:1.8.0'
+    implementation 'com.google.dagger:hilt-android:2.44.2'
     implementation project(path: ':ListViewDraggingAnimation')
     implementation project(path: ':ToastCompat')
 }

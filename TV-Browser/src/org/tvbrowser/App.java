@@ -20,6 +20,9 @@ import org.tvbrowser.utils.CompatUtils;
 import org.tvbrowser.utils.PrefUtils;
 import org.tvbrowser.utils.UiUtils;
 
+import dagger.hilt.android.HiltAndroidApp;
+
+@HiltAndroidApp
 public final class App extends Application {
   public static final int TYPE_NOTIFICATION_DEFAULT = 0;
   public static final int TYPE_NOTIFICATION_REMINDER_DAY = 1;
