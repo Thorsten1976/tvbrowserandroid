@@ -127,7 +127,7 @@ public abstract class FilterValues {
     }
     
     if(removed) {
-      pref.edit().putStringSet(context.getString(R.string.CURRENT_FILTER_ID), test).commit();
+      pref.edit().putStringSet(context.getString(R.string.CURRENT_FILTER_ID), test).apply();
     }
   }
   

@@ -510,7 +510,7 @@ public final class UiUtils {
                   Editor edit = PreferenceManager.getDefaultSharedPreferences(activity).edit();
 
                   edit.putStringSet(key, newDontWantToSeeSet);
-                  edit.commit();
+                  edit.apply();
                 }
               }
             });
@@ -617,7 +617,7 @@ public final class UiUtils {
             Editor edit = PreferenceManager.getDefaultSharedPreferences(activity).edit();
 
             edit.putStringSet(activity.getResources().getString(R.string.I_DONT_WANT_TO_SEE_ENTRIES), newExclusionSet);
-            edit.commit();
+            edit.apply();
           }
 
           return true;

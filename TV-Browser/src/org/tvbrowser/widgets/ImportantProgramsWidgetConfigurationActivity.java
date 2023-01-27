@@ -171,7 +171,7 @@ public class ImportantProgramsWidgetConfigurationActivity extends Activity {
       edit.remove(mAppWidgetId+"_"+getString(R.string.WIDGET_CONFIG_IMPORTANT_LIMIT_COUNT));
     }
     
-    edit.commit();
+    edit.apply();
     
     Intent result = new Intent();
     

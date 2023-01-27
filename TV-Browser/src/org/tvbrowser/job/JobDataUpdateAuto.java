@@ -182,7 +182,7 @@ public class JobDataUpdateAuto extends Worker {
             long start = last.getTimeInMillis() + (long) (Math.random() * (60 * 60000L));
 
             // end = (time + 1) * 60000L;
-            prefs.getDefault().edit().putLong(context.getString(R.string.AUTO_UPDATE_CURRENT_START_TIME), start).commit();
+            prefs.getDefault().edit().putLong(context.getString(R.string.AUTO_UPDATE_CURRENT_START_TIME), start).apply();
             Logging.log("info9", "START " + new Date(start), Logging.TYPE_DATA_UPDATE, context);
 
             builder.setInitialDelay(start - currentTime, TimeUnit.MILLISECONDS);
@@ -205,7 +205,7 @@ public class JobDataUpdateAuto extends Worker {
           if (timeCurrent + 60 * 60000L < end && timeCurrent > System.currentTimeMillis() + 60000L) {
             end = timeCurrent - System.currentTimeMillis();
           } else {
-            prefs.getDefault().edit().putLong(context.getString(R.string.AUTO_UPDATE_CURRENT_START_TIME), System.currentTimeMillis() + start).commit();
+            prefs.getDefault().edit().putLong(context.getString(R.string.AUTO_UPDATE_CURRENT_START_TIME), System.currentTimeMillis() + start).apply();
           }
 
           Logging.log("info9", "NET START " + new Date(System.currentTimeMillis() + start), Logging.TYPE_DATA_UPDATE, context);

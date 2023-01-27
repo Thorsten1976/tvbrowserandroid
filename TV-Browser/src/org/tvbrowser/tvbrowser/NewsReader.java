@@ -160,7 +160,7 @@ class NewsReader {
       edit.putLong(context.getString(R.string.NEWS_DATE_LAST_KNOWN), newestNewsDate);
       edit.putLong(context.getString(R.string.NEWS_DATE_LAST_DOWNLOAD), System.currentTimeMillis());
       
-      edit.commit();
+      edit.apply();
     } catch (Exception ignored) {}
   }
   

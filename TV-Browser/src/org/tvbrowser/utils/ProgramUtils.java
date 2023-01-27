@@ -425,7 +425,7 @@ public class ProgramUtils {
       }
     }
     
-    edit.commit();
+    edit.apply();
   }
   
   private static ImageSpan ICON_REMINDER;

@@ -60,7 +60,7 @@ public class Logging {
           
           Editor edit = PreferenceManager.getDefaultSharedPreferences(context).edit();
           edit.putLong(context.getString(logKey), log.getFilePointer());
-          edit.commit();
+          edit.apply();
           
           log.writeBytes(" --- NEWEST ENTRY ABOVE THIS LINE --- \n");
         }

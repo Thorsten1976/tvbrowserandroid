@@ -882,7 +882,7 @@ public class TvDataUpdateService extends Service {
                 }
             }
 
-            edit.commit();
+            edit.apply();
 
             mCurrentChannelData.clear();
             mCurrentChannelData = null;
@@ -1990,7 +1990,7 @@ public class TvDataUpdateService extends Service {
             edit.putString(getString(R.string.PREF_AUTO_CHANNEL_UPDATE_CHANNELS_INSERTED), TextUtils.join(",", updatedIdsList));
         }
 
-        edit.commit();
+        edit.apply();
 
         Intent updateDone = new Intent(SettingConstants.CHANNEL_DOWNLOAD_COMPLETE);
         updateDone.putExtra(SettingConstants.EXTRA_CHANNEL_DOWNLOAD_SUCCESSFULLY, success.getBoolean());
@@ -3105,7 +3105,7 @@ public class TvDataUpdateService extends Service {
                                                     }
                                                 }
 
-                                                edit.commit();
+                                                edit.apply();
                                                 donationInfoLoaded = true;
                                             }
 

@@ -283,7 +283,7 @@ public class TvbPreferenceFragment extends PreferenceFragment implements OnShare
       else if(key.equals(getString(R.string.PREF_AUTO_UPDATE_START_TIME))) {
         Editor edit = sharedPreferences.edit();
         edit.putLong(getString(R.string.AUTO_UPDATE_CURRENT_START_TIME), 0);
-        edit.commit();
+        edit.apply();
         
         IOUtils.handleDataUpdatePreferences(getActivity());
       }
@@ -465,7 +465,7 @@ public class TvbPreferenceFragment extends PreferenceFragment implements OnShare
                 if (sharedPreferences.getInt(getString(R.string.PREF_RUNNING_TIME_SELECTION), ContextCompat.getColor(context, R.color.pref_color_running_time_selection_background_glow_style_default)) == ContextCompat.getColor(context, R.color.pref_color_running_time_selection_background_glow_style_default)) {
                   Editor edit = sharedPreferences.edit();
                   edit.putInt(getString(R.string.PREF_RUNNING_TIME_SELECTION), ContextCompat.getColor(context, R.color.pref_color_running_time_selection_background_tvb_style_default));
-                  edit.commit();
+                  edit.apply();
                 }
                 break;
               }
@@ -486,7 +486,7 @@ public class TvbPreferenceFragment extends PreferenceFragment implements OnShare
                 if (sharedPreferences.getInt(getString(R.string.PREF_RUNNING_TIME_SELECTION), ContextCompat.getColor(context, R.color.pref_color_running_time_selection_background_tvb_style_default)) == ContextCompat.getColor(context, R.color.pref_color_running_time_selection_background_tvb_style_default)) {
                   Editor edit = sharedPreferences.edit();
                   edit.putInt(getString(R.string.PREF_RUNNING_TIME_SELECTION), ContextCompat.getColor(context, R.color.pref_color_running_time_selection_background_glow_style_default));
-                  edit.commit();
+                  edit.apply();
                 }
                 break;
               }
@@ -507,7 +507,7 @@ public class TvbPreferenceFragment extends PreferenceFragment implements OnShare
                 if (sharedPreferences.getInt(getString(R.string.PREF_RUNNING_TIME_SELECTION), ContextCompat.getColor(context, R.color.pref_color_running_time_selection_background_tvb_style_default)) == ContextCompat.getColor(context, R.color.pref_color_running_time_selection_background_tvb_style_default)) {
                   Editor edit = sharedPreferences.edit();
                   edit.putInt(getString(R.string.PREF_RUNNING_TIME_SELECTION), ContextCompat.getColor(context, R.color.pref_color_running_time_selection_background_decent_dark_style_default));
-                  edit.commit();
+                  edit.apply();
                 }
                 break;
               }
@@ -884,7 +884,7 @@ public class TvbPreferenceFragment extends PreferenceFragment implements OnShare
     if(currentStyle != null && currentStyle.getValue() != null && currentStyle.getValue().equals("0")) {
       Editor edit = pref.edit();
       edit.putInt(getString(valueKey), color.getColor());
-      edit.commit();
+      edit.apply();
     }
   }
 }

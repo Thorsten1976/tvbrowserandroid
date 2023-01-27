@@ -268,7 +268,7 @@ public class ImportantProgramsListWidget extends AppWidgetProvider {
         edit.remove(appWidgetId + "_" + context.getString(R.string.WIDGET_CONFIG_IMPORTANT_SHOWN_SYNCHRONIZED));
       }
       
-      edit.commit();
+      edit.apply();
     }
     
     super.onDeleted(context, appWidgetIds);

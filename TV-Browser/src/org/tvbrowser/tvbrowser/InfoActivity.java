@@ -169,7 +169,7 @@ public class InfoActivity extends AppCompatActivity {
 
         Editor edit = pref.edit();
         edit.putInt(appWidgetId + "_" + getString(R.string.WIDGET_CONFIG_RUNNING_TIME), value);
-        edit.commit();
+        edit.apply();
 
         Intent update = new Intent(getApplicationContext(), RunningProgramsListWidget.class);
         update.setAction(SettingConstants.UPDATE_RUNNING_APP_WIDGET);
@@ -212,7 +212,7 @@ public class InfoActivity extends AppCompatActivity {
           
           Editor edit = pref.edit();
           edit.putString(appWidgetId+"_"+getString(R.string.WIDGET_CONFIG_PROGRAM_LIST_CHANNELS), value.toString());
-          edit.commit();
+          edit.apply();
           
           AppWidgetManager.getInstance(getApplicationContext()).notifyAppWidgetViewDataChanged(appWidgetId, R.id.important_widget_list_view);
           

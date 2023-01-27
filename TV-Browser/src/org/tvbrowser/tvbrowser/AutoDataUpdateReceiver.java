@@ -157,7 +157,7 @@ public class AutoDataUpdateReceiver extends BroadcastReceiver {
     
     Editor currentTime = PreferenceManager.getDefaultSharedPreferences(context).edit();
     currentTime.putLong(context.getString(R.string.AUTO_UPDATE_CURRENT_START_TIME), current);
-    currentTime.commit();
+    currentTime.apply();
     
     IOUtils.setDataUpdateTime(context, current, pref);
   }
