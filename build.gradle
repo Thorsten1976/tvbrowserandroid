@@ -7,7 +7,7 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.4.0-rc03'
+        classpath 'com.android.tools.build:gradle:8.1.0-alpha02'
     }
 }
 
@@ -18,8 +18,9 @@ allprojects {
         google()
     }
     gradle.projectsEvaluated {
-        tasks.withType(JavaCompile) {
+        tasks.withType(JavaCompile).tap {
+            configureEach {
             options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
         }
     }
-}
+}}

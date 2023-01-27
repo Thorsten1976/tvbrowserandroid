@@ -245,13 +245,13 @@ if (project.hasProperty("AndroidProject.signing")
 dependencies {
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.0'
     implementation 'androidx.appcompat:appcompat:1.7.0-alpha01'
-    implementation 'androidx.constraintlayout:constraintlayout:2.2.0-alpha05'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0-alpha06'
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation 'androidx.preference:preference:1.2.0'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
     implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
     implementation 'androidx.work:work-runtime:2.7.1'
-    implementation 'com.google.android.material:material:1.7.0'
+    implementation 'com.google.android.material:material:1.8.0'
     implementation project(path: ':ListViewDraggingAnimation')
     implementation project(path: ':ToastCompat')
 }
