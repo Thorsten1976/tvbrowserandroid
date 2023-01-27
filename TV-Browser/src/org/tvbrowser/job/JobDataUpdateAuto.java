@@ -241,7 +241,7 @@ public class JobDataUpdateAuto extends Worker {
 
       final AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
 
-      PendingIntent pending = PendingIntent.getBroadcast(context, ID_ALARM, remind, PendingIntent.FLAG_UPDATE_CURRENT);
+      PendingIntent pending = PendingIntent.getBroadcast(context, ID_ALARM, remind, CompatUtils.modifyPendingIntentFlags(PendingIntent.FLAG_UPDATE_CURRENT));
 
       CompatUtils.setAlarm(context, alarmManager,AlarmManager.RTC_WAKEUP, System.currentTimeMillis()+60000L, pending, null, false);
     }

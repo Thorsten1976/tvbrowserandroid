@@ -164,12 +164,12 @@ public class ServiceUpdateRemindersAndAutoUpdate extends Service {
     }
     
     if(startTime >= System.currentTimeMillis()) {
-      PendingIntent pending = PendingIntent.getBroadcast(context, (int)programID, remind, PendingIntent.FLAG_UPDATE_CURRENT);
+      PendingIntent pending = PendingIntent.getBroadcast(context, (int)programID, remind, CompatUtils.modifyPendingIntentFlags(PendingIntent.FLAG_UPDATE_CURRENT));
       Intent startInfo = new Intent(context, InfoActivity.class);
       startInfo.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
       startInfo.putExtra(SettingConstants.REMINDER_PROGRAM_ID_EXTRA, programID);
       
-      PendingIntent start = PendingIntent.getActivity(context, (int)programID, startInfo, PendingIntent.FLAG_UPDATE_CURRENT);
+      PendingIntent start = PendingIntent.getActivity(context, (int)programID, startInfo, CompatUtils.modifyPendingIntentFlags(PendingIntent.FLAG_UPDATE_CURRENT));
       
       if(startTime-reminderTime > System.currentTimeMillis()-200) {        
         Logging.log(BroadcastReceiverReminder.tag, "Create Reminder at " + new Date(startTime-reminderTime) + " with programID: '" + programID + "' " + pending.toString(), Logging.TYPE_REMINDER, context);
@@ -181,7 +181,7 @@ public class ServiceUpdateRemindersAndAutoUpdate extends Service {
       }
       
       if(remindAgain && startTime-reminderTimeSecond > System.currentTimeMillis()) {
-        pending = PendingIntent.getBroadcast(context, (int)-programID, remind, PendingIntent.FLAG_UPDATE_CURRENT);
+        pending = PendingIntent.getBroadcast(context, (int)-programID, remind, CompatUtils.modifyPendingIntentFlags(PendingIntent.FLAG_UPDATE_CURRENT));
         
         Logging.log(BroadcastReceiverReminder.tag, "Create Reminder at " + new Date(startTime-reminderTimeSecond) + " with programID: '-" + programID + "' " + pending.toString(), Logging.TYPE_REMINDER, context);
         CompatUtils.setAlarm(context, alarmManager,AlarmManager.RTC_WAKEUP, startTime-reminderTimeSecond, pending, start);

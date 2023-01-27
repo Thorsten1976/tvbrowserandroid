@@ -235,21 +235,21 @@ public class RunningProgramsListWidget extends AppWidgetProvider {
         tvb.setAction(SettingConstants.START_WITH_TIME_WIDGET_RUNNING);
         tvb.putExtra(SettingConstants.EXTRA_START_TIME,currentValue);
 
-        PendingIntent tvbstart = PendingIntent.getBroadcast(context, 0, tvb, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent tvbstart = PendingIntent.getBroadcast(context, 0, tvb, CompatUtils.modifyPendingIntentFlags(PendingIntent.FLAG_UPDATE_CURRENT));
         views.setOnClickPendingIntent(R.id.running_widget_header_info_wrapper, tvbstart);
         
         Intent config = new Intent(context, WidgetOnClickReceiver.class);
         config.setAction(SettingConstants.SELECT_TIME_WIDGET_RUNNING);
         config.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
         
-        PendingIntent timeSelection = PendingIntent.getBroadcast(context, appWidgetId, config, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent timeSelection = PendingIntent.getBroadcast(context, appWidgetId, config, CompatUtils.modifyPendingIntentFlags(PendingIntent.FLAG_UPDATE_CURRENT));
         views.setOnClickPendingIntent(R.id.running_widget_time, timeSelection);
         
         Intent templateIntent = new Intent(context, WidgetOnClickReceiver.class);
         templateIntent.setAction(SettingConstants.HANDLE_APP_WIDGET_CLICK);
         templateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
         
-        PendingIntent templatePendingIntent = PendingIntent.getBroadcast(context, appWidgetId, templateIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent templatePendingIntent = PendingIntent.getBroadcast(context, appWidgetId, templateIntent, CompatUtils.modifyPendingIntentFlags(PendingIntent.FLAG_UPDATE_CURRENT));
         
         views.setPendingIntentTemplate(R.id.running_widget_list_view, templatePendingIntent);
       }

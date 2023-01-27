@@ -225,21 +225,21 @@ public class ImportantProgramsListWidget extends AppWidgetProvider {
         config.putExtra(SettingConstants.WIDGET_CHANNEL_SELECTION_EXTRA, appWidgetId);
       }
       
-      PendingIntent configStart = PendingIntent.getActivity(context, appWidgetId, config, PendingIntent.FLAG_UPDATE_CURRENT);
+      PendingIntent configStart = PendingIntent.getActivity(context, appWidgetId, config, CompatUtils.modifyPendingIntentFlags(PendingIntent.FLAG_UPDATE_CURRENT));
       views.setOnClickPendingIntent(R.id.important_widget_config, configStart);
       
       if(!isKeyguard) {
         Intent tvb = new Intent(context, TvBrowser.class);
         tvb.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         
-        PendingIntent tvbstart = PendingIntent.getActivity(context, appWidgetId, tvb, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent tvbstart = PendingIntent.getActivity(context, appWidgetId, tvb, CompatUtils.modifyPendingIntentFlags(PendingIntent.FLAG_UPDATE_CURRENT));
         views.setOnClickPendingIntent(R.id.important_widget_header_info_wrapper, tvbstart);
         
         Intent templateIntent = new Intent(context, WidgetOnClickReceiver.class);
         templateIntent.setAction(SettingConstants.HANDLE_APP_WIDGET_CLICK);
         templateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
         
-        PendingIntent templatePendingIntent = PendingIntent.getBroadcast(context, appWidgetId, templateIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent templatePendingIntent = PendingIntent.getBroadcast(context, appWidgetId, templateIntent, CompatUtils.modifyPendingIntentFlags(PendingIntent.FLAG_UPDATE_CURRENT));
         
         views.setPendingIntentTemplate(R.id.important_widget_list_view, templatePendingIntent);
       }

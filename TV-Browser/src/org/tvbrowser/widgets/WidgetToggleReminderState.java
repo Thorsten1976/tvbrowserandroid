@@ -3,6 +3,7 @@ package org.tvbrowser.widgets;
 import org.tvbrowser.settings.SettingConstants;
 import org.tvbrowser.tvbrowser.BroadcastReceiverReminderToggle;
 import org.tvbrowser.tvbrowser.R;
+import org.tvbrowser.utils.CompatUtils;
 
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
@@ -38,7 +39,7 @@ public class WidgetToggleReminderState extends AppWidgetProvider {
     
     Intent intentClick = new Intent(context,BroadcastReceiverReminderToggle.class);
     
-    PendingIntent startService = PendingIntent.getBroadcast(context, appWidgetId, intentClick, PendingIntent.FLAG_UPDATE_CURRENT);
+    PendingIntent startService = PendingIntent.getBroadcast(context, appWidgetId, intentClick, CompatUtils.modifyPendingIntentFlags(PendingIntent.FLAG_UPDATE_CURRENT));
     views.setOnClickPendingIntent(R.id.widget_toggle_reminder_state_button, startService);
     
     // Instruct the widget manager to update the widget

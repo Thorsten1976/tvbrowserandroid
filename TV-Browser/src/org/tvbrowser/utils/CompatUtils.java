@@ -416,4 +416,16 @@ public final class CompatUtils {
         }
         return new Handler(looper);
     }
+
+    /**
+     * Adds {@link PendingIntent#FLAG_IMMUTABLE} to the given flags, if the {@link Build.VERSION}
+     * is greater or equals 31 (Android S). If the {@link PendingIntent} should be mutable,
+     * {@link PendingIntent#FLAG_MUTABLE} should be added manually instead (by logical or).
+     * <p>
+     * Starting with Android S either the immutable or mutable flag is mandatory.
+     */
+    public static int modifyPendingIntentFlags(final int flags) {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ?
+                PendingIntent.FLAG_IMMUTABLE | flags : flags;
+    }
 }

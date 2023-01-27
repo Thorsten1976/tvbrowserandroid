@@ -304,7 +304,7 @@ public class BroadcastReceiverReminder extends BroadcastReceiver {
             startInfo.putExtra(SettingConstants.REMINDER_PROGRAM_ID_EXTRA, programID);
             startInfo.setAction("actionstring" + System.currentTimeMillis());
             
-            builder.setContentIntent(PendingIntent.getActivity(context, 0, startInfo, 0));
+            builder.setContentIntent(PendingIntent.getActivity(context, 0, startInfo, CompatUtils.modifyPendingIntentFlags(0)));
             builder.setCategory(NotificationCompat.CATEGORY_REMINDER);
             
             Logging.log(tag, new Date(System.currentTimeMillis()) + ": ProgramID for Reminder '" + programID + "' Create notification with intent: " + startInfo, Logging.TYPE_REMINDER, context);

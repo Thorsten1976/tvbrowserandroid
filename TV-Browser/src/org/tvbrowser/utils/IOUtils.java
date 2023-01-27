@@ -643,7 +643,8 @@ public final class IOUtils {
       now.add(Calendar.SECOND, 10);
     }
     
-    PendingIntent pending = PendingIntent.getService(context, REQUEST_CODE_DATA_TABLE_UPDATE, dataUpdate, PendingIntent.FLAG_UPDATE_CURRENT);
+    PendingIntent pending = PendingIntent.getService(context, REQUEST_CODE_DATA_TABLE_UPDATE,
+            dataUpdate, CompatUtils.modifyPendingIntentFlags(PendingIntent.FLAG_UPDATE_CURRENT));
     
     CompatUtils.setExactAlarmAndAllowWhileIdle(alarmManager,AlarmManager.RTC_WAKEUP, now.getTimeInMillis(), pending);
   }
@@ -1221,19 +1222,19 @@ public final class IOUtils {
     return result;
   }
   
-  public static void removeReminder(Context context, long programID) {
+  public static void removeReminder(@NonNull final Context context, final long programID) {
     AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
     
     Intent remind = new Intent(context,BroadcastReceiverReminder.class);
     remind.putExtra(SettingConstants.REMINDER_PROGRAM_ID_EXTRA, programID);
     
-    PendingIntent pending = PendingIntent.getBroadcast(context, (int)programID, remind, PendingIntent.FLAG_NO_CREATE);
+    PendingIntent pending = PendingIntent.getBroadcast(context, (int)programID, remind, CompatUtils.modifyPendingIntentFlags(PendingIntent.FLAG_NO_CREATE));
     Logging.log(BroadcastReceiverReminder.tag, " Delete reminder for programID '" + programID + "' with pending intent '" + pending + "'", Logging.TYPE_REMINDER, context);
     if(pending != null) {
       alarmManager.cancel(pending);
     }
     
-    pending = PendingIntent.getBroadcast(context, (int)-programID, remind, PendingIntent.FLAG_NO_CREATE);
+    pending = PendingIntent.getBroadcast(context, (int)-programID, remind, CompatUtils.modifyPendingIntentFlags(PendingIntent.FLAG_NO_CREATE));
     Logging.log(BroadcastReceiverReminder.tag, " Delete reminder for programID '-" + programID + "' with pending intent '" + pending + "'", Logging.TYPE_REMINDER, context);
     if(pending != null) {
       alarmManager.cancel(pending);

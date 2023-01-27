@@ -121,7 +121,7 @@ public final class RunningProgramsRemoteViewsService extends RemoteViewsService 
       update.setAction(SettingConstants.UPDATE_RUNNING_APP_WIDGET);
       update.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
 
-      final PendingIntent pending = PendingIntent.getBroadcast(getApplicationContext(), mAppWidgetId, update, PendingIntent.FLAG_UPDATE_CURRENT);
+      final PendingIntent pending = PendingIntent.getBroadcast(getApplicationContext(), mAppWidgetId, update, CompatUtils.modifyPendingIntentFlags(PendingIntent.FLAG_UPDATE_CURRENT));
 
       final AlarmManager alarm = (AlarmManager)getSystemService(ALARM_SERVICE);
 
@@ -134,7 +134,7 @@ public final class RunningProgramsRemoteViewsService extends RemoteViewsService 
       update.setAction(SettingConstants.UPDATE_RUNNING_APP_WIDGET);
       update.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
 
-      final PendingIntent pending = PendingIntent.getBroadcast(getApplicationContext(), mAppWidgetId, update, PendingIntent.FLAG_NO_CREATE);
+      final PendingIntent pending = PendingIntent.getBroadcast(getApplicationContext(), mAppWidgetId, update, CompatUtils.modifyPendingIntentFlags(PendingIntent.FLAG_NO_CREATE));
 
       if(pending != null) {
         final AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
