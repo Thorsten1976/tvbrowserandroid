@@ -695,6 +695,10 @@ public final class TvBrowser extends AppCompatActivity {
     }
   }
 
+  public boolean hasEpgDonateChannelsSubscribed() {
+    return mTvBrowserViewModel.getEpgDonateChannelsCount() > 0;
+  }
+
   private void showEpgPaidInfo() {
     PrefUtils prefs = App.get().prefs();
     Log.d("info6", "showEpgPaidInfo");

@@ -256,7 +256,7 @@ public final class PluginHandler {
         PackageManager packageManager = context.getPackageManager();
         Intent baseIntent = new Intent( PluginHandler.PLUGIN_ACTION );
         baseIntent.setFlags( Intent.FLAG_DEBUG_LOG_RESOLUTION );
-        List<ResolveInfo> list = packageManager.queryIntentServices(baseIntent, PackageManager.GET_RESOLVED_FILTER );
+        List<ResolveInfo> list = CompatUtils.queryIntentServices(packageManager, baseIntent, PackageManager.GET_RESOLVED_FILTER);
         doLog(context, "ResoleInfo list size: " + list.size());
         for( int i = 0 ; i < list.size() ; ++i ) {
           ResolveInfo info = list.get( i );
@@ -292,9 +292,9 @@ public final class PluginHandler {
     final ArrayList<PluginServiceConnection> pluginList = new ArrayList<>();
     
     PackageManager packageManager = context.getPackageManager();
-    Intent baseIntent = new Intent( PluginHandler.PLUGIN_ACTION );
-    baseIntent.setFlags( Intent.FLAG_DEBUG_LOG_RESOLUTION );
-    List<ResolveInfo> list = packageManager.queryIntentServices(baseIntent, PackageManager.GET_RESOLVED_FILTER );
+    Intent baseIntent = new Intent(PluginHandler.PLUGIN_ACTION);
+    baseIntent.setFlags(Intent.FLAG_DEBUG_LOG_RESOLUTION);
+    List<ResolveInfo> list = CompatUtils.queryIntentServices(packageManager, baseIntent, PackageManager.GET_RESOLVED_FILTER);
     
     for( int i = 0 ; i < list.size() ; ++i ) {
       ResolveInfo info = list.get( i );

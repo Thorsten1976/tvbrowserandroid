@@ -27,6 +27,7 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -57,6 +58,7 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.IllegalFormatConversionException;
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -66,6 +68,7 @@ import java.util.regex.Pattern;
  * @author René Mach
  */
 @SuppressLint("NewApi")
+@SuppressWarnings("RedundantSuppression")
 public final class CompatUtils {
 
     CompatUtils() {}
@@ -359,7 +362,7 @@ public final class CompatUtils {
     }
 
     /**
-     * Returns the {@link PackageInfo} of this application in a SDK independent way.
+     * Returns the {@link PackageInfo} of this application in a SDK version independent way.
      * <p>
      * @param context application context to retrieve the {@link PackageManager} from
      * @throws PackageManager.NameNotFoundException if the package is not available to the caller.
@@ -373,6 +376,26 @@ public final class CompatUtils {
             packageInfo = packageManager.getPackageInfo(context.getPackageName(), 0);
         }
         return packageInfo;
+    }
+
+    /**
+     * Returns a list of {@link android.content.pm.ResolveInfo} entries for the given intent and
+     * flags in a SDK version independent way. Note: for newer Android versions a &lt;queries&gt;
+     * declaration is required in the manifest.
+     * <p>
+     * @param packageManager the {@link PackageManager} of the application
+     * @param intent the {@link Intent} to resolve matching {@link android.app.Service} instances
+     * @param flags numeric representation of the flags (integer)
+     */
+    @SuppressWarnings("deprecation")
+    public static List<ResolveInfo> queryIntentServices(@NonNull PackageManager packageManager, @NonNull final Intent intent, final int flags) {
+        final List<ResolveInfo> result;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            result = packageManager.queryIntentServices(intent, PackageManager.ResolveInfoFlags.of(flags));
+        } else {
+            result = packageManager.queryIntentServices(intent, flags);
+        }
+        return result;
     }
 
     public static int getVersionCode(@NonNull final PackageInfo packageInfo) {

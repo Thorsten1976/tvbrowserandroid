@@ -108,7 +108,7 @@ final class DonationRatingHelperImpl extends DonationRatingHelper {
                 donatedDetails = details;
             }
             if (details != null) {
-                if (!details.getSku().equals(SKU_EPG_DONATE_ONCE) || hasEpgDonateChannelsSubscribed()) {
+                if (!details.getSku().equals(SKU_EPG_DONATE_ONCE) || tvBrowser.hasEpgDonateChannelsSubscribed()) {
 					String title = details.getTitle().lastIndexOf("(") > 1 ? details.getTitle().substring(0, details.getTitle().lastIndexOf("(") - 1) : details.getTitle();
 
 					Button donation = new Button(tvBrowser);
@@ -268,14 +268,10 @@ final class DonationRatingHelperImpl extends DonationRatingHelper {
         }
     }
 
-    private boolean hasEpgDonateChannelsSubscribed() {
-        return tvBrowser.getEpgDonateChannelsCount() > 0;
-    }
-
     @Override
     boolean showDonationMenuItem() {
         // FIXME for now show only if not installed from Google Play
-        return !installedFromGooglePlay(tvBrowser) || hasEpgDonateChannelsSubscribed();
+        return !installedFromGooglePlay(tvBrowser) || tvBrowser.hasEpgDonateChannelsSubscribed();
     }
 
     @Override
