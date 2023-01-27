@@ -210,18 +210,18 @@ public final class CompatUtils {
         return minute;
     }
 
-    public static boolean isAtLeastAndroidN() {
+    public static boolean isAtLeastAndroidNougat() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.N;
     }
 
-    public static boolean isAtLeastAndroidO() {
+    public static boolean isAtLeastAndroidOreo() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
     }
 
     public static boolean startForegroundService(final Context context, final Intent service) {
         boolean result;
 
-        if (isAtLeastAndroidO()) {
+        if (isAtLeastAndroidOreo()) {
             result = context.startForegroundService(service) != null;
     }
     else {
@@ -355,7 +355,7 @@ public final class CompatUtils {
             prefs.setValue(R.string.PREF_WIDGET_REFRESH_WARNING, false);
         }
 
-        return show && isAtLeastAndroidO();
+        return show && isAtLeastAndroidOreo();
     }
 
     /**

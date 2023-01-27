@@ -259,7 +259,7 @@ public class BroadcastReceiverReminder extends BroadcastReceiver {
             builder.setSmallIcon(R.drawable.ic_stat_reminder);
             builder.setWhen(startTime);
 
-            if(!CompatUtils.isAtLeastAndroidO()) {
+            if(!CompatUtils.isAtLeastAndroidOreo()) {
               if(sound) {
                 builder.setSound(soundUri);
               }
@@ -286,14 +286,14 @@ public class BroadcastReceiverReminder extends BroadcastReceiver {
 
             builder.setAutoCancel(true);
 
-            if(CompatUtils.isAtLeastAndroidN()) {
+            if(CompatUtils.isAtLeastAndroidNougat()) {
               builder.setSubText(UiUtils.formatDate(startTime,context,false, true, true, java.text.DateFormat.SHORT, true) + " \u2022 " + channelInfo);
             }
             else {
               builder.setContentInfo(channelInfo);
             }
 
-            builder.setContentTitle((!CompatUtils.isAtLeastAndroidN() ? UiUtils.formatDate(startTime,context,false, true, true, java.text.DateFormat.SHORT, true) + " " : "") + UiUtils.getTimeFormat(context).format(new Date(startTime)) + " " + title);
+            builder.setContentTitle((!CompatUtils.isAtLeastAndroidNougat() ? UiUtils.formatDate(startTime,context,false, true, true, java.text.DateFormat.SHORT, true) + " " : "") + UiUtils.getTimeFormat(context).format(new Date(startTime)) + " " + title);
             
             if(episode != null) {
               builder.setContentText(episode);

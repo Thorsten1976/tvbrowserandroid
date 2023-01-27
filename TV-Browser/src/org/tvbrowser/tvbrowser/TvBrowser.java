@@ -3745,7 +3745,7 @@ public final class TvBrowser extends AppCompatActivity {
       sendMail.putExtra(Intent.EXTRA_TEXT,text + " " + new Date());
       sendMail.setType("text/rtf");
 
-      if(CompatUtils.isAtLeastAndroidN()) {
+      if(CompatUtils.isAtLeastAndroidNougat()) {
         sendMail.putExtra(Intent.EXTRA_STREAM, FileProvider.getUriForFile(this, getString(R.string.authority_file_provider), logFile));
       }
       else {

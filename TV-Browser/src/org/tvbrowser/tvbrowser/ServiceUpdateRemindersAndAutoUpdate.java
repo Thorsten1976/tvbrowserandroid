@@ -57,7 +57,7 @@ public class ServiceUpdateRemindersAndAutoUpdate extends Service {
   public void onCreate() {
     super.onCreate();
 
-    if(CompatUtils.isAtLeastAndroidO()) {
+    if(CompatUtils.isAtLeastAndroidOreo()) {
       NotificationCompat.Builder b = new NotificationCompat.Builder(ServiceUpdateRemindersAndAutoUpdate.this, App.getNotificationChannelIdDefault(this));
       b.setSmallIcon(R.drawable.ic_stat_notify);
       b.setContentTitle(getResources().getText(R.string.notification_update_reminders));
@@ -69,7 +69,7 @@ public class ServiceUpdateRemindersAndAutoUpdate extends Service {
 
   @Override
   public void onDestroy() {
-    if(CompatUtils.isAtLeastAndroidO()) {
+    if(CompatUtils.isAtLeastAndroidOreo()) {
       stopForeground(true);
     }
 

@@ -133,7 +133,7 @@ final class PluginUpdateHelperImpl extends PluginUpdateHelper {
                                 installPluginActivityResultLauncher.launch(install);
                             };
 
-                            if (CompatUtils.isAtLeastAndroidN()) {
+                            if (CompatUtils.isAtLeastAndroidNougat()) {
                                 if (!canRequestPackageInstalls(tvBrowser)) {
                                     final AlertDialog.Builder builder = new AlertDialog.Builder(tvBrowser);
                                     builder.setTitle(R.string.dialog_permission_title);
@@ -189,6 +189,6 @@ final class PluginUpdateHelperImpl extends PluginUpdateHelper {
     }
 
     private static boolean canRequestPackageInstalls(@NonNull final Context context) {
-        return !CompatUtils.isAtLeastAndroidO() || context.getPackageManager().canRequestPackageInstalls();
+        return !CompatUtils.isAtLeastAndroidOreo() || context.getPackageManager().canRequestPackageInstalls();
     }
 }

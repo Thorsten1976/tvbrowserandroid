@@ -63,7 +63,7 @@ public final class App extends Application {
 
 		SettingConstants.initialize(getApplicationContext());
 
-		if (CompatUtils.isAtLeastAndroidO()) {
+		if (CompatUtils.isAtLeastAndroidOreo()) {
 			createNotificationChannel(false);
 			UiUtils.updateImportantProgramsWidget(getApplicationContext());
 			UiUtils.updateRunningProgramsWidget(getApplicationContext());
@@ -191,7 +191,7 @@ public final class App extends Application {
 	}
 
 	public void updateNotificationChannels() {
-		if (CompatUtils.isAtLeastAndroidO()) {
+		if (CompatUtils.isAtLeastAndroidOreo()) {
 			createNotificationChannel(true);
 		}
 	}

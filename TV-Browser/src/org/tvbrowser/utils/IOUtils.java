@@ -880,6 +880,7 @@ public final class IOUtils {
    * @param client the {@link ContentProviderClient} to close.
    * @see ContentProviderClient#close()
    */
+  @SuppressWarnings("deprecation")
   public static void close(@Nullable final ContentProviderClient client) {
     if (client != null) {
       if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
