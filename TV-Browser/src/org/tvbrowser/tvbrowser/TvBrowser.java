@@ -62,6 +62,7 @@ import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import com.google.android.material.tabs.TabLayout;
 
+import androidx.appcompat.widget.AppCompatAutoCompleteTextView;
 import androidx.fragment.app.Fragment;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
@@ -255,7 +256,7 @@ public class TvBrowser extends AppCompatActivity {
 
   static {
     mRundate = Calendar.getInstance();
-    mRundate.set(Calendar.YEAR, 2024);
+    mRundate.set(Calendar.YEAR, 2029);
     mRundate.set(Calendar.MONTH, Calendar.DECEMBER);
     mRundate.set(Calendar.DAY_OF_MONTH, 31);
   }
@@ -889,6 +890,10 @@ public class TvBrowser extends AppCompatActivity {
     return result;
   }
 
+  private boolean isRuntimeExpired() {
+    return (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) && mRundate.getTimeInMillis() < System.currentTimeMillis();
+  }
+
   private void handleResume() {
     /*new Thread() {
       public void run() {
@@ -908,7 +913,7 @@ public class TvBrowser extends AppCompatActivity {
     }.start();
     */
     // Don't allow use of version after date
-    if (mRundate.getTimeInMillis() < System.currentTimeMillis()) {
+    if (isRuntimeExpired()) {
       donationsRatingHelper.handleExpiredVersion(mRundate);
       return;
     }
@@ -1089,6 +1094,7 @@ public class TvBrowser extends AppCompatActivity {
 
           URLConnection connection = null;
           try {
+            NetHelper.prepareConnection(getApplicationContext());
             URL documentUrl = new URL(SettingConstants.URL_SYNC_BASE + "data/scripts/syncDown.php?type=channelsFromDesktop");
             connection = documentUrl.openConnection();
             IOUtils.setConnectionTimeoutDefault(connection);
@@ -1105,99 +1111,94 @@ public class TvBrowser extends AppCompatActivity {
 
               connection.setRequestProperty ("Authorization", basicAuth);
 
-              BufferedReader read = new BufferedReader(new InputStreamReader(new GZIPInputStream(connection.getInputStream()), Charset.defaultCharset()));
-
-              String line = null;
-
-              int sort = 1;
-
-              final String[] projection = {TvBrowserContentProvider.KEY_ID};
-              final ContentResolver resolver = getContentResolver();
-
               HashMap<String, Integer> groupMap = new HashMap<>();
-
-              Cursor group = resolver.query(TvBrowserContentProvider.CONTENT_URI_GROUPS, null, null, null, null);
-
-              try {
-                if(IOUtils.prepareAccess(group)) {
-                  int keyIndex = group.getColumnIndex(TvBrowserContentProvider.KEY_ID);
-                  int groupIdIndex = group.getColumnIndex(TvBrowserContentProvider.GROUP_KEY_GROUP_ID);
-                  int dataServiceIdIndex = group.getColumnIndex(TvBrowserContentProvider.GROUP_KEY_DATA_SERVICE_ID);
-
-                  while(group.moveToNext()) {
-                    String dataServiceId = group.getString(dataServiceIdIndex);
-                    String groupId = group.getString(groupIdIndex);
-                    int key = group.getInt(keyIndex);
-
-                    groupMap.put(dataServiceId+";"+groupId, key);
-                  }
-                }
-              }finally {
-                IOUtils.close(group);
-              }
-
               ArrayList<ContentProviderOperation> updateList = new ArrayList<>();
 
-              while((line = read.readLine()) != null) {
-                if(line.trim().length() > 0) {
-                  if(line.contains(":")) {
-                    String[] parts = line.split(":");
+              try(BufferedReader read = new BufferedReader(new InputStreamReader(new GZIPInputStream(connection.getInputStream()), Charset.defaultCharset()))) {
+                String line = null;
 
-                    String dataService = null;
-                    String groupKey = null;
-                    String channelId = null;
-                    String sortNumber = null;
+                int sort = 1;
 
-                    if(parts[0].equals(SettingConstants.getNumberForDataServiceKey(SettingConstants.EPG_FREE_KEY))) {
-                      dataService = SettingConstants.EPG_FREE_KEY;
-                      groupKey = parts[1];
-                      channelId = parts[2];
+                final String[] projection = {TvBrowserContentProvider.KEY_ID};
+                final ContentResolver resolver = getContentResolver();
 
-                      if(parts.length > 3) {
-                        sortNumber = parts[3];
-                      }
+                try (Cursor group = resolver.query(TvBrowserContentProvider.CONTENT_URI_GROUPS, null, null, null, null)) {
+                  if (IOUtils.prepareAccess(group)) {
+                    int keyIndex = group.getColumnIndex(TvBrowserContentProvider.KEY_ID);
+                    int groupIdIndex = group.getColumnIndex(TvBrowserContentProvider.GROUP_KEY_GROUP_ID);
+                    int dataServiceIdIndex = group.getColumnIndex(TvBrowserContentProvider.GROUP_KEY_DATA_SERVICE_ID);
+
+                    while (group.moveToNext()) {
+                      String dataServiceId = group.getString(dataServiceIdIndex);
+                      String groupId = group.getString(groupIdIndex);
+                      int key = group.getInt(keyIndex);
+
+                      groupMap.put(dataServiceId + ";" + groupId, key);
                     }
-                    else if(parts[0].equals(SettingConstants.getNumberForDataServiceKey(SettingConstants.EPG_DONATE_KEY))) {
-                      dataService = SettingConstants.EPG_DONATE_KEY;
-                      groupKey = SettingConstants.EPG_DONATE_GROUP_KEY;
-                      channelId = parts[1];
+                  }
+                }
 
-                      if(parts.length > 2) {
-                        sortNumber = parts[2];
-                      }
-                    }
+                while ((line = read.readLine()) != null) {
+                  if (line.trim().length() > 0) {
+                    if (line.contains(":")) {
+                      String[] parts = line.split(":");
 
-                    if(dataService != null) {
-                      Integer groupId = groupMap.get(dataService+";"+groupKey);
+                      String dataService = null;
+                      String groupKey = null;
+                      String channelId = null;
+                      String sortNumber = null;
 
-                      if(groupId != null) {
-                        String where = " ( " + TvBrowserContentProvider.GROUP_KEY_GROUP_ID + "=" + groupId + " ) AND ( " + TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID + "='" + channelId + "' ) ";
+                      if (parts[0].equals(SettingConstants.getNumberForDataServiceKey(SettingConstants.EPG_FREE_KEY))) {
+                        dataService = SettingConstants.EPG_FREE_KEY;
+                        groupKey = parts[1];
+                        channelId = parts[2];
 
-                        ContentValues values = new ContentValues();
-
-                        if(sortNumber != null) {
-                          try {
-                            sort = Integer.parseInt(sortNumber);
-                          }catch(NumberFormatException ignored) {}
+                        if (parts.length > 3) {
+                          sortNumber = parts[3];
                         }
+                      } else if (parts[0].equals(SettingConstants.getNumberForDataServiceKey(SettingConstants.EPG_DONATE_KEY))) {
+                        dataService = SettingConstants.EPG_DONATE_KEY;
+                        groupKey = SettingConstants.EPG_DONATE_GROUP_KEY;
+                        channelId = parts[1];
 
-                        values.put(TvBrowserContentProvider.CHANNEL_KEY_SELECTION, 1);
-                        values.put(TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER, sort);
+                        if (parts.length > 2) {
+                          sortNumber = parts[2];
+                        }
+                      }
 
-                        Cursor channelIdCursor = resolver.query(TvBrowserContentProvider.CONTENT_URI_CHANNELS, projection, where, null, TvBrowserContentProvider.KEY_ID + " ASC LIMIT 1");
+                      if (dataService != null) {
+                        Integer groupId = groupMap.get(dataService + ";" + groupKey);
 
-                        try {
-                          if(IOUtils.prepareAccessFirst(channelIdCursor)) {
-                            int id = channelIdCursor.getInt(channelIdCursor.getColumnIndex(TvBrowserContentProvider.KEY_ID));
+                        if (groupId != null) {
+                          String where = " ( " + TvBrowserContentProvider.GROUP_KEY_GROUP_ID + "=" + groupId + " ) AND ( " + TvBrowserContentProvider.CHANNEL_KEY_CHANNEL_ID + "='" + channelId + "' ) ";
 
-                            updateList.add(ContentProviderOperation.newUpdate(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_CHANNELS,id)).withValues(values).build());
+                          ContentValues values = new ContentValues();
+
+                          if (sortNumber != null) {
+                            try {
+                              sort = Integer.parseInt(sortNumber);
+                            } catch (NumberFormatException ignored) {
+                            }
                           }
-                        }finally {
-                          IOUtils.close(channelIdCursor);
-                        }
-                      }
 
-                      sort++;
+                          values.put(TvBrowserContentProvider.CHANNEL_KEY_SELECTION, 1);
+                          values.put(TvBrowserContentProvider.CHANNEL_KEY_ORDER_NUMBER, sort);
+
+                          Cursor channelIdCursor = resolver.query(TvBrowserContentProvider.CONTENT_URI_CHANNELS, projection, where, null, TvBrowserContentProvider.KEY_ID + " ASC LIMIT 1");
+
+                          try {
+                            if (IOUtils.prepareAccessFirst(channelIdCursor)) {
+                              int id = channelIdCursor.getInt(channelIdCursor.getColumnIndex(TvBrowserContentProvider.KEY_ID));
+
+                              updateList.add(ContentProviderOperation.newUpdate(ContentUris.withAppendedId(TvBrowserContentProvider.CONTENT_URI_CHANNELS, id)).withValues(values).build());
+                            }
+                          } finally {
+                            IOUtils.close(channelIdCursor);
+                          }
+                        }
+
+                        sort++;
+                      }
                     }
                   }
                 }
@@ -1232,6 +1233,7 @@ public class TvBrowser extends AppCompatActivity {
             handler.post(() -> showChannelSelectionInternal());
           } finally {
         	  IOUtils.disconnect(connection);
+              NetHelper.finishConnection();
           }
 
           selectingChannels = false;
@@ -1278,6 +1280,7 @@ public class TvBrowser extends AppCompatActivity {
           URLConnection connection = null;
 
           try {
+            NetHelper.prepareConnection(getApplicationContext());
             URL documentUrl = new URL(SettingConstants.URL_SYNC_BASE + "data/scripts/syncDown.php?type=dontWantToSee");
             connection = documentUrl.openConnection();
             IOUtils.setConnectionTimeoutDefault(connection);
@@ -1293,19 +1296,19 @@ public class TvBrowser extends AppCompatActivity {
 
               connection.setRequestProperty ("Authorization", basicAuth);
 
-              BufferedReader read = new BufferedReader(new InputStreamReader(new GZIPInputStream(connection.getInputStream()), Charset.defaultCharset()));
-
-              String line = null;
-
               StringBuilder exclusionBuilder = new StringBuilder();
               HashSet<String> exclusions = new HashSet<>();
               HashSet<String> newExclusions = new HashSet<>();
 
-              while((line = read.readLine()) != null) {
-                if(line.contains(";;") && line.trim().length() > 0) {
-                  exclusions.add(line);
-                  newExclusions.add(line);
-                  exclusionBuilder.append(line).append("\n");
+              try(BufferedReader read = new BufferedReader(new InputStreamReader(new GZIPInputStream(connection.getInputStream()), Charset.defaultCharset()))) {
+                String line = null;
+
+                while ((line = read.readLine()) != null) {
+                  if (line.contains(";;") && line.trim().length() > 0) {
+                    exclusions.add(line);
+                    newExclusions.add(line);
+                    exclusionBuilder.append(line).append("\n");
+                  }
                 }
               }
 
@@ -1347,7 +1350,7 @@ public class TvBrowser extends AppCompatActivity {
                     where = "NOT " + TvBrowserContentProvider.DATA_KEY_DONT_WANT_TO_SEE;
                   }
 
-                  MemorySizeConstrictedDatabaseOperation dontWantToSeeUpdate = new MemorySizeConstrictedDatabaseOperation(TvBrowser.this, null);
+                  MemorySizeConstrictedDatabaseOperation dontWantToSeeUpdate = new MemorySizeConstrictedDatabaseOperation(TvBrowser.this, null, null);
                   //ArrayList<ContentProviderOperation> updateValuesList = new ArrayList<ContentProviderOperation>();
                   Cursor c = getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA, new String[] {TvBrowserContentProvider.KEY_ID,TvBrowserContentProvider.DATA_KEY_TITLE}, where, null, TvBrowserContentProvider.KEY_ID);
 
@@ -1386,6 +1389,7 @@ public class TvBrowser extends AppCompatActivity {
                         //updateValuesList.add(opBuilder.build());
                       }
                     }
+
                   }finally {
                     IOUtils.close(c);
                   }
@@ -1426,6 +1430,7 @@ public class TvBrowser extends AppCompatActivity {
           }catch(Throwable t) {
             handler.post(() -> ToastCompat.makeText(getApplicationContext(), R.string.no_dont_want_to_see_sync, ToastCompat.LENGTH_LONG).show());
           } finally {
+            NetHelper.finishConnection();
         	  IOUtils.disconnect(connection);
           }
 
@@ -1525,16 +1530,16 @@ public class TvBrowser extends AppCompatActivity {
           updateProgressIcon(true);
 
           URLConnection connection = null;
-          BufferedReader read = null;
           boolean restored = false;
 
           try {
+            NetHelper.prepareConnection(getApplicationContext());
             URL documentUrl = new URL(SettingConstants.URL_SYNC_BASE + "data/scripts/syncDown.php?type=preferencesBackup");
             connection = documentUrl.openConnection();
             IOUtils.setConnectionTimeoutDefault(connection);
 
-            final PrefUtils prefUtils = App.get().prefs();
-            SharedPreferences pref = prefUtils.getShared(PrefUtils.TYPE_PREFERENCES_TRANSPORTATION);
+            SharedPreferences pref = getSharedPreferences("transportation", Context.MODE_PRIVATE);
+            Editor edit = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
 
             String car = pref.getString(SettingConstants.USER_NAME, null);
             String bicycle = pref.getString(SettingConstants.USER_PASSWORD, null);
@@ -1545,95 +1550,94 @@ public class TvBrowser extends AppCompatActivity {
 
               connection.setRequestProperty ("Authorization", basicAuth);
 
-              read = new BufferedReader(new InputStreamReader(new GZIPInputStream(connection.getInputStream()), Charset.defaultCharset()));
+              try(BufferedReader read = new BufferedReader(new InputStreamReader(new GZIPInputStream(connection.getInputStream()), Charset.defaultCharset()))) {
+                String line;
 
-              String line;
-              Editor edit = prefUtils.edit();
+                TvBrowserContentProvider.INFORM_FOR_CHANGES = false;
 
-              TvBrowserContentProvider.INFORM_FOR_CHANGES = false;
+                final Favorite[] existingFavorites = Favorite.getAllFavorites(getApplicationContext());
 
-              final Favorite[] existingFavorites = Favorite.getAllFavorites(getApplicationContext());
+                while ((line = read.readLine()) != null) {
+                  int index = line.indexOf(":");
 
-              while((line = read.readLine()) != null) {
-                int index = line.indexOf(":");
+                  if (index > 0) {
+                    restored = true;
+                    String type = line.substring(0, index);
+                    String[] parts = line.substring(index + 1).split("=");
 
-                if(index > 0) {
-                  restored = true;
-                  String type = line.substring(0,index);
-                  String[] parts = line.substring(index+1).split("=");
+                    if (parts != null && parts.length > 1) {
+                      switch (type) {
+                        case "boolean":
+                          boolean boolValue = Boolean.valueOf(parts[1].trim());
 
-                  if(parts != null && parts.length > 1) {
-                    switch (type) {
-                      case "boolean":
-                        boolean boolValue = Boolean.valueOf(parts[1].trim());
-
-                        if ((!getString(R.string.PREF_RATING_DONATION_INFO_SHOWN).equals(parts[0]) || boolValue)
-                          && !getString(R.string.PREF_WIDGET_REFRESH_WARNING).equals(parts[0])) {
-                          edit.putBoolean(parts[0], boolValue);
-                        }
-                        break;
-                      case "int":
-                        if (!getString(R.string.OLD_VERSION).equals(parts[0])) {
-                          edit.putInt(parts[0], Integer.valueOf(parts[1].trim()));
-                        }
-                        break;
-                      case "float":
-                        edit.putFloat(parts[0], Float.valueOf(parts[1].trim()));
-                        break;
-                      case "long":
-                        edit.putLong(parts[0], Long.valueOf(parts[1].trim()));
-                        break;
-                      case "string":
-                        if (getString(R.string.CURRENT_FILTER_ID).equals(parts[0])) {
-                          HashSet<String> set = new HashSet<>();
-                          set.add(parts[1].trim());
-
-                          edit.putStringSet(parts[0], set);
-                        } else if (getString(R.string.PREF_DATABASE_PATH).equals(parts[0])) {
-                          final File test = new File(parts[1].trim());
-
-                          if (test.isFile()) {
-                            edit.putString(parts[0], parts[1].trim());
+                          if ((!getString(R.string.PREF_RATING_DONATION_INFO_SHOWN).equals(parts[0]) || boolValue)
+                                  && !getString(R.string.PREF_WIDGET_REFRESH_WARNING).equals(parts[0])) {
+                            edit.putBoolean(parts[0], boolValue);
                           }
-                        } else {
-                          edit.putString(parts[0], parts[1].trim());
-                        }
-                        break;
-                      case "set":
-                        HashSet<String> set = new HashSet<>();
-
-                        String[] setParts = parts[1].split("#,#");
-
-                        if (setParts != null && setParts.length > 0) {
-                          if (parts[0].equals("FAVORITE_LIST")) {
-                            Favorite.deleteAllFavorites(getApplicationContext());
-                            int id = 1000;
-
-                            for (String setPart : setParts) {
-                              Favorite favorite = new Favorite(id++, setPart);
-                              favorite.loadChannelRestrictionIdsFromUniqueChannelRestriction(getApplicationContext());
-                              Favorite.handleFavoriteMarking(getApplicationContext(), favorite, Favorite.TYPE_MARK_ADD);
-                            }
-                          } else {
-                            Collections.addAll(set, setParts);
+                          break;
+                        case "int":
+                          if (!getString(R.string.OLD_VERSION).equals(parts[0])) {
+                            edit.putInt(parts[0], Integer.valueOf(parts[1].trim()));
+                          }
+                          break;
+                        case "float":
+                          edit.putFloat(parts[0], Float.valueOf(parts[1].trim()));
+                          break;
+                        case "long":
+                          edit.putLong(parts[0], Long.valueOf(parts[1].trim()));
+                          break;
+                        case "string":
+                          if (getString(R.string.CURRENT_FILTER_ID).equals(parts[0])) {
+                            HashSet<String> set = new HashSet<>();
+                            set.add(parts[1].trim());
 
                             edit.putStringSet(parts[0], set);
-                          }
-                        }
-                        break;
-                      case "favorite":
-                        Favorite favorite = new Favorite(Long.parseLong(parts[0]), parts[1].replace("\\n", "\n"));
+                          } else if (getString(R.string.PREF_DATABASE_PATH).equals(parts[0])) {
+                            final File test = new File(parts[1].trim());
 
-                        for (Favorite test : existingFavorites) {
-                          if (test.getFavoriteId() == favorite.getFavoriteId()) {
-                            Favorite.deleteFavorite(getApplicationContext(), favorite);
-                            break;
+                            if (test.isFile()) {
+                              edit.putString(parts[0], parts[1].trim());
+                            }
+                          } else {
+                            edit.putString(parts[0], parts[1].trim());
                           }
-                        }
+                          break;
+                        case "set":
+                          HashSet<String> set = new HashSet<>();
 
-                        favorite.loadChannelRestrictionIdsFromUniqueChannelRestriction(getApplicationContext());
-                        Favorite.handleFavoriteMarking(getApplicationContext(), favorite, Favorite.TYPE_MARK_ADD);
-                        break;
+                          String[] setParts = parts[1].split("#,#");
+
+                          if (setParts != null && setParts.length > 0) {
+                            if (parts[0].equals("FAVORITE_LIST")) {
+                              Favorite.deleteAllFavorites(getApplicationContext());
+                              int id = 1000;
+
+                              for (String setPart : setParts) {
+                                Favorite favorite = new Favorite(id++, setPart);
+                                favorite.loadChannelRestrictionIdsFromUniqueChannelRestriction(getApplicationContext());
+                                Favorite.handleFavoriteMarking(getApplicationContext(), favorite, Favorite.TYPE_MARK_ADD);
+                              }
+                            } else {
+                              Collections.addAll(set, setParts);
+
+                              edit.putStringSet(parts[0], set);
+                            }
+                          }
+                          break;
+                        case "favorite":
+                          Favorite favorite = new Favorite(Long.parseLong(parts[0]), parts[1].replace("\\n", "\n"));
+
+                          for (Favorite test : existingFavorites) {
+                            if (test.getFavoriteId() == favorite.getFavoriteId()) {
+                              Favorite.deleteFavorite(getApplicationContext(), favorite);
+                              break;
+                            }
+                          }
+
+                          favorite.loadChannelRestrictionIdsFromUniqueChannelRestriction(getApplicationContext());
+                          Favorite.handleFavoriteMarking(getApplicationContext(), favorite, Favorite.TYPE_MARK_ADD);
+                          break;
+                      }
                     }
                   }
                 }
@@ -1653,7 +1657,7 @@ public class TvBrowser extends AppCompatActivity {
             restored = false;
           }
           finally {
-            IOUtils.close(read);
+            NetHelper.finishConnection();
             IOUtils.disconnect(connection);
           }
 
@@ -3074,6 +3078,7 @@ public class TvBrowser extends AppCompatActivity {
         public void run() {
           URLConnection connection = null;
           try {
+            NetHelper.prepareConnection(getApplicationContext());
             URL documentUrl = new URL(SettingConstants.URL_SYNC_BASE + "data/scripts/testMyAccount.php");
             connection = documentUrl.openConnection();
             IOUtils.setConnectionTimeoutDefault(connection);
@@ -3093,6 +3098,7 @@ public class TvBrowser extends AppCompatActivity {
           }catch(Throwable t) {
             showUserError(userName,password,syncChannels);
           } finally {
+            NetHelper.finishConnection();
         	  IOUtils.disconnect(connection);
           }
         }
@@ -3338,7 +3344,7 @@ public class TvBrowser extends AppCompatActivity {
           new Thread() {
             public void run() {
               if(IOUtils.isDatabaseAccessible(TvBrowser.this)) {
-                MemorySizeConstrictedDatabaseOperation dontWantToSeeUpdate = new MemorySizeConstrictedDatabaseOperation(TvBrowser.this, null);
+                MemorySizeConstrictedDatabaseOperation dontWantToSeeUpdate = new MemorySizeConstrictedDatabaseOperation(TvBrowser.this, null, null);
                 //ArrayList<ContentProviderOperation> updateValuesList = new ArrayList<ContentProviderOperation>();
                 Cursor programs = getContentResolver().query(TvBrowserContentProvider.CONTENT_URI_DATA, new String[] {TvBrowserContentProvider.KEY_ID,TvBrowserContentProvider.DATA_KEY_TITLE}, null, null, TvBrowserContentProvider.KEY_ID);
 
@@ -3673,7 +3679,7 @@ public class TvBrowser extends AppCompatActivity {
             final String password = prefs.getValue(R.string.PREF_EPGPAID_PASSWORD, null);
 
             if (userName != null && password != null && userName.trim().length() > 0 && password.trim().length() > 0) {
-              final EPGpaidDataConnection epgPaidTest = new EPGpaidDataConnection();
+              final EPGpaidDataConnection epgPaidTest = new EPGpaidDataConnection(getApplicationContext());
 
               if (epgPaidTest.loginBool(userName, password)) {
                 epgPaidTest.logout();
@@ -3766,7 +3772,12 @@ public class TvBrowser extends AppCompatActivity {
     TextView dataRange = about.findViewById(R.id.data_range);
     dataRange.setText(DateFormat.getMediumDateFormat(TvBrowser.this).format(new Date(prefs.getLongValueWithDefaultKey(R.string.META_DATA_DATE_FIRST_KNOWN, R.integer.meta_data_date_known_default))) + " - " + DateFormat.getMediumDateFormat(TvBrowser.this).format(new Date(prefs.getLongValueWithDefaultKey(R.string.META_DATA_DATE_LAST_KNOWN, R.integer.meta_data_date_known_default))));
 
-    ((TextView)about.findViewById(R.id.rundate_value)).setText(DateFormat.getLongDateFormat(getApplicationContext()).format(mRundate.getTime()));
+    TextView rundate = about.findViewById(R.id.rundate_value);
+    rundate.setText(DateFormat.getLongDateFormat(getApplicationContext()).format(mRundate.getTime()));
+
+    if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+      rundate.setText(getString(R.string.unrestricted));
+    }
 
     builder.setTitle(R.string.action_about);
     builder.setView(about);
@@ -4523,7 +4534,7 @@ public class TvBrowser extends AppCompatActivity {
 
         @Override
         public Cursor swapCursor(Cursor c) {
-          SearchView.SearchAutoComplete mSearchSrcTextView = searchView.findViewById(androidx.appcompat.R.id.search_src_text);
+          AppCompatAutoCompleteTextView mSearchSrcTextView = searchView.findViewById(androidx.appcompat.R.id.search_src_text);
           mSearchSrcTextView.setDropDownWidth(getResources().getDisplayMetrics().widthPixels);
           mSearchSrcTextView.setDropDownBackgroundResource(R.color.dark_gray_lighter);
           return super.swapCursor(c);

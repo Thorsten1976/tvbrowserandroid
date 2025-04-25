@@ -1,59 +1,7 @@
 apply plugin: 'com.android.application'
 
-import groovy.swing.SwingBuilder
-
-System.setProperty('java.awt.headless', 'false')
-/*
-gradle.taskGraph.whenReady { taskGraph ->
-    if (taskGraph.hasTask(':' + project.name + ':validateSigningFreeRelease') ||
-            taskGraph.hasTask(':' + project.name + ':validateSigningGoogleRelease')) {
-        def password = ""
-        def passwordKeyStore = ""
-
-        if (System.console() == null) {
-            new SwingBuilder().edt {
-                dialog(modal: true,
-                        title: "Enter password",
-                        alwaysOnTop: true,
-                        resizable: false,
-                        locationRelativeTo: null,
-                        pack: true,
-                        show: true
-                ) {
-                    vbox {
-                        label(text: "Enter store password: ")
-                        input1 = passwordField()
-                        label(text: "Enter key password: ")
-                        input = passwordField()
-                        button(defaultButton: true,
-                                text: 'OK',
-                                actionPerformed: {
-                                    passwordKeyStore = new String(input1.password)
-                                    password = new String(input.password)
-                                    dispose()
-                                })
-                    }
-                }
-            }
-        } else {
-            password = System.console().readPassword("\nEnter keystore password: ")
-            password = new String(password)
-            passwordKeyStore = System.console().readPassword("\nEnter key password: ")
-            passwordKeyStore = new String(passwordKeyStore)
-        }
-
-        if (password.size() <= 0 || passwordKeyStore.size() <= 0) {
-            throw new InvalidUserDataException("Empty password")
-        }
-
-        // set signing config key passwords
-        android.signingConfigs.google.storePassword = passwordKeyStore
-        android.signingConfigs.google.keyPassword = password
-
-        android.signingConfigs.free.storePassword = passwordKeyStore
-        android.signingConfigs.free.keyPassword = password
-    }
-}*/
+//import groovy.swing.SwingBuilder
+//System.setProperty('java.awt.headless', 'false')
 
 android {
     signingConfigs {
@@ -71,9 +19,9 @@ android {
     defaultConfig {
         applicationId "org.tvbrowser.tvbrowser"
         minSdkVersion 14
-        targetSdkVersion 30
-        versionCode 4270
-        versionName "0.7.0.8"
+        targetSdkVersion 28
+        versionCode 4274
+        versionName "0.7.0.10beta3"
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -223,6 +171,7 @@ if (project.hasProperty("AndroidProject.signing")
 }
 
 dependencies {
+    implementation project(path: ':ListViewDraggingAnimation')
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.0-beta01'
     implementation 'androidx.preference:preference:1.1.1'
@@ -231,5 +180,5 @@ dependencies {
     implementation 'androidx.work:work-runtime:2.5.0'
     implementation 'com.google.android.material:material:1.3.0'
     implementation 'me.drakeet.support:toastcompat:1.1.0'
-    implementation project(path: ':ListViewDraggingAnimation')
+    implementation 'com.google.android.gms:play-services-auth:20.7.0'
 }
